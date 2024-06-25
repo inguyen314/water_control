@@ -1,6 +1,6 @@
 import {fetchJsonFile,getNames,addBasinNames,createUrl,formatString,getList} from './functions.js'
 
-const jsonUrl = "https://wm.mvs.ds.usace.army.mil/php-data-api/public/json/gage_control.json"
+const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
 
 // Const Variables
 const basinName = document.getElementById('basinCombobox'),
@@ -127,6 +127,7 @@ function main(data) {
 
 
 // Fetch the gages names
-fetchJsonFile("../json/data.json", initialize, function(){});
+/* fetchJsonFile("../json/data.json", initialize, function(){}); */
 
+fetchJsonFile(jsonUrl, initialize, function(){});
 
