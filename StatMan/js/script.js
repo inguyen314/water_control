@@ -1,4 +1,12 @@
-import {fetchJsonFile,getNames,addBasinNames,createUrl,formatString,getList} from './functions.js'
+import {
+    fetchJsonFile,
+    getNames,
+    addBasinNames,
+    createUrl,
+    formatString,
+    getList,
+    getMeanMinMaxList
+} from './functions.js'
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
 
@@ -7,7 +15,8 @@ const basinName = document.getElementById('basinCombobox'),
       gageName = document.getElementById('gageCombobox'),
       beginDate = document.getElementById('begin-input'),
       endDate = document.getElementById('end-input'),
-      computeHTMLBtn = document.getElementById('button-html');
+      computeHTMLBtn = document.getElementById('button-html'),
+      averageTable = document.getElementById('mean-table');
 
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
@@ -78,51 +87,27 @@ function main(data) {
     
     let wholePeriodList = getList(objData);
 
-    console.log(wholePeriodList);
+    let totalData = getMeanMinMaxList(wholePeriodList);
 
-    let tableDateList = [];
+    let meanData = totalData[0],
+        minData = totalData[1],
+        maxData = totalData[2];
 
-    let month = 1;
-    let day = 1;
-    for (let i = 1; i <= 372; i++) {
+    meanTable();
 
-        if (i % 31 === 0){
-            tableDateList.push({
-                date: `${month}-${day}`,
-                stage: 0
-            });
-            month++;
-            day = 1;
-        } else {
-            tableDateList.push({
-                date: `${month}-${day}`,
-                stage: 0
-            });
-            day++;
+}
+
+function meanTable() {
+
+    
+    
+    for (let i = 1; i < 32; i++) {
+        let row = document.createElement('tr');
+        for (let j = 1; j < 14; j++) {
+            row.innerHTML += `<td>${i} + ${j}</td>`;
         }
-
+        averageTable.appendChild(row);
     }
-
-    tableDateList.forEach(item => {
-        wholePeriodList.forEach(element => {
-            element.data.forEach(x => {
-                let year = x.date.split('-')[0];
-                let splittedDate = x.date.split('-').slice(-2);
-                let refDate = splittedDate.join('-');
-
-                // Get Average
-                var count = 0;
-                if (refDate === item.date) {
-                    console.log(`refDate: (${refDate}); item.date: (${item.date})`);
-                    item.stage += x.stage; 
-                    count ++;
-                }
-
-            });
-        });
-    });
-
-    console.log(tableDateList);
 }
 
 
