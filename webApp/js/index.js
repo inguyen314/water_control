@@ -3,7 +3,7 @@
 import { fetchJsonFile } from './functions.js';
 
 // Fetch the datname data from json file url
-let namesJsonUrl = "https://wm.mvs.ds.usace.army.mil/php-data-api/public/json/gage_control.json"
+let namesJsonUrl = "https://wm.mvs.ds.usace.army.mil/php_data_api/public/json/gage_control.json"
 
 // Declare some const elements
 const nameTextBox = document.getElementById('name-input'),
