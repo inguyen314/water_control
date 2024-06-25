@@ -127,7 +127,7 @@ function main(data) {
 
 
 // Fetch the gages names
-/* fetchJsonFile("../json/data.json", initialize, function(){}); */
+fetchJsonFile("../json/data.json", initialize, function(){});
 
-fetchJsonFile(jsonUrl, initialize, function(){});
+/* fetchJsonFile(jsonUrl, initialize, function(){}); */
 
