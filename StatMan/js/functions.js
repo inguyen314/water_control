@@ -110,6 +110,107 @@ export function getList(dataList) {
 }
 
 // Function to get the mean values
-export function getMeanList(dataObject) {
-    
+export function getMeanMinMaxList(dataList) {
+
+    let dateStageList = [];
+
+    let month = 1;
+    let day = 1;
+    for (let i = 1; i <= 372; i++) {
+
+        let dayStr = `0${day}`;
+        let monthStr = `0${month}`;
+
+        if (month > 9) {
+            monthStr = `${month}`;
+        }
+
+        if (day > 9) {
+            dayStr = `${day}`;
+        }
+
+        if (i % 31 === 0){
+
+            dateStageList.push({
+                date: `${monthStr}-${dayStr}`,
+                stage: 0
+            });
+            month++;
+            day = 1;
+        } else {
+            dateStageList.push({
+                date: `${monthStr}-${dayStr}`,
+                stage: 0
+            });
+            day++;
+        }
+
+    }
+
+    // Create copy of the list for the average, min and max values
+    let averageList = [],
+        minList = [],
+        maxList = [];
+
+    dateStageList.forEach(element => {
+
+        averageList.push({
+            date:element.date,
+            stage:element.stage
+        });
+        minList.push({
+            date:element.date,
+            stage:element.stage
+        });
+        maxList.push({
+            date:element.date,
+            stage:element.stage
+        });
+
+    });
+
+    dateStageList.forEach((item, index) => {
+        let count = 0;
+        let tempList = [];
+
+        dataList.forEach(element => {
+            element.data.forEach(x => {
+                let year = x.date.split('-')[0];
+                let splittedDate = x.date.split('-').slice(-2);
+                let refDate = splittedDate.join('-');
+
+                // Get Average
+                if (refDate === item.date) {
+                    averageList[index].stage += x.stage; 
+                    tempList.push({
+                        year:year,
+                        stage:x.stage
+                    }); 
+                    count ++;
+                };
+            });
+        });
+
+        if (count > 0) {
+            averageList[index].stage = averageList[index].stage / count;
+        };
+
+        if (tempList.length > 0) {
+            // Get stage list            
+            let stageList = tempList.map(item => item.stage);
+
+            // Max Stage
+            let maxStage = Math.max(...stageList);
+            let maxYear = tempList.filter(item => item.stage === maxStage)[0].year;
+            maxList[index].stage = [maxStage, maxYear];
+
+            // Min Stage
+            let minStage = Math.min(...stageList);
+            let minYear = tempList.filter(item => item.stage === minStage)[0].year;
+            minList[index].stage = [minStage, minYear];
+        };
+    });
+
+    return [averageList, minList, maxList];
+
 }
