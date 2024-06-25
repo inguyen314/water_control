@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="header">
+        <h1 id="main-title">StatMan - Statistic Computation Module</h1>
+    </div>
+    <div class="container">
+        <div class="input-container">
+            <div class="inputs">
+                <div class="data-info">
+                    <div class="basin">
+                        <label>Basin:</label>
+                        <select name="basin" id="basinCombobox"></select>
+                    </div>
+                    <div class="gage">
+                        <label>Gage:</label>
+                        <select name="gage" id="gageCombobox"></select>
+                    </div>
+                    <div class="data-type">
+                        <label>Data type: Stage</label>
+                    </div>
+                </div>
+            </div>
+            <div class="time-info">
+                <table id="info-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Available POR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Start Time</td>
+                            <td>End Time</td>
+                        </tr>
+                        <tr>
+                            <td>03/24/1986</td>
+                            <td>06/10/2024</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="select-time">
+                <table id="input-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Select Time Window</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Starting Year</td>
+                            <td>Ending Year</td>
+                        </tr>
+                        <tr>
+                            <td><input type="date" id="begin-input" value="2018-01-01"></td>
+                            <td><input type="date" id="end-input" value="2020-12-31"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="input-checkbox">
+            <label>Compute:</label>
+            <label>Ave</label>
+            <input type="checkbox" name="ave" id="average">
+            <label>Max</label>
+            <input type="checkbox" name="max" id="maximum">
+            <label>Min</label>
+            <input type="checkbox" name="min" id="minimum">
+        </div>
+        <div class="buttons">
+            <button class="html" id="button-html">Compute HTML</button>
+            <button class="pdf" id="button-pdf">Compute PDF</button>
+        </div>
+    </div>
+    <div class="results">
+        <div class="gage-info">
+            <table id="gage-info-table">
+                <thead>
+                    <tr>
+                        <th colspan="2">Table Title</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Location:</td>
+                        <td><p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolores rerum excepturi voluptate delectus distinctio accusamus deserunt facere illo saepe, quidem ratione dolorum, itaque ex nemo rem repudiandae aperiam cum sequi iste maiores magni ipsa! Voluptates excepturi libero iusto ipsam repellendus!</p></td>
+                    </tr>
+                    <tr>
+                        <td>Gage:</td>
+                        <td><p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi eaque asperiores dignissimos quae voluptatem iste quasi amet earum, voluptates velit?</p></td>
+                    </tr>
+                    <tr>
+                        <td>General information:</td>
+                        <td><p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Eaque, nihil.</p></td>
+                    </tr>
+                    <tr>
+                        <td>Record Available:</td>
+                        <td><p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Incidunt, quos.</p></td>
+                    </tr>
+                    <tr>
+                        <td>Zero Gage Datum:</td>
+                        <td><p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dignissimos, aliquam.</p></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="intro-text">
+                <h4 class="text">All Values Recorded at 8am. Stage in ft:</h4>
+            </div>
+        </div>
+        <div class="selected-por-statistic">
+            <h2>Selected POR Statistics [Mar 1986 to Jun 2024]</h2>
+        </div>
+        <div class="first-stats">
+            <h4>The Mean Stage for the POR was: 3.04</h4>
+            <h4>The Highest Stage for the POR was: 14.15 which occured on: 03-20-2020</h4>
+            <h4>The Lowest Stage for the POR was: 1.21 which occured on: 09-04-2020</h4>
+        </div>
+        <div class="daily-title">
+            <h4>Daily Mean Values for Select POR [Jan 2020 to Dec 2020] --> CFMV:</h4>
+        </div>
+        <div class="mean-data">
+            <table class="data-table" id="mean-table">
+                <thead>
+                    <tr>
+                        <th colspan="13">Month</th>
+                    </tr>
+                    <tr>
+                        <th>Day</th>
+                        <th>Jan</th>
+                        <th>Feb</th>
+                        <th>Mar</th>
+                        <th>Apr</th>
+                        <th>May</th>
+                        <th>Jun</th>
+                        <th>Jul</th>
+                        <th>Aug</th>
+                        <th>Sep</th>
+                        <th>Oct</th>
+                        <th>Nov</th>
+                        <th>Dec</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script type="module" src="../js/script.js"></script>
+</body>
+</html>
