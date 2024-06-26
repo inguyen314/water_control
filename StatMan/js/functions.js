@@ -214,3 +214,14 @@ export function getMeanMinMaxList(dataList) {
     return [averageList, minList, maxList];
 
 }
+
+// Function to extract the mean, min and max data in a better format for the table
+export function extractDataForTable(data) {
+    let newTable = [];
+    for (let i = 1; i < 32; i++) {
+        let dayString = (i < 10) ? `0${i}` : `${i}`;
+        let newList = data.filter(x => x.date.split('-')[1] === dayString).map(x => x.stage);
+        newTable.push(newList);
+    };
+    return newTable;
+}

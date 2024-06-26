@@ -5,7 +5,8 @@ import {
     createUrl,
     formatString,
     getList,
-    getMeanMinMaxList
+    getMeanMinMaxList,
+    extractDataForTable
 } from './functions.js'
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
@@ -95,19 +96,28 @@ function main(data) {
 
     meanTable();
 
+    console.log(minData);
+
+    let meanDataTable = extractDataForTable(meanData);
+    let minDataTable = extractDataForTable(minData);
+    
+    console.log(minDataTable);
+
 }
 
-function meanTable() {
-
-    
+function meanTable(data) {
     
     for (let i = 1; i < 32; i++) {
         let row = document.createElement('tr');
-        for (let j = 1; j < 14; j++) {
+        for (let j = 0; j < 13; j++) {
+            if (j === 0) {
+                row.innerHTML += `<td>${i}</td>`;
+            }
+
             row.innerHTML += `<td>${i} + ${j}</td>`;
         }
         averageTable.appendChild(row);
-    }
+    };
 }
 
 
