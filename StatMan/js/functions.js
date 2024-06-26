@@ -228,25 +228,119 @@ export function extractDataForTable(data) {
 
 // Function to create a table and add it to the page
 export function createTable(data, tableElement, tableDataType) {
-    
-    for (let i = 0; i < 31; i++) {
+
+    let lastPart = ["Mean", "Min", "Max"];
+
+    let dataArray = function() {
+        let holdList = []; // 12 empty list
+        for (let i = 0; i < 12; i++) {
+            let emptyList = [];
+            data.forEach(element => {
+                emptyList.push(element[i]);
+            });
+            holdList.push(emptyList);
+        }
+        return holdList;
+    }();
+
+    for (let i = 0; i < 34; i++) {
+
         let row = document.createElement('tr');
+
+        if (i % 5 === 0) {
+            row.style.background = "var(--background-yellow-line)";
+        }
+
         for (let j = 0; j < 12; j++) {
-            if (j === 0) {
-                row.innerHTML += `<td>${i+1}</td>`;
+
+            if (i > 30) {
+
+                if (j === 0) {
+                    row.innerHTML += `<td>${lastPart[i - 31]}</td>`;
+                }
+
+                if (lastPart[i - 31] === "Min") {
+                    let newArray = [];
+                    dataArray[j].forEach(element => {
+                        if (element.length > 0) {
+                            newArray.push(element[0]);
+                        } else {
+                            newArray.push(element)
+                        }
+                    });
+                    let filterMin = newArray.filter(x => x !== 0);
+                    let minValue = Math.min(...filterMin);
+                    row.innerHTML += `<td>${minValue.toFixed(2)}</td>`;
+                } else if (lastPart[i - 31] === "Max") {
+                    let newArray = [];
+                    dataArray[j].forEach(element => {
+                        if (element.length > 0) {
+                            newArray.push(element[0]);
+                        } else {
+                            newArray.push(element)
+                        }
+                    });
+                    let maxValue = Math.max(...newArray);
+                    row.innerHTML += `<td>${maxValue.toFixed(2)}</td>`;
+                } else {
+                    let newArray = [];
+                    dataArray[j].forEach(element => {
+                        if (element.length > 0) {
+                            newArray.push(element[0]);
+                        } else {
+                            newArray.push(element)
+                        }
+                    });
+                    let meanValue = newArray.reduce((p,c) => p + c) / newArray.length;
+                    row.innerHTML += `<td>${meanValue.toFixed(2)}</td>`;
+                }
+
+            } else {
+                if (j === 0) {
+                    row.innerHTML += `<td>${i+1}</td>`;
+                }
+    
+                if (tableDataType === "mean") {
+                    row.innerHTML += `<td>${(data[i][j]).toFixed(2)}</td>`;
+                } else {
+                    let dateStageArray = data[i][j];
+                    if (dateStageArray.length > 0) {
+                        row.innerHTML += `<td>${(data[i][j][0]).toFixed(2)}<br>${data[i][j][1]}</td>`;
+                    } else {
+                        row.innerHTML += "<td>---</td>";
+                    }
+                };
             }
 
-            if (tableDataType === "mean") {
-                row.innerHTML += `<td>${(data[i][j]).toFixed(2)}</td>`;
-            } else {
-                let dateStageArray = data[i][j];
-                if (dateStageArray.length > 0) {
-                    row.innerHTML += `<td>${(data[i][j][0]).toFixed(2)}<br>${data[i][j][1]}</td>`;
-                } else {
-                    row.innerHTML += `<td>---</td>`;
-                }
-            };
         };
+
         tableElement.appendChild(row);
     };
+}
+
+// Function to clear table
+export function clearTable(table) {
+    table.innerHTML = `<thead>
+                            <tr>
+                                <th colspan="13">Month</th>
+                            </tr>
+                            <tr>
+                                <th>Day</th>
+                                <th>Jan</th>
+                                <th>Feb</th>
+                                <th>Mar</th>
+                                <th>Apr</th>
+                                <th>May</th>
+                                <th>Jun</th>
+                                <th>Jul</th>
+                                <th>Aug</th>
+                                <th>Sep</th>
+                                <th>Oct</th>
+                                <th>Nov</th>
+                                <th>Dec</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>`;
 }

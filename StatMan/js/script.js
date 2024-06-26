@@ -7,7 +7,8 @@ import {
     getList,
     getMeanMinMaxList,
     extractDataForTable,
-    createTable
+    createTable,
+    clearTable
 } from './functions.js'
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
@@ -19,7 +20,12 @@ const basinName = document.getElementById('basinCombobox'),
       endDate = document.getElementById('end-input'),
       computeHTMLBtn = document.getElementById('button-html'),
       resultsDiv = document.querySelector('.results'),
-      averageTable = document.getElementById('mean-table');
+      averageTable = document.getElementById('mean-table'),
+      maxTable = document.getElementById('max-table'),
+      minTable = document.getElementById('min-table'),
+      aveCheckbox = document.getElementById('average'),
+      maxCheckbox = document.getElementById('maximum'),
+      minCheckbox = document.getElementById('minimum');
 
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
@@ -67,6 +73,7 @@ function initialize(data) {
 
     // HTML button clicked
     computeHTMLBtn.addEventListener('click', function() {
+
         // Initialize variables
         let datmanName = gageName.value,
             officeName = "MVS",
@@ -78,13 +85,14 @@ function initialize(data) {
         fetchJsonFile(stageUrl, main, function(){});
         resultsDiv.classList.remove('hidden');
     });
-
-    computeHTMLBtn.click();
     
 }
 
 // Main function
 function main(data) {
+    // Change button text
+    computeHTMLBtn.textContent = "Processing - One Moment";
+
     let objData = data["time-series"]["time-series"][0]["irregular-interval-values"]["values"];
     /* let dateArray = getList(objData, "date");
     let stageArray = getList(objData, "stage"); */
@@ -101,7 +109,37 @@ function main(data) {
     let minDataTable = extractDataForTable(minData);
     let maxDataTable = extractDataForTable(maxData);
     
-    createTable(meanDataTable, averageTable, "mean");
+    if (aveCheckbox.checked) {
+        clearTable(averageTable);
+        createTable(meanDataTable, averageTable, "mean");
+        document.querySelector(".daily-title.mean").classList.remove('hidden');
+        document.querySelector(".mean-data").classList.remove('hidden');
+    } else {
+        document.querySelector(".daily-title.mean").classList.add('hidden');
+        document.querySelector(".mean-data").classList.add('hidden');
+    }
+
+    if (maxCheckbox.checked) {
+        clearTable(maxTable);
+        createTable(maxDataTable, maxTable, "max");
+        document.querySelector(".daily-title.max").classList.remove('hidden');
+        document.querySelector(".max-data").classList.remove('hidden');
+    } else {
+        document.querySelector(".daily-title.max").classList.add('hidden');
+        document.querySelector(".max-data").classList.add('hidden');
+    }
+
+    if (minCheckbox.checked) {
+        clearTable(minTable);
+        createTable(minDataTable, minTable, "min");
+        document.querySelector(".daily-title.min").classList.remove('hidden');
+        document.querySelector(".min-data").classList.remove('hidden');
+    } else {
+        document.querySelector(".daily-title.min").classList.add('hidden');
+        document.querySelector(".min-data").classList.add('hidden');
+    }
+    // Change button text
+    computeHTMLBtn.textContent = "Compute HTML";
 
 }
 
