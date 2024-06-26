@@ -5,7 +5,9 @@ import {
     createUrl,
     formatString,
     getList,
-    getMeanMinMaxList
+    getMeanMinMaxList,
+    extractDataForTable,
+    createTable
 } from './functions.js'
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
@@ -16,6 +18,7 @@ const basinName = document.getElementById('basinCombobox'),
       beginDate = document.getElementById('begin-input'),
       endDate = document.getElementById('end-input'),
       computeHTMLBtn = document.getElementById('button-html'),
+      resultsDiv = document.querySelector('.results'),
       averageTable = document.getElementById('mean-table');
 
 /**============= Main functions when data is retrieved ================**/
@@ -73,6 +76,7 @@ function initialize(data) {
         // Create the URL to get the data
         let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
         fetchJsonFile(stageUrl, main, function(){});
+        resultsDiv.classList.remove('hidden');
     });
 
     computeHTMLBtn.click();
@@ -93,26 +97,18 @@ function main(data) {
         minData = totalData[1],
         maxData = totalData[2];
 
-    meanTable();
-
-}
-
-function meanTable() {
-
+    let meanDataTable = extractDataForTable(meanData);
+    let minDataTable = extractDataForTable(minData);
+    let maxDataTable = extractDataForTable(maxData);
     
-    
-    for (let i = 1; i < 32; i++) {
-        let row = document.createElement('tr');
-        for (let j = 1; j < 14; j++) {
-            row.innerHTML += `<td>${i} + ${j}</td>`;
-        }
-        averageTable.appendChild(row);
-    }
+    createTable(meanDataTable, averageTable, "mean");
+
 }
 
 
 // Fetch the gages names
 fetchJsonFile("../json/data.json", initialize, function(){});
 
+// Fetch gages with the json URL
 /* fetchJsonFile(jsonUrl, initialize, function(){}); */
 

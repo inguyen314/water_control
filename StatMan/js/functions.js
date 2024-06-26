@@ -214,3 +214,39 @@ export function getMeanMinMaxList(dataList) {
     return [averageList, minList, maxList];
 
 }
+
+// Function to extract the mean, min and max data in a better format for the table
+export function extractDataForTable(data) {
+    let newTable = [];
+    for (let i = 1; i < 32; i++) {
+        let dayString = (i < 10) ? `0${i}` : `${i}`;
+        let newList = data.filter(x => x.date.split('-')[1] === dayString).map(x => x.stage);
+        newTable.push(newList);
+    };
+    return newTable;
+}
+
+// Function to create a table and add it to the page
+export function createTable(data, tableElement, tableDataType) {
+    
+    for (let i = 0; i < 31; i++) {
+        let row = document.createElement('tr');
+        for (let j = 0; j < 12; j++) {
+            if (j === 0) {
+                row.innerHTML += `<td>${i+1}</td>`;
+            }
+
+            if (tableDataType === "mean") {
+                row.innerHTML += `<td>${(data[i][j]).toFixed(2)}</td>`;
+            } else {
+                let dateStageArray = data[i][j];
+                if (dateStageArray.length > 0) {
+                    row.innerHTML += `<td>${(data[i][j][0]).toFixed(2)}<br>${data[i][j][1]}</td>`;
+                } else {
+                    row.innerHTML += `<td>---</td>`;
+                }
+            };
+        };
+        tableElement.appendChild(row);
+    };
+}
