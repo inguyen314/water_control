@@ -246,3 +246,15 @@ body {
 .results .mean-data .data-table td {
     text-align: center;
 }
+
+.results .mean-stats h4 {
+    margin: 0px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.results .mean-data .data-table tr:nth-last-child(1),
+.results .mean-data .data-table tr:nth-last-child(2),
+.results .mean-data .data-table tr:nth-last-child(3) {
+    font-weight: 800;
+}

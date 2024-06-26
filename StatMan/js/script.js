@@ -67,6 +67,9 @@ function initialize(data) {
 
     // HTML button clicked
     computeHTMLBtn.addEventListener('click', function() {
+        // Change button text
+        computeHTMLBtn.textContent = "Processing - One Moment";
+
         // Initialize variables
         let datmanName = gageName.value,
             officeName = "MVS",
@@ -77,6 +80,7 @@ function initialize(data) {
         let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
         fetchJsonFile(stageUrl, main, function(){});
         resultsDiv.classList.remove('hidden');
+        computeHTMLBtn.textContent = "Compute HTML";
     });
 
     computeHTMLBtn.click();

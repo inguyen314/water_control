@@ -228,25 +228,68 @@ export function extractDataForTable(data) {
 
 // Function to create a table and add it to the page
 export function createTable(data, tableElement, tableDataType) {
-    
-    for (let i = 0; i < 31; i++) {
+
+    let lastPart = ["Mean", "Min", "Max"];
+
+    let dataArray = function() {
+        let holdList = []; // 12 empty list
+        for (let i = 0; i < 12; i++) {
+            let emptyList = [];
+            data.forEach(element => {
+                emptyList.push(element[i]);
+            });
+            holdList.push(emptyList);
+        }
+        return holdList;
+    }();
+
+    console.log(dataArray);
+
+    for (let i = 0; i < 34; i++) {
+
         let row = document.createElement('tr');
+
         for (let j = 0; j < 12; j++) {
-            if (j === 0) {
-                row.innerHTML += `<td>${i+1}</td>`;
+
+            if (i > 30) {
+
+                if (j === 0) {
+                    row.innerHTML += `<td>${lastPart[i - 31]}</td>`;
+                }
+
+                if (lastPart[i - 31] === "Min") {
+                    let filteredList = dataArray[j].filter(x => x !== 0);
+                    let minValue = Math.min(...filteredList);
+                    row.innerHTML += `<td>${minValue.toFixed(2)}</td>`;
+                } else if (lastPart[i - 31] === "Max") {
+                    let maxValue = Math.max(...dataArray[j]);
+                    row.innerHTML += `<td>${maxValue.toFixed(2)}</td>`;
+                } else {
+                    let meanValue = dataArray[j].reduce((p,c) => p + c) / dataArray[j].length;
+                    row.innerHTML += `<td>${meanValue.toFixed(2)}</td>`;
+                }
+                
+
+
+            } else {
+                if (j === 0) {
+                    row.innerHTML += `<td>${i+1}</td>`;
+                }
+    
+                if (tableDataType === "mean") {
+                    row.innerHTML += `<td>${(data[i][j]).toFixed(2)}</td>`;
+                } else {
+                    let dateStageArray = data[i][j];
+                    if (dateStageArray.length > 0) {
+                        row.innerHTML += `<td>${(data[i][j][0]).toFixed(2)}<br>${data[i][j][1]}</td>`;
+                    } else {
+                        row.innerHTML += "<td>---</td>";
+                    }
+                };
             }
 
-            if (tableDataType === "mean") {
-                row.innerHTML += `<td>${(data[i][j]).toFixed(2)}</td>`;
-            } else {
-                let dateStageArray = data[i][j];
-                if (dateStageArray.length > 0) {
-                    row.innerHTML += `<td>${(data[i][j][0]).toFixed(2)}<br>${data[i][j][1]}</td>`;
-                } else {
-                    row.innerHTML += `<td>---</td>`;
-                }
-            };
         };
+
         tableElement.appendChild(row);
     };
 }
