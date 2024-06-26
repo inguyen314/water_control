@@ -13,7 +13,10 @@ import {
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
 
-// Const Variables
+//"https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations/St%20Charles-Missouri?office=MVS"
+const generalInfoURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations/";
+
+// Const Elements
 const basinName = document.getElementById('basinCombobox'),
       gageName = document.getElementById('gageCombobox'),
       beginDate = document.getElementById('begin-input'),
@@ -25,7 +28,12 @@ const basinName = document.getElementById('basinCombobox'),
       minTable = document.getElementById('min-table'),
       aveCheckbox = document.getElementById('average'),
       maxCheckbox = document.getElementById('maximum'),
-      minCheckbox = document.getElementById('minimum');
+      minCheckbox = document.getElementById('minimum'),
+      locationInformation = document.getElementById('location-data'),
+      zeroGageData = document.getElementById('zero-gage-data');
+
+// Const Variables
+const officeName = "MVS";
 
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
@@ -76,7 +84,6 @@ function initialize(data) {
 
         // Initialize variables
         let datmanName = gageName.value,
-            officeName = "MVS",
             beginValue = formatString("start date", beginDate.value),
             endValue = formatString('end date', endDate.value);
 
@@ -93,6 +100,39 @@ function main(data) {
     // Change button text
     computeHTMLBtn.textContent = "Processing - One Moment";
 
+    // Is the gage a project?
+    fetchJsonFile("../json/data.json", function(data){
+        let is_gage29 = false;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                element.gages.forEach(gage => {
+                    if (gage.tsid_datman === gageName.value) {
+                        is_gage29 = gage.display_stage_29;
+                    }
+                });
+            } 
+        });
+
+        if (!is_gage29) {
+            fetchJsonFile(`https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations/${formattedName}?office=${officeName}`, function(data) {
+                zeroGageData.textContent = `${data.elevation} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+            }, function(){});
+        } else {
+            zeroGageData.textContent = "${data.elevation} ft ${data['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.";
+        }
+
+    }, function(){});
+
+
+    // Fetch data for general information
+    let formattedName = gageName.value.split('.')[0].split(' ').join('%20');
+
+    fetchJsonFile(`https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations/${formattedName}?office=${officeName}`, function(data) {
+        console.log(data);
+        locationInformation.textContent = `LAT. ${data.latitude}, LONG. ${data.longitude}, ${data.description}`;
+        //zeroGageData.textContent = `${elevation} ft NAVD ${navNum}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+    }, function(){});
+    
     let objData = data["time-series"]["time-series"][0]["irregular-interval-values"]["values"];
     /* let dateArray = getList(objData, "date");
     let stageArray = getList(objData, "stage"); */
