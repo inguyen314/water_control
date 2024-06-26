@@ -243,11 +243,13 @@ export function createTable(data, tableElement, tableDataType) {
         return holdList;
     }();
 
-    console.log(dataArray);
-
     for (let i = 0; i < 34; i++) {
 
         let row = document.createElement('tr');
+
+        if (i % 5 === 0) {
+            row.style.background = "var(--background-yellow-line)";
+        }
 
         for (let j = 0; j < 12; j++) {
 
@@ -258,18 +260,40 @@ export function createTable(data, tableElement, tableDataType) {
                 }
 
                 if (lastPart[i - 31] === "Min") {
-                    let filteredList = dataArray[j].filter(x => x !== 0);
-                    let minValue = Math.min(...filteredList);
+                    let newArray = [];
+                    dataArray[j].forEach(element => {
+                        if (element.length > 0) {
+                            newArray.push(element[0]);
+                        } else {
+                            newArray.push(element)
+                        }
+                    });
+                    let filterMin = newArray.filter(x => x !== 0);
+                    let minValue = Math.min(...filterMin);
                     row.innerHTML += `<td>${minValue.toFixed(2)}</td>`;
                 } else if (lastPart[i - 31] === "Max") {
-                    let maxValue = Math.max(...dataArray[j]);
+                    let newArray = [];
+                    dataArray[j].forEach(element => {
+                        if (element.length > 0) {
+                            newArray.push(element[0]);
+                        } else {
+                            newArray.push(element)
+                        }
+                    });
+                    let maxValue = Math.max(...newArray);
                     row.innerHTML += `<td>${maxValue.toFixed(2)}</td>`;
                 } else {
-                    let meanValue = dataArray[j].reduce((p,c) => p + c) / dataArray[j].length;
+                    let newArray = [];
+                    dataArray[j].forEach(element => {
+                        if (element.length > 0) {
+                            newArray.push(element[0]);
+                        } else {
+                            newArray.push(element)
+                        }
+                    });
+                    let meanValue = newArray.reduce((p,c) => p + c) / newArray.length;
                     row.innerHTML += `<td>${meanValue.toFixed(2)}</td>`;
                 }
-                
-
 
             } else {
                 if (j === 0) {
@@ -292,4 +316,31 @@ export function createTable(data, tableElement, tableDataType) {
 
         tableElement.appendChild(row);
     };
+}
+
+// Function to clear table
+export function clearTable(table) {
+    table.innerHTML = `<thead>
+                            <tr>
+                                <th colspan="13">Month</th>
+                            </tr>
+                            <tr>
+                                <th>Day</th>
+                                <th>Jan</th>
+                                <th>Feb</th>
+                                <th>Mar</th>
+                                <th>Apr</th>
+                                <th>May</th>
+                                <th>Jun</th>
+                                <th>Jul</th>
+                                <th>Aug</th>
+                                <th>Sep</th>
+                                <th>Oct</th>
+                                <th>Nov</th>
+                                <th>Dec</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>`;
 }
