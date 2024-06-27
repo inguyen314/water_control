@@ -42,7 +42,7 @@ function initialize(data) {
 
     // Add dark mode functionality
     darkModeBtn.addEventListener('click', function() {
-        document.querySelector('body').classList.toggle('dark');
+        document.getElementById('content-body').classList.toggle('dark');
     })
 
     // Extract the names of the basins with the list of gages
