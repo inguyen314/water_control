@@ -247,7 +247,7 @@ export function createTable(data, tableElement, tableDataType) {
 
         let row = document.createElement('tr');
 
-        if (i % 5 === 0) {
+        if ((i + 1) % 5 === 0) {
             row.style.background = "var(--background-yellow-line)";
         }
 

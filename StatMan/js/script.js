@@ -13,7 +13,10 @@ import {
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
 
-// Const Variables
+//"https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations/St%20Charles-Missouri?office=MVS"
+const generalInfoURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations";
+
+// Const Elements
 const basinName = document.getElementById('basinCombobox'),
       gageName = document.getElementById('gageCombobox'),
       beginDate = document.getElementById('begin-input'),
@@ -25,7 +28,12 @@ const basinName = document.getElementById('basinCombobox'),
       minTable = document.getElementById('min-table'),
       aveCheckbox = document.getElementById('average'),
       maxCheckbox = document.getElementById('maximum'),
-      minCheckbox = document.getElementById('minimum');
+      minCheckbox = document.getElementById('minimum'),
+      locationInformation = document.getElementById('location-data'),
+      zeroGageData = document.getElementById('zero-gage-data');
+
+// Const Variables
+const officeName = "MVS";
 
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
@@ -65,6 +73,11 @@ function initialize(data) {
         });
     })
 
+    // Update 'Avaliable POR' table everytime the gage name is changed
+    /* gageName.addEventListener('change', function(){
+        
+    }) */
+
 
     // Get all data to create the url
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -76,7 +89,6 @@ function initialize(data) {
 
         // Initialize variables
         let datmanName = gageName.value,
-            officeName = "MVS",
             beginValue = formatString("start date", beginDate.value),
             endValue = formatString('end date', endDate.value);
 
@@ -84,8 +96,7 @@ function initialize(data) {
         let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
         fetchJsonFile(stageUrl, main, function(){});
         resultsDiv.classList.remove('hidden');
-    });
-    
+    });    
 }
 
 // Main function
@@ -93,22 +104,68 @@ function main(data) {
     // Change button text
     computeHTMLBtn.textContent = "Processing - One Moment";
 
-    let objData = data["time-series"]["time-series"][0]["irregular-interval-values"]["values"];
-    /* let dateArray = getList(objData, "date");
-    let stageArray = getList(objData, "stage"); */
-    
-    let wholePeriodList = getList(objData);
+    // Fetch data for general information
+    let formattedName = gageName.value.split('.')[0].split(' ').join('%20');
 
+    // Update Location Info
+    fetchJsonFile(`${generalInfoURL}/${formattedName}?office=${officeName}`, function(data) {
+        locationInformation.textContent = `LAT. ${data.latitude}, LONG. ${data.longitude}, ${data.description}`;
+        //zeroGageData.textContent = `${elevation} ft NAVD ${navNum}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+    }, function(){});
+
+    // Is the gage a project?
+    fetchJsonFile("../json/data.json", function(data){
+        let is_gage29 = false;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                element.gages.forEach(gage => {
+                    if (gage.tsid_datman === gageName.value) {
+                        is_gage29 = gage.display_stage_29;
+                    }
+                });
+            } 
+        });
+
+        // Update Zero Gage Datum
+        if (!is_gage29) {
+            fetchJsonFile(`${generalInfoURL}/${formattedName}?office=${officeName}`, function(data) {
+                zeroGageData.textContent = `${data.elevation} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+            }, function(){});
+        } else {
+            zeroGageData.textContent = "${data.elevation} ft ${data['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.";
+        }
+
+    }, function(){});
+
+    /* Update some other data */
+    // Selected POR Statistic
+    let porStartDate = beginDate.value; // 'yyyy/mm/dd'
+    let porEndDate = endDate.value; // 'yyyy/mm/dd'
+
+    let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    let porNewStartDate = `${monthsNames[parseInt(porStartDate.split('-')[1]) - 1]} ${porStartDate.split('-')[0]}`;
+    let porNewEndDate = `${monthsNames[parseInt(porEndDate.split('-')[1]) - 1]} ${porEndDate.split('-')[0]}`;
+
+    document.querySelector('.selected-por-statistic h2').textContent = `Selected POR Statistics [${porNewStartDate} to ${porNewEndDate}]`
+    
+    let objData = data["time-series"]["time-series"][0]["irregular-interval-values"]["values"];
+    
+    // Get list with all the years
+    let wholePeriodList = getList(objData);
     let totalData = getMeanMinMaxList(wholePeriodList);
 
+    // Separete data between mean, max and min
     let meanData = totalData[0],
         minData = totalData[1],
         maxData = totalData[2];
 
+    // Extract the data which is goind to be shown in the table
     let meanDataTable = extractDataForTable(meanData);
     let minDataTable = extractDataForTable(minData);
     let maxDataTable = extractDataForTable(maxData);
     
+    // Check if the checkbox are checked
     if (aveCheckbox.checked) {
         clearTable(averageTable);
         createTable(meanDataTable, averageTable, "mean");
@@ -138,6 +195,160 @@ function main(data) {
         document.querySelector(".daily-title.min").classList.add('hidden');
         document.querySelector(".min-data").classList.add('hidden');
     }
+
+    // Get all the data for the total stats
+    let totalPORData = [];
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            totalPORData.push(item.stage);
+        });
+    });
+
+    // Get mean, max and min
+    let removeUndefinedTotal = totalPORData.filter(x => x);
+    let totalMean = removeUndefinedTotal.reduce((x, y) => x + y)/removeUndefinedTotal.length;
+    let totalMax = Math.max(...removeUndefinedTotal);
+    let totalFilteredMinData = removeUndefinedTotal.filter(x => x !== 0);
+    let totalMin = Math.min(...totalFilteredMinData);
+
+    // Get date for min and max
+    let maxTotalDate = null;
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            if (item.stage === totalMax) {
+                maxTotalDate = item.date;
+            }
+        });
+    });
+
+    let minTotalDate = null;
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            if (item.stage === totalMin) {
+                minTotalDate = item.date;
+            }
+        });
+    });
+
+    // Update numeric data for the mean data
+    document.querySelectorAll('.first-stats h4')[0].innerText = `The Mean Stage for the POR was: ${totalMean.toFixed(2)}`;
+    document.querySelectorAll('.first-stats h4')[1].innerText = `The Highest Stage for the POR was: ${totalMax.toFixed(2)} which occured on: ${maxTotalDate}`;
+    document.querySelectorAll('.first-stats h4')[2].innerText = `The Lowest Stage for the POR was: ${totalMin.toFixed(2)} which occured on: ${minTotalDate}`;
+
+    // Get all the data for the mean stats
+    let allMeanData = [];
+    meanDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMeanData.push(element[i]);
+        };
+    });
+
+    // Get mean, max and min
+    let aveMean = allMeanData.reduce((x, y) => x + y)/allMeanData.length;
+    let aveMax = Math.max(...allMeanData);
+    let filteredMinData = allMeanData.filter(x => x !== 0);
+    let aveMin = Math.min(...filteredMinData);
+
+    // Get date for min and max
+    let maxMeanDate = null;
+    meanData.forEach(element => {
+        if (element.stage === aveMax) {
+            maxMeanDate = element.date;
+        }
+    });
+
+    let minMeanDate = null;
+    meanData.forEach(element => {
+        if (element.stage === aveMin) {
+            minMeanDate = element.date;
+        }
+    });
+
+    // Update mean POR string
+    document.querySelector('.daily-title.mean h4').textContent = `Daily Mean Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+
+    // Update numeric data for the mean data
+    document.querySelectorAll('.mean-stats h4')[0].innerText = `The AVG Mean Stage on this table: ${aveMean.toFixed(2)}`;
+    document.querySelectorAll('.mean-stats h4')[1].innerText = `The Highest Stage for the POR was: ${aveMax.toFixed(2)} which occured on: ${maxMeanDate}`;
+    document.querySelectorAll('.mean-stats h4')[2].innerText = `The Lowest Stage for the POR was: ${aveMin.toFixed(2)} which occured on: ${minMeanDate}`;
+
+    // Get all the data for the min stats
+    let allMinData = [];
+    minDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMinData.push(element[i][0]);
+        };
+    });
+
+    // Get mean, max and min
+    let removeUndefined = allMinData.filter(x => x);
+    let minMean = removeUndefined.reduce((x, y) => x + y)/removeUndefined.length;
+    let minMax = Math.max(...removeUndefined);
+    let minFilteredMinData = removeUndefined.filter(x => x !== 0);
+    let minMin = Math.min(...minFilteredMinData);
+
+    // Get date for min and max
+    let maxMinDate = null;
+    minData.forEach(element => {
+        if (element.stage[0] === minMax) {
+            maxMinDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    let minMinDate = null;
+    minData.forEach(element => {
+        if (element.stage[0] === minMin) {
+            minMinDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    // Update min POR string
+    document.querySelector('.daily-title.min h4').textContent = `Daily Min Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+
+    // Update numeric data for the min data
+    document.querySelectorAll('.min-stats h4')[0].innerText = `The MIN Mean Stage on this table: ${minMean.toFixed(2)}`;
+    document.querySelectorAll('.min-stats h4')[1].innerText = `The Highest MIN Stage on this table: ${minMax.toFixed(2)} which fell on the day: ${maxMinDate.split('-').slice(-2).join('-')}`;
+    document.querySelectorAll('.min-stats h4')[2].innerText = `The Lowest MIN Stage on this table: ${minMin.toFixed(2)} which fell on the day: ${minMinDate.split('-').slice(-2).join('-')}`;
+
+    // Get all the data for the max stats
+    let allMaxData = [];
+    maxDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMaxData.push(element[i][0]);
+        };
+    });
+
+    // Get mean, max and min
+    let removeUndefinedMax = allMaxData.filter(x => x);
+    let maxMean = removeUndefinedMax.reduce((x, y) => x + y)/removeUndefinedMax.length;
+    let maxMax = Math.max(...removeUndefinedMax);
+    let maxFilteredMinData = removeUndefinedMax.filter(x => x !== 0);
+    let maxMin = Math.min(...maxFilteredMinData);
+
+    // Get date for min and max
+    let maxMaxDate = null;
+    maxData.forEach(element => {
+        if (element.stage[0] === maxMax) {
+            maxMaxDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    let minMaxDate = null;
+    maxData.forEach(element => {
+        if (element.stage[0] === maxMin) {
+            minMaxDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    // Update max POR string
+    document.querySelector('.daily-title.max h4').textContent = `Daily Max Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+
+    // Update numeric data for the min data
+    document.querySelectorAll('.max-stats h4')[0].innerText = `The MAX Mean Stage on this table: ${maxMean.toFixed(2)}`;
+    document.querySelectorAll('.max-stats h4')[1].innerText = `The Highest MAX Stage on this table: ${maxMax.toFixed(2)} which fell on the day: ${maxMaxDate.split('-').slice(-2).join('-')}`;
+    document.querySelectorAll('.max-stats h4')[2].innerText = `The Lowest MAX Stage on this table: ${maxMin.toFixed(2)} which fell on the day: ${minMaxDate.split('-').slice(-2).join('-')}`;
+    
+
     // Change button text
     computeHTMLBtn.textContent = "Compute HTML";
 
