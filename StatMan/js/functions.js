@@ -248,7 +248,8 @@ export function createTable(data, tableElement, tableDataType) {
         let row = document.createElement('tr');
 
         if ((i + 1) % 5 === 0) {
-            row.style.background = "var(--background-yellow-line)";
+            row.style.background = "var(--color-red)";
+            row.style.color = "var(--font-color)";
         }
 
         for (let j = 0; j < 12; j++) {
