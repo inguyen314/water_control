@@ -196,6 +196,45 @@ function main(data) {
         document.querySelector(".min-data").classList.add('hidden');
     }
 
+    // Get all the data for the total stats
+    let totalPORData = [];
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            totalPORData.push(item.stage);
+        });
+    });
+
+    // Get mean, max and min
+    let removeUndefinedTotal = totalPORData.filter(x => x);
+    let totalMean = removeUndefinedTotal.reduce((x, y) => x + y)/removeUndefinedTotal.length;
+    let totalMax = Math.max(...removeUndefinedTotal);
+    let totalFilteredMinData = removeUndefinedTotal.filter(x => x !== 0);
+    let totalMin = Math.min(...totalFilteredMinData);
+
+    // Get date for min and max
+    let maxTotalDate = null;
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            if (item.stage === totalMax) {
+                maxTotalDate = item.date;
+            }
+        });
+    });
+
+    let minTotalDate = null;
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            if (item.stage === totalMin) {
+                minTotalDate = item.date;
+            }
+        });
+    });
+
+    // Update numeric data for the mean data
+    document.querySelectorAll('.first-stats h4')[0].innerText = `The Mean Stage for the POR was: ${totalMean.toFixed(2)}`;
+    document.querySelectorAll('.first-stats h4')[1].innerText = `The Highest Stage for the POR was: ${totalMax.toFixed(2)} which occured on: ${maxTotalDate}`;
+    document.querySelectorAll('.first-stats h4')[2].innerText = `The Lowest Stage for the POR was: ${totalMin.toFixed(2)} which occured on: ${minTotalDate}`;
+
     // Get all the data for the mean stats
     let allMeanData = [];
     meanDataTable.forEach(element => {
@@ -225,6 +264,9 @@ function main(data) {
         }
     });
 
+    // Update mean POR string
+    document.querySelector('.daily-title.mean h4').textContent = `Daily Mean Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+
     // Update numeric data for the mean data
     document.querySelectorAll('.mean-stats h4')[0].innerText = `The AVG Mean Stage on this table: ${aveMean.toFixed(2)}`;
     document.querySelectorAll('.mean-stats h4')[1].innerText = `The Highest Stage for the POR was: ${aveMax.toFixed(2)} which occured on: ${maxMeanDate}`;
@@ -239,13 +281,11 @@ function main(data) {
     });
 
     // Get mean, max and min
-    let minMean = allMinData.reduce((x, y) => x + y)/allMinData.length;
-    let minMax = Math.max(...allMinData);
-    let minFilteredMinData = allMinData.filter(x => x !== 0);
+    let removeUndefined = allMinData.filter(x => x);
+    let minMean = removeUndefined.reduce((x, y) => x + y)/removeUndefined.length;
+    let minMax = Math.max(...removeUndefined);
+    let minFilteredMinData = removeUndefined.filter(x => x !== 0);
     let minMin = Math.min(...minFilteredMinData);
-
-    console.log(allMinData);
-    console.log(minMean);
 
     // Get date for min and max
     let maxMinDate = null;
@@ -262,11 +302,51 @@ function main(data) {
         }
     });
 
+    // Update min POR string
+    document.querySelector('.daily-title.min h4').textContent = `Daily Min Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+
     // Update numeric data for the min data
     document.querySelectorAll('.min-stats h4')[0].innerText = `The MIN Mean Stage on this table: ${minMean.toFixed(2)}`;
-    document.querySelectorAll('.min-stats h4')[1].innerText = `The Highest MIN Stage on this table: ${minMax.toFixed(2)} which fell on the day: ${maxMinDate}`;
-    document.querySelectorAll('.min-stats h4')[2].innerText = `The Lowest MIN Stage on this table: ${minMin.toFixed(2)} which fell on the day: ${minMinDate}`;
+    document.querySelectorAll('.min-stats h4')[1].innerText = `The Highest MIN Stage on this table: ${minMax.toFixed(2)} which fell on the day: ${maxMinDate.split('-').slice(-2).join('-')}`;
+    document.querySelectorAll('.min-stats h4')[2].innerText = `The Lowest MIN Stage on this table: ${minMin.toFixed(2)} which fell on the day: ${minMinDate.split('-').slice(-2).join('-')}`;
 
+    // Get all the data for the max stats
+    let allMaxData = [];
+    maxDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMaxData.push(element[i][0]);
+        };
+    });
+
+    // Get mean, max and min
+    let removeUndefinedMax = allMaxData.filter(x => x);
+    let maxMean = removeUndefinedMax.reduce((x, y) => x + y)/removeUndefinedMax.length;
+    let maxMax = Math.max(...removeUndefinedMax);
+    let maxFilteredMinData = removeUndefinedMax.filter(x => x !== 0);
+    let maxMin = Math.min(...maxFilteredMinData);
+
+    // Get date for min and max
+    let maxMaxDate = null;
+    maxData.forEach(element => {
+        if (element.stage[0] === maxMax) {
+            maxMaxDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    let minMaxDate = null;
+    maxData.forEach(element => {
+        if (element.stage[0] === maxMin) {
+            minMaxDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    // Update max POR string
+    document.querySelector('.daily-title.max h4').textContent = `Daily Max Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+
+    // Update numeric data for the min data
+    document.querySelectorAll('.max-stats h4')[0].innerText = `The MAX Mean Stage on this table: ${maxMean.toFixed(2)}`;
+    document.querySelectorAll('.max-stats h4')[1].innerText = `The Highest MAX Stage on this table: ${maxMax.toFixed(2)} which fell on the day: ${maxMaxDate.split('-').slice(-2).join('-')}`;
+    document.querySelectorAll('.max-stats h4')[2].innerText = `The Lowest MAX Stage on this table: ${maxMin.toFixed(2)} which fell on the day: ${minMaxDate.split('-').slice(-2).join('-')}`;
     
 
     // Change button text
