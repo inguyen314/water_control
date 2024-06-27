@@ -23,13 +23,7 @@
     --font-color-2: #000;
 }
 
-body {
-    width: var(--body-width);
-    margin: auto;
-    font-size: 14px;
-    background: var(--background-body);
-    color: var(--font-color-2);
-}
+
 
 body.dark {
     --background-body: #525252;
