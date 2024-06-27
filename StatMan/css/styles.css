@@ -20,6 +20,7 @@
 
 body {
     width: var(--body-width);
+    margin: auto;
     font-size: 14px;
 }
 
@@ -237,6 +238,8 @@ body {
 
 .results .selected-por-statistic h2{
     padding: 5px 0px 5px 15px;
+    font-weight: bolder;
+    font-style: italic;
 }
 
 .results .selected-por-statistic::before {

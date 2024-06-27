@@ -104,6 +104,8 @@ function main(data) {
     // Change button text
     computeHTMLBtn.textContent = "Processing - One Moment";
 
+    document.querySelector('.results #gage-info-table th').textContent = gageName.value.split('.')[0];
+
     // Fetch data for general information
     let formattedName = gageName.value.split('.')[0].split(' ').join('%20');
 
@@ -268,9 +270,9 @@ function main(data) {
     document.querySelector('.daily-title.mean h4').textContent = `Daily Mean Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
 
     // Update numeric data for the mean data
-    document.querySelectorAll('.mean-stats h4')[0].innerText = `The AVG Mean Stage on this table: ${aveMean.toFixed(2)}`;
-    document.querySelectorAll('.mean-stats h4')[1].innerText = `The Highest Stage for the POR was: ${aveMax.toFixed(2)} which occured on: ${maxMeanDate}`;
-    document.querySelectorAll('.mean-stats h4')[2].innerText = `The Lowest Stage for the POR was: ${aveMin.toFixed(2)} which occured on: ${minMeanDate}`;
+    document.querySelectorAll('.mean-stats h4')[0].innerHTML = `The AVG Mean Stage on this table: <strong>${aveMean.toFixed(2)}</strong>`;
+    document.querySelectorAll('.mean-stats h4')[1].innerHTML = `The Highest Stage for the POR was: <strong>${aveMax.toFixed(2)}</strong> which occured on: <strong>${maxMeanDate}</strong>`;
+    document.querySelectorAll('.mean-stats h4')[2].innerHTML = `The Lowest Stage for the POR was: <strong>${aveMin.toFixed(2)}</strong> which occured on: <strong>${minMeanDate}</strong>`;
 
     // Get all the data for the min stats
     let allMinData = [];
@@ -306,9 +308,9 @@ function main(data) {
     document.querySelector('.daily-title.min h4').textContent = `Daily Min Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
 
     // Update numeric data for the min data
-    document.querySelectorAll('.min-stats h4')[0].innerText = `The MIN Mean Stage on this table: ${minMean.toFixed(2)}`;
-    document.querySelectorAll('.min-stats h4')[1].innerText = `The Highest MIN Stage on this table: ${minMax.toFixed(2)} which fell on the day: ${maxMinDate.split('-').slice(-2).join('-')}`;
-    document.querySelectorAll('.min-stats h4')[2].innerText = `The Lowest MIN Stage on this table: ${minMin.toFixed(2)} which fell on the day: ${minMinDate.split('-').slice(-2).join('-')}`;
+    document.querySelectorAll('.min-stats h4')[0].innerHTML = `The MIN Mean Stage on this table: <strong>${minMean.toFixed(2)}</strong>`;
+    document.querySelectorAll('.min-stats h4')[1].innerHTML = `The Highest MIN Stage on this table: <strong>${minMax.toFixed(2)}</strong> which fell on the day: <strong>${maxMinDate.split('-').slice(-2).join('-')}</strong>`;
+    document.querySelectorAll('.min-stats h4')[2].innerHTML = `The Lowest MIN Stage on this table: <strong>${minMin.toFixed(2)}</strong> which fell on the day: <strong>${minMinDate.split('-').slice(-2).join('-')}</strong>`;
 
     // Get all the data for the max stats
     let allMaxData = [];
@@ -344,9 +346,9 @@ function main(data) {
     document.querySelector('.daily-title.max h4').textContent = `Daily Max Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
 
     // Update numeric data for the min data
-    document.querySelectorAll('.max-stats h4')[0].innerText = `The MAX Mean Stage on this table: ${maxMean.toFixed(2)}`;
-    document.querySelectorAll('.max-stats h4')[1].innerText = `The Highest MAX Stage on this table: ${maxMax.toFixed(2)} which fell on the day: ${maxMaxDate.split('-').slice(-2).join('-')}`;
-    document.querySelectorAll('.max-stats h4')[2].innerText = `The Lowest MAX Stage on this table: ${maxMin.toFixed(2)} which fell on the day: ${minMaxDate.split('-').slice(-2).join('-')}`;
+    document.querySelectorAll('.max-stats h4')[0].innerHTML = `The MAX Mean Stage on this table: <strong>${maxMean.toFixed(2)}</strong>`;
+    document.querySelectorAll('.max-stats h4')[1].innerHTML = `The Highest MAX Stage on this table: <strong>${maxMax.toFixed(2)}</strong> which fell on the day: <strong>${maxMaxDate.split('-').slice(-2).join('-')}</strong>`;
+    document.querySelectorAll('.max-stats h4')[2].innerHTML = `The Lowest MAX Stage on this table: <strong>${maxMin.toFixed(2)}</strong> which fell on the day: <strong>${minMaxDate.split('-').slice(-2).join('-')}</strong>`;
     
 
     // Change button text
