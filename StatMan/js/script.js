@@ -30,7 +30,8 @@ const basinName = document.getElementById('basinCombobox'),
       maxCheckbox = document.getElementById('maximum'),
       minCheckbox = document.getElementById('minimum'),
       locationInformation = document.getElementById('location-data'),
-      zeroGageData = document.getElementById('zero-gage-data');
+      zeroGageData = document.getElementById('zero-gage-data'),
+      darkModeBtn = document.getElementById('button-dark');
 
 // Const Variables
 const officeName = "MVS";
@@ -38,6 +39,11 @@ const officeName = "MVS";
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
 function initialize(data) {
+
+    // Add dark mode functionality
+    darkModeBtn.addEventListener('click', function() {
+        document.querySelector('body').classList.toggle('dark');
+    })
 
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);

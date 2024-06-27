@@ -7,38 +7,84 @@
 
 :root 
 {
+    --background-body: #fff;
     --background-color-1: #191919;
     --background-color-2: #C6C6C6;
+    --background-color-3: #fff;
+    --border-color-1: #191919;
+    --border-color-2: #C6C6C6;
     --background-info-table: #EDEDED;
-    --color-red: #DE1E2E;
+    --color-active: #DE1E2E;
     --background-yellow-line: rgb(255, 217, 0);
     --body-width: 1080px;
     --body-width-before: 1074px; /* body width - 6px */
-    --shadow-box: 0px 5px 5px grey;
-    --font-color: #FFFFFF;
+    --shadow-box: 0px 5px 5px rgba(0, 0, 0, 0.2);
+    --font-color-1: #FFFFFF;
+    --font-color-2: #000;
 }
 
 body {
     width: var(--body-width);
     margin: auto;
     font-size: 14px;
+    background: var(--background-body);
+    color: var(--font-color-2);
+}
+
+body.dark {
+    --background-body: #525252;
+    --background-color-1: #191919;
+    --background-color-2: #000;
+    --background-color-3: #5f5f5f;
+    --border-color-1: #fff;
+    --border-color-2: #000;
+    --background-info-table: #000;
+    --color-active: #2276d6;
+    --background-yellow-line: rgb(255, 217, 0);
+    --body-width: 1080px;
+    --body-width-before: 1074px; /* body width - 6px */
+    --shadow-box: 0px 5px 5px rgba(255, 255, 255, 0.2);
+    --font-color-1: #fff;
+    --font-color-2: #fff;
+}
+
+.header {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-template-areas: 
+    "title button";
+    background: var(--background-color-2);
+    box-shadow: var(--shadow-box);
+    margin: 3px;
+}
+
+.header::before {
+    position: absolute;
+    content: '';
+    width: 50px;
+    height: 5px;
+    top: 0;
+    left: 0;
+    background: var(--color-active);
 }
 
 .header h1 {
-    display: flex;
-    justify-content: center;
-    background-color: var(--background-color-1);
-    padding: 15px;
-    box-shadow: 0px 2px 3px grey;
-    margin: 3px;
+    grid-area: title;
     font-size: 26px;
     font-weight: bolder;
-    color: var(--font-color);
+    color: var(--font-color-2);
+    margin: 15px 0px 15px 340px;
+}
+
+.header button {
+    grid-area: button;
+    margin: 15px 15px 15px 100px;
 }
 
 .container .input-container {
     position: relative;
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     margin: 0px 3px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -58,7 +104,7 @@ body {
     content: '';
     width: 50px;
     height: 5px;
-    background-color: var(--color-red);
+    background-color: var(--color-active);
 
 }
 
@@ -74,7 +120,8 @@ body {
 
 .container .data-info select{
     margin-left: 10px;
-    width: 315px; 
+    width: 315px;
+    cursor: pointer; 
 }
 
 .container .time-info {
@@ -85,12 +132,12 @@ body {
 .container #info-table {
     background-color: var(--background-info-table);
     padding: 5px 5px;
-    border: 2px solid black;
+    border: 2px solid var(--border-color-1);
 }
 
 .container #info-table th,#info-table td {
     padding: 0px 20px;
-    border: 1px solid black;
+    border: 1px solid var(--border-color-1);
 }
 
 .container #info-table tbody tr:nth-child(1) {
@@ -99,8 +146,8 @@ body {
 }
 
 .container #input-table {
-    background-color: white;
-    border: 2px solid grey;
+    background-color: var(--background-color-3);
+    border: 2px solid var(--background-color-1);
     padding: 5px 5px;
 }
 
@@ -111,7 +158,7 @@ body {
 
 .container #input-table th,#input-table td {
     padding: 2px 10px;
-    border: 1px solid grey;
+    border: 1px solid var(--border-color-2);
 }
 
 .container #input-table tbody tr:nth-child(1) td:nth-child(-n+2) {
@@ -125,7 +172,7 @@ body {
 
 .container #input-table input {
     padding-left: 5px;
-    border: 1px solid grey;
+    border: 1px solid var(--background-color-2);
     border-radius: 5px;
 }
 
@@ -135,7 +182,7 @@ body {
 
 .container .input-checkbox {
     margin: 0px 3px;
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     display: flex;
     padding: 2px 10px;
     gap: 5px;
@@ -151,19 +198,32 @@ body {
 }
 
 .container .input-checkbox input:checked {
-    accent-color: var(--color-red);
+    accent-color: var(--color-active);
 }
 
 .container .buttons {
+    position: relative;
     background-color: var(--background-color-2);
     display: flex;
     justify-content: right;
     gap: 10px;
     margin: 0px 3px;
     padding: 10px;
-    box-shadow: 0px 10px 10px grey;
+    box-shadow: var(--shadow-box);
 }
 
+.container .buttons button{
+    border-radius: 5px;
+    border: 1px solid var(--border-color-1);
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.container .buttons button:hover{
+    background: var(--color-active);
+    color: var(--font-color-1);
+    font-weight: bold;
+}
 
 /** Results Section **/
 .results {
@@ -179,8 +239,8 @@ body {
 
 .results .gage-info{ 
     position: relative;
-    background-color: var(--font-color);
-    box-shadow: 0px 5px 5px grey;
+    background-color: var(--background-color-3);
+    box-shadow: var(--shadow-box);
 }
 
 .results .gage-info::before{
@@ -197,7 +257,7 @@ body {
     top: 0;
     width: 50px;
     height: 5px;
-    background-color: var(--color-red);
+    background-color: var(--color-active);
 }
 
 .results #gage-info-table {
@@ -231,7 +291,7 @@ body {
 
 .results .selected-por-statistic {
     position: relative;
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     font-size: 18px;
     box-shadow: var(--shadow-box);
 }
@@ -252,7 +312,7 @@ body {
 
 .results .selected-por-statistic::after {
     position: absolute;
-    background-color: var(--color-red);
+    background-color: var(--color-active);
     content: '';
     width: 50px;
     height: 5px;
@@ -262,7 +322,7 @@ body {
 .results .first-stats {
     display: flex;
     flex-direction: column;
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     padding: 15px;
     box-shadow: var(--shadow-box);
 }
@@ -272,13 +332,13 @@ body {
 }
 
 .results .daily-title {
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     box-shadow: var(--shadow-box);
 }
 
 .results .daily-title {
     position: relative;
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     box-shadow: var(--shadow-box);
 }
 
@@ -292,7 +352,7 @@ body {
 
 .results .daily-title::after {
     position: absolute;
-    background-color: var(--color-red);
+    background-color: var(--color-active);
     content: '';
     width: 50px;
     height: 5px;
@@ -305,28 +365,28 @@ body {
 
 /* Mean Table */
 .results .mean-data {
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     padding: 15px;
     box-shadow: var(--shadow-box);
 }
 
 .results .mean-data .data-table {
     width: 100%;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
 }
 
 /* Header Format */
 .results .mean-data .data-table th {
     font-size: 24px;
     font-weight: bold;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
     background: var(--background-color-1);
-    color: var(--font-color);
+    color: var(--font-color-1);
 }
 
 .results .mean-data .data-table td {
     text-align: center;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
 }
 
 .results .mean-stats h4 {
@@ -343,28 +403,28 @@ body {
 
 /* Max Table */
 .results .max-data {
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     padding: 15px;
     box-shadow: var(--shadow-box);
 }
 
 .results .max-data .data-table {
     width: 100%;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
 }
 
 /* Header Format */
 .results .max-data .data-table th {
     font-size: 24px;
     font-weight: bold;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
     background: var(--background-color-1);
-    color: var(--font-color);
+    color: var(--font-color-1);
 }
 
 .results .max-data .data-table td {
     text-align: center;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
 }
 
 .results .max-stats h4 {
@@ -381,28 +441,28 @@ body {
 
 /* Min Table */
 .results .min-data {
-    background-color: var(--font-color);
+    background-color: var(--background-color-3);
     padding: 15px;
     box-shadow: var(--shadow-box);
 }
 
 .results .min-data .data-table {
     width: 100%;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
 }
 
 /* Header Format */
 .results .min-data .data-table th {
     font-size: 24px;
     font-weight: bold;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
     background: var(--background-color-1);
-    color: var(--font-color);
+    color: var(--font-color-1);
 }
 
 .results .min-data .data-table td {
     text-align: center;
-    border: 1px solid var(--background-color-2);
+    border: 1px solid var(--border-color-2);
 }
 
 .results .mean-stats,
