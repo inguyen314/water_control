@@ -369,6 +369,6 @@ function main(data) {
 // Fetch the gages names
 fetchJsonFile("../json/data.json", initialize, function(){});
 
-// Fetch gages with the json URL
-/* fetchJsonFile(jsonUrl, initialize, function(){}); */
+// Fetch gages with the json URL on the Water Control page
+/* fetchJsonFile("../../../../php_data_api/public/json/gage_control.json", initialize, function(){}) */
 
