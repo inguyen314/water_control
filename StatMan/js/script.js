@@ -22,6 +22,7 @@ const basinName = document.getElementById('basinCombobox'),
       beginDate = document.getElementById('begin-input'),
       endDate = document.getElementById('end-input'),
       computeHTMLBtn = document.getElementById('button-html'),
+      computeCSV = document.getElementById('button-csv'),
       resultsDiv = document.querySelector('.results'),
       averageTable = document.getElementById('mean-table'),
       maxTable = document.getElementById('max-table'),
@@ -94,6 +95,8 @@ function initialize(data) {
     fetchJsonFile("../json/test_available_por_data.json",
         updateAvailablePORTable, function() {});
 
+    computeCSV.addEventListener('click' , alertMessageForCSVBtn);
+
     // HTML button clicked
     computeHTMLBtn.addEventListener('click', function() {
 
@@ -111,6 +114,9 @@ function initialize(data) {
 
 // Main function
 function main(data) {
+    // Add function to the CSV button
+    computeCSV.removeEventListener('click', alertMessageForCSVBtn)
+
     // Change button text
     computeHTMLBtn.textContent = "Processing - One Moment";
 
@@ -364,6 +370,31 @@ function main(data) {
     // Change button text
     computeHTMLBtn.textContent = "Compute HTML";
 
+    let aveTableSring = 'Day,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec\n';
+    for (let i = 3; i < averageTable.childNodes.length; i++) {
+        aveTableSring += averageTable.childNodes[i].innerText.split('\t').join(',');
+        aveTableSring += '\n';
+    }
+
+    let testString = '';
+    /* averageTable.children[33].forEach(value => {
+        testString += `${value},`;
+    })
+    console.log(testString.split(',').join(',')); */
+
+    computeCSV.addEventListener('click' , function() {
+
+        let dataStringForCSV = '';
+        dataStringForCSV += "Mean table\n";
+        dataStringForCSV += formatDataToCSV(meanDataTable);
+        dataStringForCSV += "\nMin Table\n";
+        dataStringForCSV += formatDataToCSV(minDataTable);
+        dataStringForCSV += "\nMax Table\n";
+        dataStringForCSV += formatDataToCSV(maxDataTable);
+
+        exportToCSV(dataStringForCSV);
+    });
+
 }
 
 // Update Available POR Function
@@ -374,6 +405,111 @@ function updateAvailablePORTable(data) {
     let endDate = data.latest_time.split(' ')[0];
     startPORDate.innerText = startDate;
     endPORDate.innerHTML = endDate;
+}
+
+// Export CSV file
+function exportToCSV(data, filename = 'data.csv') {
+    // Convert the array of arrays to a CSV string
+    /* const csvContent = convertArrayToCSV(data); */
+    const csvContent = data;
+
+    // Create a Blob from the CSV string
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // Create a link element
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // feature detection
+        // Create a URL for the Blob and set it as the href attribute
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        
+        // Append the link to the body
+        document.body.appendChild(link);
+        
+        // Programmatically click the link to trigger the download
+        link.click();
+        
+        // Remove the link from the document
+        document.body.removeChild(link);
+    }
+}
+
+function alertMessageForCSVBtn() {
+    alert("Need to compute the HTML first.");
+}
+
+function formatDataToCSV(data) {
+
+    let stringCSV = '';
+
+    // Add Header
+    stringCSV += "Day,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec\n"
+
+    // Add data
+    let days = 1;
+    data.forEach(element => {
+
+        if (typeof(element[0]) === "object") {
+            for (let row = 0; row < 2; row++) {
+
+                if (row === 0) {
+
+                    stringCSV += `${days},`;
+                    days += 1;
+                    for (let i = 0; i < 12; i++) {
+                        if (element[i][0]) {
+                            stringCSV += element[i][0].toFixed(2);
+                        } else if (element[i][0] === 0) {
+                            stringCSV += "0.00";
+                        } else {
+                            stringCSV += "---";
+                        }
+                        
+                        if (i !== 11) {
+                            stringCSV += ",";
+                        }
+                    }
+                    stringCSV += '\n';
+
+                } else {
+
+                    stringCSV += ' ,';
+                    for (let i = 0; i < 12; i++) {
+                        if (element[i][1]) {
+                            stringCSV += element[i][1];
+                        } else {
+                            stringCSV += "---";
+                        }
+                        if (i !== 11) {
+                            stringCSV += ",";
+                        }
+                    }
+                    stringCSV += '\n';
+
+                }
+
+            }
+
+        } else {
+
+            stringCSV += `${days},`;
+            days += 1;
+            for (let i = 0; i < 12; i++) {
+                stringCSV += element[i].toFixed(2);
+                if (i !== 11) {
+                    stringCSV += ",";
+                }
+            }
+            stringCSV += '\n';
+
+        };
+
+    });
+    stringCSV += "MEAN,=SUM(B3:B33),=SUM(C3:C33),=SUM(D3:D33),=SUM(E3:E33),=SUM(F3:F33),=SUM(G3:G33),=SUM(H3:H33),=SUM(I3:I33),=SUM(J3:J33),=SUM(K3:K33),=SUM(L3:L33),=SUM(M3:M33)\n";
+    stringCSV += "MIN,=MIN(B3:B33),=MIN(C3:C33),=MIN(D3:D33),=MIN(E3:E33),=MIN(F3:F33),=MIN(G3:G33),=MIN(H3:H33),=MIN(I3:I33),=MIN(J3:J33),=MIN(K3:K33),=MIN(L3:L33),=MIN(M3:M33)\n";
+    stringCSV += "MAX,=MAX(B3:B33),=MAX(C3:C33),=MAX(D3:D33),=MAX(E3:E33),=MAX(F3:F33),=MAX(G3:G33),=MAX(H3:H33),=MAX(I3:I33),=MAX(J3:J33),=MAX(K3:K33),=MAX(L3:L33),=MAX(M3:M33)\n";
+    return stringCSV;
 }
 
 // Fetch the gages names
