@@ -21,7 +21,7 @@
 	width: 100%;
 	height: 25px;
 	margin-bottom: -12px;
-	background-color: #ededed;
+	background-color: #ededed; /* Gray bars on titles*/
 }
 
 .box-usace .box-header-striped:after {
