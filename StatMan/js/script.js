@@ -40,9 +40,6 @@ const officeName = "MVS";
 // Initilize page
 function initialize(data) {
 
-    // Populate Available POR table
-    fetchJsonFile("../../../../php_data_api/public/json/gage_control.json", console.log, function(){})
-
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
         document.getElementById('content-body').classList.toggle('dark');
@@ -92,6 +89,10 @@ function initialize(data) {
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
     const timeSeries = "/timeseries?";
     const timeZone = "CST6CDT";
+
+    // Populate Available POR table
+    fetchJsonFile("../json/test_available_por_data.json",
+        updateAvailablePORTable, function() {});
 
     // HTML button clicked
     computeHTMLBtn.addEventListener('click', function() {
@@ -365,6 +366,15 @@ function main(data) {
 
 }
 
+// Update Available POR Function
+function updateAvailablePORTable(data) {
+    let startPORDate = document.querySelector('#info-table .por-start');
+    let endPORDate = document.querySelector('#info-table .por-end');
+    let startDate = data.earliest_time.split(' ')[0];
+    let endDate = data.latest_time.split(' ')[0];
+    startPORDate.innerText = startDate;
+    endPORDate.innerHTML = endDate;
+}
 
 // Fetch the gages names
 fetchJsonFile("../json/data.json", initialize, function(){});
