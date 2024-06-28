@@ -31,7 +31,7 @@ const basinName = document.getElementById('basinCombobox'),
       minCheckbox = document.getElementById('minimum'),
       locationInformation = document.getElementById('location-data'),
       zeroGageData = document.getElementById('zero-gage-data'),
-      darkModeBtn = document.getElementById('button-dark');
+      darkModeCheckbox = document.querySelector('.header label input');
 
 // Const Variables
 const officeName = "MVS";
@@ -40,10 +40,13 @@ const officeName = "MVS";
 // Initilize page
 function initialize(data) {
 
+    // Populate Available POR table
+    fetchJsonFile("../../../../php_data_api/public/json/gage_control.json", console.log, function(){})
+
     // Add dark mode functionality
-    darkModeBtn.addEventListener('click', function() {
+    darkModeCheckbox.addEventListener('click', function() {
         document.getElementById('content-body').classList.toggle('dark');
-    })
+    });
 
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);
@@ -273,7 +276,7 @@ function main(data) {
     });
 
     // Update mean POR string
-    document.querySelector('.daily-title.mean h4').textContent = `Daily Mean Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+    document.querySelector('.daily-title.mean h4').textContent = `Daily Mean Values for Select POR [${porNewStartDate} to ${porNewEndDate}]`;
 
     // Update numeric data for the mean data
     document.querySelectorAll('.mean-stats h4')[0].innerHTML = `The AVG Mean Stage on this table: <strong>${aveMean.toFixed(2)}</strong>`;
@@ -311,7 +314,7 @@ function main(data) {
     });
 
     // Update min POR string
-    document.querySelector('.daily-title.min h4').textContent = `Daily Min Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+    document.querySelector('.daily-title.min h4').textContent = `Daily Min Values for Select POR [${porNewStartDate} to ${porNewEndDate}]`;
 
     // Update numeric data for the min data
     document.querySelectorAll('.min-stats h4')[0].innerHTML = `The MIN Mean Stage on this table: <strong>${minMean.toFixed(2)}</strong>`;
@@ -349,7 +352,7 @@ function main(data) {
     });
 
     // Update max POR string
-    document.querySelector('.daily-title.max h4').textContent = `Daily Max Values for Select POR [${porNewStartDate} to ${porNewEndDate}] --> CFMV:`;
+    document.querySelector('.daily-title.max h4').textContent = `Daily Max Values for Select POR [${porNewStartDate} to ${porNewEndDate}]`;
 
     // Update numeric data for the min data
     document.querySelectorAll('.max-stats h4')[0].innerHTML = `The MAX Mean Stage on this table: <strong>${maxMean.toFixed(2)}</strong>`;
