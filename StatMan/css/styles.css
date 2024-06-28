@@ -8,22 +8,22 @@
 :root 
 {
     --background-body: #fff;
-    --background-color-1: #191919;
-    --background-color-2: #C6C6C6;
+    --background-color-1: darkblue;
+    --background-color-2: darkblue;
     --background-color-3: #fff;
     --border-color-1: #191919;
     --border-color-2: #C6C6C6;
     --background-info-table: #EDEDED;
     --color-active: #DE1E2E;
     --background-yellow-line: rgb(255, 217, 0);
-    --body-width: 1080px;
+    --body-width: 100%;
     --body-width-before: 1074px; /* body width - 6px */
     --shadow-box: 0px 5px 5px rgba(0, 0, 0, 0.2);
     --font-color-1: #FFFFFF;
     --font-color-2: #000;
 }
 
-body {
+#content-body {
     width: var(--body-width);
     margin: auto;
     font-size: 14px;
@@ -31,7 +31,7 @@ body {
     color: var(--font-color-2);
 }
 
-body.dark {
+#content-body.dark {
     --background-body: #525252;
     --background-color-1: #191919;
     --background-color-2: #000;
@@ -41,7 +41,7 @@ body.dark {
     --background-info-table: #000;
     --color-active: #2276d6;
     --background-yellow-line: rgb(255, 217, 0);
-    --body-width: 1080px;
+    --body-width: 100%;
     --body-width-before: 1074px; /* body width - 6px */
     --shadow-box: 0px 5px 5px rgba(255, 255, 255, 0.2);
     --font-color-1: #fff;
@@ -59,17 +59,8 @@ body.dark {
     margin: 3px;
 }
 
-.header::before {
-    position: absolute;
-    content: '';
-    width: 50px;
-    height: 5px;
-    top: 0;
-    left: 0;
-    background: var(--color-active);
-}
-
 .header h1 {
+    display: none;
     grid-area: title;
     font-size: 26px;
     font-weight: bolder;
@@ -79,7 +70,8 @@ body.dark {
 
 .header button {
     grid-area: button;
-    margin: 15px 15px 15px 100px;
+    margin: 10px 15px 10px 100px;
+    height: 50px;
 }
 
 .container .input-container {
@@ -97,14 +89,6 @@ body.dark {
     width: 100%;
     height: 10px;
     background-color: var(--background-color-2);
-
-}
-.container .input-container::after {
-    position: absolute;
-    content: '';
-    width: 50px;
-    height: 5px;
-    background-color: var(--color-active);
 
 }
 
@@ -251,15 +235,6 @@ body.dark {
     background-color: var(--background-color-2);
 }
 
-.results .gage-info::after{
-    position: absolute;
-    content: '';
-    top: 0;
-    width: 50px;
-    height: 5px;
-    background-color: var(--color-active);
-}
-
 .results #gage-info-table {
     padding: 35px 15px 15px 15px;
 }
@@ -273,6 +248,7 @@ body.dark {
 .results #gage-info-table td {
     font-size: 16px;
     text-transform: uppercase;
+    align-content: center;
 }
 
 /* Content text - Left column */
@@ -287,6 +263,7 @@ body.dark {
 .results .gage-info .intro-text h4 {
     padding: 15px;
     text-transform: uppercase;
+    color: var(--font-color-2);
 }
 
 .results .selected-por-statistic {
@@ -297,9 +274,10 @@ body.dark {
 }
 
 .results .selected-por-statistic h2{
-    padding: 5px 0px 5px 15px;
+    padding: 20px 0px 5px 15px;
     font-weight: bolder;
     font-style: italic;
+    color: var(--font-color-2);
 }
 
 .results .selected-por-statistic::before {
@@ -308,15 +286,6 @@ body.dark {
     content: '';
     width: 100%;
     height: 20px;
-}
-
-.results .selected-por-statistic::after {
-    position: absolute;
-    background-color: var(--color-active);
-    content: '';
-    width: 50px;
-    height: 5px;
-    top: 0;
 }
 
 .results .first-stats {
@@ -329,6 +298,7 @@ body.dark {
 
 .results .first-stats h4 {
     margin: 0px;
+    color: var(--font-color-2);
 }
 
 .results .daily-title {
@@ -350,17 +320,9 @@ body.dark {
     height: 20px;
 }
 
-.results .daily-title::after {
-    position: absolute;
-    background-color: var(--color-active);
-    content: '';
-    width: 50px;
-    height: 5px;
-    top: 0;
-}
-
 .results .daily-title h4 {
     margin: 30px 15px 15px 15px;
+    color: var(--font-color-2);
 }
 
 /* Mean Table */
@@ -431,6 +393,7 @@ body.dark {
     margin: 0px;
     font-size: 12px;
     font-weight: normal;
+    color: var(--font-color-2);
 }
 
 .results .max-data .data-table tr:nth-last-child(1),
@@ -475,6 +438,7 @@ body.dark {
     margin: 0px;
     font-size: 12px;
     font-weight: normal;
+    color: var(--font-color-2);
 }
 
 .results .min-data .data-table tr:nth-last-child(1),
