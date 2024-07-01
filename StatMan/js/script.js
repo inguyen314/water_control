@@ -99,6 +99,20 @@ function initialize(data) {
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
+        // Get the gage 'tsid_stage_rev' for the 'Available POR' table
+        let tsIdStagRev;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                element.gages.forEach(item => {
+                    if (item.tsid_datman === gageName.value) {
+                        tsIdStagRev = item.tsid_stage_rev;
+                    }
+                });
+            };
+        });
+
+        // If is not local it will add the 'tsid_stage_rev' to the URL
+        generalInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
         fetchJsonFile(generalInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
     })
 
