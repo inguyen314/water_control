@@ -148,7 +148,7 @@ function main(data) {
     let formattedName = gageName.value.split('.')[0].split(' ').join('%20');
 
     // Update Location Info
-    fetchJsonFile(`${generalInfoURL}/${formattedName}?office=${officeName}`, function(data) {
+    fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
         locationInformation.textContent = `LAT. ${data.latitude}, LONG. ${data.longitude}, ${data.description}`;
         //zeroGageData.textContent = `${elevation} ft NAVD ${navNum}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
     }, function(){});
@@ -168,7 +168,7 @@ function main(data) {
 
         // Update Zero Gage Datum
         if (!is_gage29) {
-            fetchJsonFile(`${generalInfoURL}/${formattedName}?office=${officeName}`, function(data) {
+            fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
                 zeroGageData.textContent = `${data.elevation} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
             }, function(){});
         } else {
@@ -424,9 +424,13 @@ function updateAvailablePORTable(data) {
     let startPORDate = document.querySelector('#info-table .por-start');
     let endPORDate = document.querySelector('#info-table .por-end');
     let startDate = data.earliest_time.split(' ')[0];
-    let endDate = data.latest_time.split(' ')[0];
+    let endDates = data.latest_time.split(' ')[0];
     startPORDate.innerText = startDate;
-    endPORDate.innerHTML = endDate;
+    endPORDate.innerHTML = endDates;
+    let startDateList = startDate.split('-');
+    let endDateList = endDates.split('-');
+    beginDate.value = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
+    endDate.value = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
 }
 
 // Export CSV file
@@ -537,6 +541,7 @@ function formatDataToCSV(data) {
 let jsonUrl;
 let generalInfoURL;
 let isLocal;
+let locationInfoURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations";
 
 // Check if the program is running in the web server or a host server
 const hostname = window.location.hostname; //Web: wm.mvs.ds.usace.army.mil;    Local: 127.0.0.1
