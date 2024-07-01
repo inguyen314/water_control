@@ -92,6 +92,8 @@ function initialize(data) {
     // If is not local it will add the 'tsid_stage_rev' to the URL
     generalInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
 
+    console.log(`Test URL: ${generalInfoURL}`);
+
     // Update 'Available POR' when the page load.
     fetchJsonFile(generalInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
 
@@ -431,6 +433,8 @@ function updateAvailablePORTable(data) {
     let endDateList = endDates.split('-');
     beginDate.value = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
     endDate.value = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
+    console.log(`beginDate.value: ${beginDate.value}\nendDate.value: ${endDate.value}`);
+    console.log(`Target values:\nstartPORDate: ${startPORDate}\nendPORDate: ${endPORDate}`);
 }
 
 // Export CSV file
