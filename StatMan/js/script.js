@@ -90,12 +90,12 @@ function initialize(data) {
     });
 
     // If is not local it will add the 'tsid_stage_rev' to the URL
-    generalInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
+    let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
 
-    console.log(`Test URL: ${generalInfoURL}`);
+    console.log(`Test URL: ${newGeneralInfoURL}`);
 
     // Update 'Available POR' when the page load.
-    fetchJsonFile(generalInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
+    fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
@@ -112,8 +112,9 @@ function initialize(data) {
         });
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
-        generalInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
-        fetchJsonFile(generalInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
+        let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
+        console.log(`Test URL: ${newGeneralInfoURL}`);
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
     })
 
 
