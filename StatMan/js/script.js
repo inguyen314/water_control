@@ -8,7 +8,8 @@ import {
     getMeanMinMaxList,
     extractDataForTable,
     createTable,
-    clearTable
+    clearTable,
+    haveOneYearOfData
 } from './functions.js'
 
 const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
@@ -40,6 +41,9 @@ const officeName = "MVS";
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
 function initialize(data) {
+
+    const hostname = window.location.hostname;
+    console.log(hostname); // Outputs the hostname (e.g., "example.com")
 
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
@@ -80,10 +84,13 @@ function initialize(data) {
         });
     })
 
+    // Update 'Available POR' when the page load.
+    fetchJsonFile("../json/test_available_por_data.json", updateAvailablePORTable, function(){}); // Change URL for the online version
+
     // Update 'Avaliable POR' table everytime the gage name is changed
-    /* gageName.addEventListener('change', function(){
-        
-    }) */
+    gageName.addEventListener('change', function(){
+        fetchJsonFile("../json/test_available_por_data.json", updateAvailablePORTable, function(){}) // Change URL for the online version
+    })
 
 
     // Get all data to create the url
@@ -100,15 +107,26 @@ function initialize(data) {
     // HTML button clicked
     computeHTMLBtn.addEventListener('click', function() {
 
-        // Initialize variables
-        let datmanName = gageName.value,
+        // Verify if the selected period is more than one year.
+        if (haveOneYearOfData(beginDate.value, endDate.value)) {
+
+            // Initialize variables
+            let datmanName = gageName.value,
             beginValue = formatString("start date", beginDate.value),
             endValue = formatString('end date', endDate.value);
 
-        // Create the URL to get the data
-        let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
-        fetchJsonFile(stageUrl, main, function(){});
-        resultsDiv.classList.remove('hidden');
+            // Create the URL to get the data
+            let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
+            fetchJsonFile(stageUrl, main, function(){});
+            resultsDiv.classList.remove('hidden');
+
+        } else {
+
+            alert("The period must be greater than one year.");
+
+        }
+
+        
     });    
 }
 
