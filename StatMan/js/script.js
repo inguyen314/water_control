@@ -12,10 +12,6 @@ import {
     haveOneYearOfData
 } from './functions.js'
 
-const jsonUrl = "https://www.mvs-wc.usace.army.mil/php_data_api/public/json/gage_control.json"
-
-//"https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations/St%20Charles-Missouri?office=MVS"
-const generalInfoURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations";
 
 // Const Elements
 const basinName = document.getElementById('basinCombobox'),
@@ -41,9 +37,6 @@ const officeName = "MVS";
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
 function initialize(data) {
-
-    const hostname = window.location.hostname;
-    console.log(hostname); // Outputs the hostname (e.g., "example.com")
 
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
@@ -84,12 +77,27 @@ function initialize(data) {
         });
     })
 
+    // Get the gage 'tsid_stage_rev' for the 'Available POR' table
+    let tsIdStagRev;
+    data.forEach(element => {
+        if (element.basin === basinName.value) {
+            element.gages.forEach(item => {
+                if (item.tsid_datman === gageName.value) {
+                    tsIdStagRev = item.tsid_stage_rev;
+                }
+            });
+        };
+    });
+
+    // If is not local it will add the 'tsid_stage_rev' to the URL
+    generalInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
+
     // Update 'Available POR' when the page load.
-    fetchJsonFile("../json/test_available_por_data.json", updateAvailablePORTable, function(){}); // Change URL for the online version
+    fetchJsonFile(generalInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
-        fetchJsonFile("../json/test_available_por_data.json", updateAvailablePORTable, function(){}) // Change URL for the online version
+        fetchJsonFile(generalInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
     })
 
 
@@ -97,10 +105,6 @@ function initialize(data) {
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
     const timeSeries = "/timeseries?";
     const timeZone = "CST6CDT";
-
-    // Populate Available POR table
-    fetchJsonFile("../json/test_available_por_data.json",
-        updateAvailablePORTable, function() {});
 
     computeCSV.addEventListener('click' , alertMessageForCSVBtn);
 
@@ -150,7 +154,7 @@ function main(data) {
     }, function(){});
 
     // Is the gage a project?
-    fetchJsonFile("../json/data.json", function(data){
+    fetchJsonFile(jsonUrl, function(data){
         let is_gage29 = false;
         data.forEach(element => {
             if (element.basin === basinName.value) {
@@ -530,9 +534,28 @@ function formatDataToCSV(data) {
     return stringCSV;
 }
 
-// Fetch the gages names
-fetchJsonFile("../json/data.json", initialize, function(){});
+let jsonUrl;
+let generalInfoURL;
+let isLocal;
 
-// Fetch gages with the json URL on the Water Control page
-/* fetchJsonFile("../../../../php_data_api/public/json/gage_control.json", initialize, function(){}) */
+// Check if the program is running in the web server or a host server
+const hostname = window.location.hostname; //Web: wm.mvs.ds.usace.army.mil;    Local: 127.0.0.1
+if (hostname === "wm.mvs.ds.usace.army.mil") {
+
+    jsonUrl = "../../../../php_data_api/public/json/gage_control.json";
+    generalInfoURL = "../../../../php_data_api/public/get_tsid_extents.php?cwms_ts_id=";
+    isLocal = false;
+
+} else if (hostname === "127.0.0.1") {
+
+    jsonUrl = "../json/data.json";
+    generalInfoURL = "../json/test_available_por_data.json";
+    isLocal = true;
+
+} else {
+    alert("There was a problem getting the server name.");
+}
+
+// Fetch the gages names
+fetchJsonFile(jsonUrl, initialize, function(){});
 
