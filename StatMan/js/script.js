@@ -41,6 +41,7 @@ function initialize(data) {
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
         document.getElementById('content-body').classList.toggle('dark');
+        document.getElementById('page-container').classList.toggle('dark');
     });
 
     // Extract the names of the basins with the list of gages
