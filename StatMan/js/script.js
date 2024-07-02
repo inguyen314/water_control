@@ -94,6 +94,8 @@ function initialize(data) {
 
     console.log(`Test URL: ${newGeneralInfoURL}`);
 
+    console.log(tsIdStagRev);
+
     // Update 'Available POR' when the page load.
     fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
 
@@ -110,6 +112,7 @@ function initialize(data) {
                 });
             };
         });
+        console.log(tsIdStagRev);
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
@@ -438,18 +441,33 @@ function main(data) {
 
 // Update Available POR Function
 function updateAvailablePORTable(data) {
+    let tempData = data
+    if (isLocal) {
+        data.forEach(element => {
+            if (element.location_id === gageName.value.split('.')[0]) {
+                tempData = element;
+            }
+        });
+    } else {
+        alert("Something went wrong.");
+    }
+
     let startPORDate = document.querySelector('#info-table .por-start');
     let endPORDate = document.querySelector('#info-table .por-end');
-    let startDate = data.earliest_time.split(' ')[0];
-    let endDates = data.latest_time.split(' ')[0];
+    let startDate = tempData.earliest_time.split(' ')[0];
+    let endDates = tempData.latest_time.split(' ')[0];
     startPORDate.innerText = startDate;
     endPORDate.innerHTML = endDates;
     let startDateList = startDate.split('-');
     let endDateList = endDates.split('-');
-    beginDate.value = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
-    endDate.value = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
-    console.log(`beginDate.value: ${beginDate.value}\nendDate.value: ${endDate.value}`);
-    console.log(`Target values:\nstartPORDate: ${startPORDate}\nendPORDate: ${endPORDate}`);
+
+    if (startDateList[0].length > 2) {
+        beginDate.value = `${startDateList[0]}-${startDateList[1]}-${startDateList[2]}`;
+        endDate.value = `${endDateList[0]}-${endDateList[1]}-${endDateList[2]}`;
+    } else {
+        beginDate.value = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
+        endDate.value = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
+    }
 }
 
 // Export CSV file
