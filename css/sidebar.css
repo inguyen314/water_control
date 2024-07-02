@@ -1,5 +1,21 @@
+:root {
+	--title-bar-color: #ededed;
+	--title-font-color: #000;
+	--background-color: #fff;
+}
+
+#page-container.dark {
+	--title-bar-color: #000;
+	--title-font-color: #fff;
+	--background-color: #303030;
+}
+
 .side-menu {
 	display: flex;
+}
+
+.titleLabel.title {
+	color:var(--title-font-color);
 }
 
 /* ================== */
@@ -21,7 +37,7 @@
 	width: 100%;
 	height: 25px;
 	margin-bottom: -12px;
-	background-color: #ededed; /* Gray bars on titles*/
+	background-color: var(--title-bar-color); /* Gray bars on titles*/
 }
 
 .box-usace .box-header-striped:after {
@@ -58,6 +74,20 @@
 	flex-direction: column;
 	padding: 16px 0 0;
 	margin: 0;
+	background: var(--background-color);
+	color: var(--title-font-color);
+}
+
+.box-usace .box-content h1 {
+	color: var(--title-font-color)
+}
+
+.box-usace h1 {
+	color: var(--title-font-color)
+}
+
+.box-usace p {
+	color: var(--title-font-color)
 }
 
 .acAccordionMenu {
