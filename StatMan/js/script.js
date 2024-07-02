@@ -92,10 +92,6 @@ function initialize(data) {
     // If is not local it will add the 'tsid_stage_rev' to the URL
     let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
 
-    console.log(`Test URL: ${newGeneralInfoURL}`);
-
-    console.log(tsIdStagRev);
-
     // Update 'Available POR' when the page load.
     fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
 
@@ -117,7 +113,6 @@ function initialize(data) {
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
-        console.log(`Test URL: ${newGeneralInfoURL}`);
         fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
     })
 
@@ -419,12 +414,6 @@ function main(data) {
         aveTableSring += '\n';
     }
 
-    let testString = '';
-    /* averageTable.children[33].forEach(value => {
-        testString += `${value},`;
-    })
-    console.log(testString.split(',').join(',')); */
-
     computeCSV.addEventListener('click' , function() {
 
         let dataStringForCSV = '';
@@ -449,8 +438,6 @@ function updateAvailablePORTable(data) {
                 tempData = element;
             }
         });
-    } else {
-        alert("Something went wrong.");
     }
 
     let startPORDate = document.querySelector('#info-table .por-start');
