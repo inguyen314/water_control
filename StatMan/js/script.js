@@ -157,6 +157,7 @@ function main(data) {
     // Change button text
     computeHTMLBtn.textContent = "Processing - One Moment";
 
+    // Add the gage name to the title
     document.querySelector('.results #gage-info-table th').textContent = gageName.value.split('.')[0];
 
     // Fetch data for general information
@@ -187,7 +188,30 @@ function main(data) {
                 zeroGageData.textContent = `${data.elevation} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
             }, function(){});
         } else {
-            zeroGageData.textContent = "${data.elevation} ft ${data['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.";
+
+            fetchJsonFile(jsonUrl, function (data) {
+                let basinData = data.filter(x => x.basin === basinName.value)[0].gages.filter(y => y.tsid_datman === gageName.value)[0];
+                let idNgvd29 = basinData.level_id_ngvd29;
+                let idEffectiveDate = basinData.level_id_effective_date_ngvd29;
+                let idUnits29 = basinData.unit_id;
+
+                let fetchURL = "https://cwms-data.usace.army.mil/cwms-data/levels";
+                
+                // example: https://cwms-data.usace.army.mil/cwms-data/levels/Sub-Casey%20Fork.Height.Inst.0.NGVD29?office=MVS&effective-date=2024-01-01T08:00:00&unit=ft
+
+                fetchJsonFile(fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29, function (data) {
+                    let constantValue = data["constant-value"];
+
+                    fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
+                        let newElev = constantValue - data.elevation;
+                        zeroGageData.textContent = `${newElev.toFixed(2)} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+                    }, function(){});
+
+                }, function() {});
+
+                zeroGageData.textContent = "${data.elevation} ft ${data['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.";
+                
+            }, function (){});
         }
 
     }, function(){});
