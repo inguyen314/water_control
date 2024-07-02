@@ -113,8 +113,52 @@ function initialize(data) {
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
         fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
+
+        // Is the gage a project?
+        fetchJsonFile(jsonUrl, function(data){
+            let is_gage29 = false;
+            data.forEach(element => {
+                if (element.basin === basinName.value) {
+                    element.gages.forEach(gage => {
+                        if (gage.tsid_datman === gageName.value) {
+                            is_gage29 = gage.display_stage_29;
+                        }
+                    });
+                } 
+            });
+
+            if (!is_gage29) {
+                // Change the datum info to show
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NAV88";
+            } else {
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
+            }
+
+        }, function(){});
+
     })
 
+    // Is the gage a project?
+    fetchJsonFile(jsonUrl, function(data){
+        let is_gage29 = false;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                element.gages.forEach(gage => {
+                    if (gage.tsid_datman === gageName.value) {
+                        is_gage29 = gage.display_stage_29;
+                    }
+                });
+            } 
+        });
+
+        if (!is_gage29) {
+            // Change the datum info to show
+            document.querySelector('#content-body .container .data-type label').innerText = "Datum: NAV88";
+        } else {
+            document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
+        }
+
+    }, function(){});
 
     // Get all data to create the url
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -128,6 +172,8 @@ function initialize(data) {
 
         // Verify if the selected period is more than one year.
         if (haveOneYearOfData(beginDate.value, endDate.value)) {
+
+            computeHTMLBtn.textContent = "Processing - One Moment";
 
             // Initialize variables
             let datmanName = gageName.value,
@@ -153,9 +199,6 @@ function initialize(data) {
 function main(data) {
     // Add function to the CSV button
     computeCSV.removeEventListener('click', alertMessageForCSVBtn)
-
-    // Change button text
-    computeHTMLBtn.textContent = "Processing - One Moment";
 
     // Add the gage name to the title
     document.querySelector('.results #gage-info-table th').textContent = gageName.value.split('.')[0];
@@ -185,7 +228,7 @@ function main(data) {
         // Update Zero Gage Datum
         if (!is_gage29) {
             fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
-                zeroGageData.textContent = `${data.elevation} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+                zeroGageData.textContent = `${data.elevation.toFixed(2)} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
             }, function(){});
         } else {
 
@@ -199,8 +242,12 @@ function main(data) {
                 
                 // example: https://cwms-data.usace.army.mil/cwms-data/levels/Sub-Casey%20Fork.Height.Inst.0.NGVD29?office=MVS&effective-date=2024-01-01T08:00:00&unit=ft
 
+                console.log(fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29);
+
                 fetchJsonFile(fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29, function (data) {
                     let constantValue = data["constant-value"];
+
+                    console.log(`${locationInfoURL}/${formattedName}?office=${officeName}`);
 
                     fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
                         let newElev = constantValue - data.elevation;
