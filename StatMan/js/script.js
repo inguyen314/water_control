@@ -112,7 +112,7 @@ function initialize(data) {
                 });
             };
         });
-        console.log(tsIdStagRev);
+        /* console.log(tsIdStagRev); */
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
