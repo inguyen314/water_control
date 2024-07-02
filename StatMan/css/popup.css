@@ -1,0 +1,19 @@
+
+
+#popup-test.active {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 100;
+}
+
+#popup-test.active>.message-container {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: red;
+}
