@@ -99,9 +99,11 @@ function initialize(data) {
     // If is not local it will add the 'tsid_stage_rev' to the URL
     let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
 
+
+    console.log(`Gage General Info Url: ${newGeneralInfoURL}`);
     // Update 'Available POR' when the page load.
     fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
-        popupMessage("error", "There was an error getting the data.\nError: " + error);
+        popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
         popupWindowBtn.click();
     }); // Change URL for the online version
 
@@ -122,7 +124,7 @@ function initialize(data) {
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
         fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
-            popupMessage("error", "There was an error getting the data.\nError: " + error);
+            popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
             popupWindowBtn.click();
         }) // Change URL for the online version
 
@@ -171,7 +173,7 @@ function initialize(data) {
         }
 
     }, function(error){
-        popupMessage("error", "There was an error getting the data.\nError: " + error);
+        popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
         popupWindowBtn.click();
     });
 
@@ -198,7 +200,7 @@ function initialize(data) {
             // Create the URL to get the data
             let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
             fetchJsonFile(stageUrl, main, function(){
-                popupMessage("error", "There was an error getting the data.\nError: " + error);
+                popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
                 popupWindowBtn.click();
             });
             resultsDiv.classList.remove('hidden');
@@ -260,12 +262,12 @@ function main(data) {
                 
                 // example: https://cwms-data.usace.army.mil/cwms-data/levels/Sub-Casey%20Fork.Height.Inst.0.NGVD29?office=MVS&effective-date=2024-01-01T08:00:00&unit=ft
 
-                console.log(fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29);
+                console.log("Gage Constant Value Url: " + fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29);
 
                 fetchJsonFile(fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29, function (data) {
                     let constantValue = data["constant-value"];
 
-                    console.log(`${locationInfoURL}/${formattedName}?office=${officeName}`);
+                    console.log(`Gage Zero Datum Value Url: ${locationInfoURL}/${formattedName}?office=${officeName}`);
 
                     fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
                         let newElev = constantValue - data.elevation;
@@ -676,8 +678,9 @@ if (hostname === "wm.mvs.ds.usace.army.mil") {
 }
 
 // Fetch the gages names
+console.log(`Gage Data Url: ${jsonUrl}`);
 fetchJsonFile(jsonUrl, initialize, function(error){
-    popupMessage("error", "There was an error getting the data.\nError: " + error);
+    popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
     popupWindowBtn.click();
 });
 
