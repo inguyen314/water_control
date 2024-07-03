@@ -381,4 +381,10 @@ export function blurBackground () {
     popupWindow.classList.toggle('active');
 }
 
-
+export function popupMessage (msgType, message) {
+    let popupTitle = document.getElementById('popup-title');
+    let popupMessage = document.getElementById('popup-message');
+    popupTitle.innerHTML = msgType === "warning" ? "Warning" : "Message";
+    popupTitle.innerHTML = msgType === "error" ? "Error" : "Message";
+    popupMessage.innerHTML = message;
+}

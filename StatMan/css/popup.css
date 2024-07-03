@@ -23,6 +23,7 @@
     visibility: hidden;
     opacity: 0;
     transition: 0.5s;
+    z-index: 100;
 }
 
 #popup-window img {

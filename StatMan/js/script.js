@@ -10,7 +10,8 @@ import {
     createTable,
     clearTable,
     haveOneYearOfData,
-    blurBackground
+    blurBackground,
+    popupMessage
 } from './functions.js'
 
 
@@ -193,6 +194,7 @@ function initialize(data) {
         } else {
 
             alert("The period must be greater than one year.");
+            popupMessage("error", "There was an error with the time window selected. Make sure the time window is <strong>ONE</strong> year or more and the ending date is greater than the starting date");
             popupWindowBtn.click();
         }
 
