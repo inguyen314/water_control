@@ -199,11 +199,22 @@ function initialize(data) {
 
             // Create the URL to get the data
             let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
+
+            let isHidden = false;
+            resultsDiv.classList.forEach(element => {
+                if (element === "hidden") {
+                    isHidden = true;
+                }
+            });
+
+            if (!isHidden) {
+                resultsDiv.classList.add('hidden');
+            }
+
             fetchJsonFile(stageUrl, main, function(){
                 popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
                 popupWindowBtn.click();
             });
-            resultsDiv.classList.remove('hidden');
 
         } else {
 
@@ -212,7 +223,10 @@ function initialize(data) {
         }
 
         
-    });    
+    });   
+    
+    
+    
 }
 
 // Main function
@@ -315,31 +329,16 @@ function main(data) {
     if (aveCheckbox.checked) {
         clearTable(averageTable);
         createTable(meanDataTable, averageTable, "mean");
-        document.querySelector(".daily-title.mean").classList.remove('hidden');
-        document.querySelector(".mean-data").classList.remove('hidden');
-    } else {
-        document.querySelector(".daily-title.mean").classList.add('hidden');
-        document.querySelector(".mean-data").classList.add('hidden');
     }
 
     if (maxCheckbox.checked) {
         clearTable(maxTable);
         createTable(maxDataTable, maxTable, "max");
-        document.querySelector(".daily-title.max").classList.remove('hidden');
-        document.querySelector(".max-data").classList.remove('hidden');
-    } else {
-        document.querySelector(".daily-title.max").classList.add('hidden');
-        document.querySelector(".max-data").classList.add('hidden');
     }
 
     if (minCheckbox.checked) {
         clearTable(minTable);
         createTable(minDataTable, minTable, "min");
-        document.querySelector(".daily-title.min").classList.remove('hidden');
-        document.querySelector(".min-data").classList.remove('hidden');
-    } else {
-        document.querySelector(".daily-title.min").classList.add('hidden');
-        document.querySelector(".min-data").classList.add('hidden');
     }
 
     // Get all the data for the total stats
@@ -517,11 +516,38 @@ function main(data) {
         exportToCSV(dataStringForCSV);
     });
 
+    // Check if the checkbox are checked
+    if (aveCheckbox.checked) {
+        document.querySelector(".daily-title.mean").classList.remove('hidden');
+        document.querySelector(".mean-data").classList.remove('hidden');
+    } else {
+        document.querySelector(".daily-title.mean").classList.add('hidden');
+        document.querySelector(".mean-data").classList.add('hidden');
+    }
+
+    if (maxCheckbox.checked) {
+        document.querySelector(".daily-title.max").classList.remove('hidden');
+        document.querySelector(".max-data").classList.remove('hidden');
+    } else {
+        document.querySelector(".daily-title.max").classList.add('hidden');
+        document.querySelector(".max-data").classList.add('hidden');
+    }
+
+    if (minCheckbox.checked) {
+        document.querySelector(".daily-title.min").classList.remove('hidden');
+        document.querySelector(".min-data").classList.remove('hidden');
+    } else {
+        document.querySelector(".daily-title.min").classList.add('hidden');
+        document.querySelector(".min-data").classList.add('hidden');
+    }
+
+    resultsDiv.classList.remove('hidden');
+
 }
 
 // Update Available POR Function
 function updateAvailablePORTable(data) {
-    let tempData = data
+    let tempData = data.entries[0].extents[0];
     if (isLocal) {
         data.forEach(element => {
             if (element.location_id === gageName.value.split('.')[0]) {
@@ -532,20 +558,23 @@ function updateAvailablePORTable(data) {
 
     let startPORDate = document.querySelector('#info-table .por-start');
     let endPORDate = document.querySelector('#info-table .por-end');
-    let startDate = tempData.earliest_time.split(' ')[0];
-    let endDates = tempData.latest_time.split(' ')[0];
-    startPORDate.innerText = startDate;
-    endPORDate.innerHTML = endDates;
+    let startDate = tempData["earliest-time"].split('T')[0];
+    let endDates = tempData["latest-time"].split('T')[0];
     let startDateList = startDate.split('-');
     let endDateList = endDates.split('-');
 
     if (startDateList[0].length > 2) {
         beginDate.value = `${startDateList[0]}-${startDateList[1]}-${startDateList[2]}`;
         endDate.value = `${endDateList[0]}-${endDateList[1]}-${endDateList[2]}`;
+        startPORDate.innerText = `${startDateList[1]}-${startDateList[2]}-${startDateList[0]}`;
+        endPORDate.innerHTML = `${endDateList[1]}-${endDateList[2]}-${endDateList[0]}`;
     } else {
         beginDate.value = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
         endDate.value = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
+        startPORDate.innerText = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
+        endPORDate.innerHTML = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
     }
+    
 }
 
 // Export CSV file
@@ -655,16 +684,17 @@ function formatDataToCSV(data) {
 }
 
 let jsonUrl;
-let generalInfoURL;
 let isLocal;
-let locationInfoURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/locations";
+let domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
+let locationInfoURL = domain + "/locations";
+let generalInfoURL = domain + "/catalog/TIMESERIES?office=MVS&like=";
 
 // Check if the program is running in the web server or a host server
 const hostname = window.location.hostname; //Web: wm.mvs.ds.usace.army.mil;    Local: 127.0.0.1
 if (hostname === "wm.mvs.ds.usace.army.mil") {
 
     jsonUrl = "../../../../php_data_api/public/json/gage_control.json";
-    generalInfoURL = "../../../../php_data_api/public/get_tsid_extents.php?cwms_ts_id=";
+    /* generalInfoURL = "../../../../php_data_api/public/get_tsid_extents.php?cwms_ts_id="; */
     isLocal = false;
 
 } else if (hostname === "127.0.0.1") {
