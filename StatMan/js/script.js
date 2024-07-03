@@ -100,7 +100,10 @@ function initialize(data) {
     let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
 
     // Update 'Available POR' when the page load.
-    fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}); // Change URL for the online version
+    fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+        popupMessage("error", "There was an error getting the data.\nError: " + error);
+        popupWindowBtn.click();
+    }); // Change URL for the online version
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
@@ -118,7 +121,10 @@ function initialize(data) {
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = isLocal ? generalInfoURL : generalInfoURL + tsIdStagRev;
-        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(){}) // Change URL for the online version
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+            popupMessage("error", "There was an error getting the data.\nError: " + error);
+            popupWindowBtn.click();
+        }) // Change URL for the online version
 
         // Is the gage a project?
         fetchJsonFile(jsonUrl, function(data){
@@ -164,7 +170,10 @@ function initialize(data) {
             document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
         }
 
-    }, function(){});
+    }, function(error){
+        popupMessage("error", "There was an error getting the data.\nError: " + error);
+        popupWindowBtn.click();
+    });
 
     // Get all data to create the url
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -188,12 +197,14 @@ function initialize(data) {
 
             // Create the URL to get the data
             let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
-            fetchJsonFile(stageUrl, main, function(){});
+            fetchJsonFile(stageUrl, main, function(){
+                popupMessage("error", "There was an error getting the data.\nError: " + error);
+                popupWindowBtn.click();
+            });
             resultsDiv.classList.remove('hidden');
 
         } else {
 
-            alert("The period must be greater than one year.");
             popupMessage("error", "There was an error with the time window selected. Make sure the time window is <strong>ONE</strong> year or more and the ending date is greater than the starting date");
             popupWindowBtn.click();
         }
@@ -564,7 +575,8 @@ function exportToCSV(data, filename = 'data.csv') {
 }
 
 function alertMessageForCSVBtn() {
-    alert("Need to compute the HTML first.");
+    popupMessage("warning", "You must calculate the HTML first before creating the CSV. At this point there is no data to create the CSV file.");
+    popupWindowBtn.click();
 }
 
 function formatDataToCSV(data) {
@@ -664,5 +676,8 @@ if (hostname === "wm.mvs.ds.usace.army.mil") {
 }
 
 // Fetch the gages names
-fetchJsonFile(jsonUrl, initialize, function(){});
+fetchJsonFile(jsonUrl, initialize, function(error){
+    popupMessage("error", "There was an error getting the data.\nError: " + error);
+    popupWindowBtn.click();
+});
 
