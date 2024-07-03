@@ -373,3 +373,18 @@ export function haveOneYearOfData(startDate, endDate) {
     };
 
 }
+
+export function blurBackground () {
+    let blur = document.querySelector('#page-container .page-wrap');
+    blur.classList.toggle('active');
+    let popupWindow = document.getElementById('popup-window');
+    popupWindow.classList.toggle('active');
+}
+
+export function popupMessage (msgType, message) {
+    let popupTitle = document.getElementById('popup-title');
+    let popupMessage = document.getElementById('popup-message');
+    popupTitle.innerHTML = msgType === "warning" ? "Warning" : "Message";
+    popupTitle.innerHTML = msgType === "error" ? "Error" : "Message";
+    popupMessage.innerHTML = message;
+}

@@ -103,7 +103,7 @@
 }
 
 .header label span {
-    z-index: 100;
+    z-index: 10;
     position: absolute;
     background: var(--checkbox-border-color);
     width: 23px;
