@@ -13,8 +13,7 @@ export function fetchJsonFile(urlToFetch, sucessFunction, errorFunction){
     })    
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
-        errorFunction();
-        alert("There was a problem getting the Data.");
+        errorFunction(error);
     })
 }
 
@@ -384,7 +383,12 @@ export function blurBackground () {
 export function popupMessage (msgType, message) {
     let popupTitle = document.getElementById('popup-title');
     let popupMessage = document.getElementById('popup-message');
-    popupTitle.innerHTML = msgType === "warning" ? "Warning" : "Message";
-    popupTitle.innerHTML = msgType === "error" ? "Error" : "Message";
+    if (msgType === "warning") {
+        popupTitle.innerHTML = "Warning";
+    } else if (msgType === "error") {
+        popupTitle.innerHTML = "Error";
+    } else {
+        popupTitle.innerHTML = "Message";
+    }
     popupMessage.innerHTML = message;
 }
