@@ -373,3 +373,12 @@ export function haveOneYearOfData(startDate, endDate) {
     };
 
 }
+
+export function blurBackground () {
+    let blur = document.querySelector('#page-container .page-wrap');
+    blur.classList.toggle('active');
+    let popupWindow = document.getElementById('popup-window');
+    popupWindow.classList.toggle('active');
+}
+
+

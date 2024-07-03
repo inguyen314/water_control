@@ -9,7 +9,8 @@ import {
     extractDataForTable,
     createTable,
     clearTable,
-    haveOneYearOfData
+    haveOneYearOfData,
+    blurBackground
 } from './functions.js'
 
 
@@ -29,7 +30,8 @@ const basinName = document.getElementById('basinCombobox'),
       minCheckbox = document.getElementById('minimum'),
       locationInformation = document.getElementById('location-data'),
       zeroGageData = document.getElementById('zero-gage-data'),
-      darkModeCheckbox = document.querySelector('.header label input');
+      darkModeCheckbox = document.querySelector('.header label input'),
+      popupWindowBtn = document.getElementById('popup-button');
 
 // Const Variables
 const officeName = "MVS";
@@ -43,6 +45,9 @@ function initialize(data) {
         document.getElementById('content-body').classList.toggle('dark');
         document.getElementById('page-container').classList.toggle('dark');
     });
+
+    // Add function to popup window button
+    popupWindowBtn.addEventListener('click', blurBackground);
 
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);
@@ -188,7 +193,7 @@ function initialize(data) {
         } else {
 
             alert("The period must be greater than one year.");
-
+            popupWindowBtn.click();
         }
 
         
