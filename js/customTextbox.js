@@ -6,7 +6,7 @@ date: 07/11/2024
 /*
 This code will add a custom textbox to a div element
 
-For this code to work and add the textbox the div must have a class called "textbox-div".
+For this code to work and add the textbox, the div must have a class called "textbox-div".
 
 You can add an id to the textbox by adding the 'data-id' attribute with the value of the id you want to set.
 You can add a place holder text to the textbox by adding the 'data-placeholder' attribute with the value of the text you want to set as a placeholder.

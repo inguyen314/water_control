@@ -7,6 +7,7 @@ body {
     background: #e2e1e1;
 }
 
+/* TextBox */
 .textbox-div {
     --clr: rgba(112, 14, 204, 0.5);
     --w: 400px;
@@ -39,3 +40,31 @@ body {
     background: var(--clr);
     bottom: 0px;
 }
+
+/* Progress Bar */
+.progress-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #111;
+    width: 800px;
+    height: 3em;
+    border-radius: 1.5em;
+}
+
+.progress-bar::before {
+    position: absolute;
+    content: attr(data-label);
+    left: 0.5em;
+    bottom: 0.5em;
+    top: 0.5em;
+    padding-left: 1em;
+    padding-top: 0.2em;
+    color: white;
+    width: calc(100% - 2em);
+    min-width: 2em;
+    background: rgb(18, 134, 201);
+    border-radius: 1em;
+    font-size: 1.2em;
+}
+
