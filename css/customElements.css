@@ -1,0 +1,41 @@
+body {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    background: #e2e1e1;
+}
+
+.textbox-div {
+    --clr: rgba(112, 14, 204, 0.5);
+    --w: 400px;
+    --h: 30px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid grey;
+    border-radius: 5px;
+    overflow: hidden;
+    width: var(--w);
+    height: var(--h);
+}
+
+#textbox-input {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding-left: 15px;
+    outline: none;
+    font-size: 1em;
+}
+
+#textbox-input:focus ~ span {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: var(--clr);
+    bottom: 0px;
+}
