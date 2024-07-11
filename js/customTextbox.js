@@ -1,3 +1,33 @@
+/*
+author: Oscar R. Cordero-Pérez
+date: 07/11/2024
+*/
+
+/*
+This code will add a custom textbox to a div element
+
+For this code to work and add the textbox the div must have a class called "textbox-div".
+
+You can add an id to the textbox by adding the 'data-id' attribute with the value of the id you want to set.
+You can add a place holder text to the textbox by adding the 'data-placeholder' attribute with the value of the text you want to set as a placeholder.
+
+If you don't add any of those attributes then it will use the default values.
+Default values:
+-id = undefine (it doesn't have an id)
+-placeholder = "Enter Text Here..."
+
+The div should look like this in orther to work.
+<div class="textbox-div" data-id="any-id" data-placeholder="any-placeholder"></div>
+
+If you want to change the width, height of the color of the bar that appears when you click on the textbox, you can add a 'style' attribute to the div.
+The variables for those styles are:
+color = --clr
+width = --w
+height = --h
+
+The div should look like this.
+<div class="textbox-div" data-id="any-id" data-placeholder="any-placeholder" style="--clr: red; --w: 400px; --h: 30px;"></div>
+*/
 
 /* Create HTML inner text for textbox */
 let textboxInnerText = `
