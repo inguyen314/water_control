@@ -1,23 +1,13 @@
 
 /* Create HTML inner text for textbox */
 let textboxInnerText = `
-<input type="text" id="textbox-input" placeholder="Enter Text Here...">
+<input type="text" placeholder="Enter Text Here...">
 <span></span>
 `;
 
 
 /* Create Style for textbox */
 let textboxStyle = `
-#textbox-input {
-    background: transparent;
-    border: none;
-    width: 100%;
-    height: 100%;
-    padding-left: 15px;
-    outline: none;
-    font-size: 1em;
-}
-
 .textbox-div {
     --clr: rgba(112, 14, 204, 0.5);
     --w: 400px;
@@ -33,7 +23,17 @@ let textboxStyle = `
     height: var(--h);
 }
 
-#textbox-input:focus ~ span {
+.textbox-div input {
+    background: transparent;
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding-left: 15px;
+    outline: none;
+    font-size: 1em;
+}
+
+.textbox-div input:focus ~ span {
     position: absolute;
     width: 100%;
     height: 2px;
@@ -46,9 +46,19 @@ let textboxStyle = `
 let newTextbox = document.querySelectorAll('.textbox-div');
 newTextbox.forEach(element => {
     // If there is an Arial Placeholder then it will be passed as the textbox placeholder
-    if (element.ariaPlaceholder) {
+    if (element.dataset.placeholder && element.dataset.id) {
         element.innerHTML = `
-            <input type="text" id="textbox-input" placeholder="${element.ariaPlaceholder}">
+            <input type="text" placeholder="${element.dataset.placeholder} id="${element.dataset.id}">
+            <span></span>
+        `;
+    } else if (element.dataset.placeholder) {
+        element.innerHTML = `
+            <input type="text" placeholder="${element.dataset.placeholder}">
+            <span></span>
+        `;
+    } else if (element.dataset.id) {
+        element.innerHTML = `
+            <input type="text" id="${element.dataset.id}" placeholder="Enter Text Here...">
             <span></span>
         `;
     } else {
