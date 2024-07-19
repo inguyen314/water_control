@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>DISTRICT Home Page</title>
+        <meta name="Description" content="U.S. Army Corps of Engineers DISTRICT HERE Home Page" />
+        <link rel="stylesheet" href="../../css/body.css" />
+        <link rel="stylesheet" href="../../css/breadcrumbs.css" />
+        <link rel="stylesheet" href="../../css/jumpMenu.css" />
+        <script type="text/javascript" src="../../js/main.js"></script>
+        <!-- Add sidebar.css IF NOT LOAD SIDEBAR TEMPLATE -->
+        <link rel="stylesheet" href="../../css/sidebar.css"/>
+        <!-- Add content window style -->
+        <link rel="stylesheet" href="../css/content.css">
+        <link rel="stylesheet" href="../css/header.css">
+        <link rel="stylesheet" href="../css/container.css">
+        <link rel="stylesheet" href="../css/popup.css">
+    </head>
+    <body>
+        <div id="page-container">
+            <header id="header">
+                <!--Header content populated here by JavaScript Tag at end of body -->
+            </header>
+            <div class="page-wrap">
+                <div class="container-fluid">
+                    <div id="breadcrumbs">
+                    </div>
+                    <div class="page-content">
+                        <sidebar id="sidebar">
+                            <!--Side bar content populated here by JavaScript Tag at end of body -->
+                        </sidebar>
+                        <div id="topPane" class="col-md backend-cp-collapsible">
+                            <!-- Page Content Here -->
+                            <div class="box-usace">
+                                <h2 class="box-header-striped">
+                                    <span class="titleLabel title">Data Request</span>
+                                    <span class="rss"></span>
+                                </h2>
+                                <div class="box-content" style="margin:auto">
+                                    <div class="content">
+
+                                        <!-- Main Window Content -->
+                                        <div id="content-body">
+                                            
+                                            <div class="header">
+                                                <label>
+                                                    <input type="checkbox">
+                                                    <span></span>
+                                                    <b></b>
+                                                    <h4>Dark Mode</h4>
+                                                </label>
+                                            </div>
+
+                                            <div class="container">
+                                                <div class="input-container">
+                                                    <div class="inputs">
+                                                        <div class="data-info">
+                                                            <div class="basin">
+                                                                <label>Basin:</label>
+                                                                <select name="basin" id="basinCombobox"></select>
+                                                            </div>
+                                                            <div class="gage">
+                                                                <label>Gage:</label>
+                                                                <select name="gage" id="gageCombobox"></select>
+                                                            </div>
+                                                            <div class="data-type">
+                                                                <label>Datum: Stage</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="time-info">
+                                                        <table id="info-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th colspan="2">Available POR</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Start Time</td>
+                                                                    <td>End Time</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="por-start">03/24/1986</td>
+                                                                    <td class="por-end">06/10/2024</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="select-time">
+                                                        <table id="input-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th colspan="2">Select Time Window</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Starting Year</td>
+                                                                    <td>Ending Year</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><input type="date" id="begin-input" value="2018-01-01"></td>
+                                                                    <td><input type="date" id="end-input" value="2020-12-31"></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="input-checkbox">
+                                                    <label>Compute:</label>
+                                                    <label>Daily</label>
+                                                    <input type="checkbox" name="day" id="daily" checked>
+                                                    <label>Hourly</label>
+                                                    <input type="checkbox" name="hour" id="hourly">
+                                                </div>
+                                                <div class="buttons">
+                                                    <button class="html" id="button-data">Get Data</button>
+                                                    <button class="csv" id="button-csv">Get CSV</button>
+                                                    <button class="csv" id="button-json">Get JSON</button>
+                                                    <button class="csv" id="button-email">Send Email</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="results hidden">
+                                                
+                                            </div>
+                                        
+                                        <script type="module" src="../../js/requestData.js"></script>
+                                        <script type="module" src="../js/script.js"></script>
+                                        </div>
+
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="box-usace">
+                                <h2 class="box-header-striped">
+                                    <span class="titleLabel title">Additional Content</span>
+                                    <span class="rss"></span>
+                                </h2>
+                                <div class="box-content" style="margin:auto">
+                                    <div class="content">
+                                        <!-- Box Content Here -->
+                                        <div>
+                                            <h1>More Paragraphs</h1>
+                                            <p>Styled like the district pages with the gray bar/red line on top and the
+                                                text offset.
+                                                Add as many of theses as you need!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h1>Without the Box Headers!</h1>
+                                <p>Or you can include content without the box-header-striped or box-content fields!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button id="returnTop" title="Return to Top of Page">Top</button>
+            </div>
+        </div>
+
+        <div id="popup-window">
+            <img src="../images/usace_logo.png" alt="usace-logo">
+            <h2 id="popup-title">This is the POPUP window Title.</h2>
+            <p id="popup-message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime delectus quasi alias dolore maiores enim nulla exercitationem quos, minus non?</p>
+            <a href="#" id="popup-button">Close</a>
+        </div>
+
+        <footer id="footer">
+            <!--Footer content populated here by script tag at end of body -->
+        </footer>
+        <script src="../../js/libraries/jQuery-3.3.6.min.js"></script>
+        <script defer>
+            // When the document has loaded pull in the page header and footer skins
+            $(document).ready(function () {
+                // Change the v= to a different number to force clearing the cached version on the client browser
+                $('#header').load('../../templates/DISTRICT.header.html?v=1');
+                // $('#sidebar').load('../../templates/DISTRICT.sidebar.html?v=1');
+                $('#footer').load('../../templates/DISTRICT.footer.html?v=1');
+            })
+        </script>
+    </body>
+
+</html>

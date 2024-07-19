@@ -15,7 +15,6 @@
     --border-color-2: #C6C6C6;
     --background-info-table: #EDEDED;
     --color-active: #74b3ff;
-    --background-yellow-line: rgb(255, 217, 0);
     --body-width: 100%;
     --body-width-before: 1074px; /* body width - 6px */
     --shadow-box: 0px 5px 5px rgba(0, 0, 0, 0.2);
@@ -41,7 +40,6 @@
     --border-color-2: #000;
     --background-info-table: #000;
     --color-active: #2276d6;
-    --background-yellow-line: rgb(255, 217, 0);
     --body-width: 100%;
     --body-width-before: 1074px; /* body width - 6px */
     --shadow-box: 0px 5px 5px rgba(255, 255, 255, 0.2);
