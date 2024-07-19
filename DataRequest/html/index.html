@@ -13,8 +13,10 @@
         <script type="text/javascript" src="../../js/main.js"></script>
         <!-- Add sidebar.css IF NOT LOAD SIDEBAR TEMPLATE -->
         <link rel="stylesheet" href="../../css/sidebar.css"/>
-        <!-- Add content window style IF NOT LOAD SIDEBAR TEMPLATE -->
-        <link rel="stylesheet" href="../css/styles.css">
+        <!-- Add content window style -->
+        <link rel="stylesheet" href="../css/content.css">
+        <link rel="stylesheet" href="../css/header.css">
+        <link rel="stylesheet" href="../css/container.css">
         <link rel="stylesheet" href="../css/popup.css">
     </head>
     <body>
@@ -40,11 +42,95 @@
                                 <div class="box-content" style="margin:auto">
                                     <div class="content">
 
-
+                                        <!-- Main Window Content -->
                                         <div id="content-body">
+                                            
+                                            <div class="header">
+                                                <label>
+                                                    <input type="checkbox">
+                                                    <span></span>
+                                                    <b></b>
+                                                    <h4>Dark Mode</h4>
+                                                </label>
+                                            </div>
 
+                                            <div class="container">
+                                                <div class="input-container">
+                                                    <div class="inputs">
+                                                        <div class="data-info">
+                                                            <div class="basin">
+                                                                <label>Basin:</label>
+                                                                <select name="basin" id="basinCombobox"></select>
+                                                            </div>
+                                                            <div class="gage">
+                                                                <label>Gage:</label>
+                                                                <select name="gage" id="gageCombobox"></select>
+                                                            </div>
+                                                            <div class="data-type">
+                                                                <label>Datum: Stage</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="time-info">
+                                                        <table id="info-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th colspan="2">Available POR</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Start Time</td>
+                                                                    <td>End Time</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="por-start">03/24/1986</td>
+                                                                    <td class="por-end">06/10/2024</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="select-time">
+                                                        <table id="input-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th colspan="2">Select Time Window</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Starting Year</td>
+                                                                    <td>Ending Year</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><input type="date" id="begin-input" value="2018-01-01"></td>
+                                                                    <td><input type="date" id="end-input" value="2020-12-31"></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="input-checkbox">
+                                                    <label>Compute:</label>
+                                                    <label>Daily</label>
+                                                    <input type="checkbox" name="day" id="daily" checked>
+                                                    <label>Hourly</label>
+                                                    <input type="checkbox" name="hour" id="hourly">
+                                                </div>
+                                                <div class="buttons">
+                                                    <button class="html" id="button-data">Get Data</button>
+                                                    <button class="csv" id="button-csv">Get CSV</button>
+                                                    <button class="csv" id="button-json">Get JSON</button>
+                                                    <button class="csv" id="button-email">Send Email</button>
+                                                </div>
+                                            </div>
 
-
+                                            <div class="results hidden">
+                                                
+                                            </div>
+                                        
+                                        <script type="module" src="../../js/requestData.js"></script>
+                                        <script type="module" src="../js/script.js"></script>
                                         </div>
 
                                         
