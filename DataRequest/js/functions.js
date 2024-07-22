@@ -99,3 +99,10 @@ export function showLoading() {
     let loading = document.getElementById('loading-image');
     loading.classList.toggle('show');
 }
+
+// Format date to desired format
+export function formatDate(date, monthsObj) {
+    let stringDate = `${date}`; // mm-dd-yyyy hh24:mi
+    let formattedDateList = stringDate.split(' ');
+    return `${monthsObj[formattedDateList[1]]}-${formattedDateList[2]}-${formattedDateList[3]} ${formattedDateList[4].split(':')[0]}:${formattedDateList[4].split(':')[1]}`;
+}

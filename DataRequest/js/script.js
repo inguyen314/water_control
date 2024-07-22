@@ -1,11 +1,15 @@
-import {fetchJsonFile} from '../../js/requestData.js';
+import {
+    fetchJsonFile,
+    convertUTCtoCentralTime
+} from '../../js/requestData.js';
 import {
     blurBackground,
     getNames,
     popupMessage,
     addBasinNames,
     haveOneYearOfData,
-    showLoading
+    showLoading,
+    formatDate
 } from './functions.js';
 
 let domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -34,7 +38,7 @@ const basinName = document.getElementById('basinCombobox'),
       hourlyCheckbox = document.getElementById('hourly');
 
 // Global Variable
-let globalData;
+let globalData = [];
 
 /*======================= Beginning of Script ========================*/
 // Fetch the gages names
@@ -215,11 +219,48 @@ function updateAvailablePORTable(data) {
 getDataBtn.addEventListener('click', function() {
 
     if (haveOneYearOfData(beginDate.value, endDate.value)) {
-        console.log(gageName.value);
-        console.log(beginDate.value);
-        console.log(endDate.value);
-        let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T00%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z&timezone=CST6CDT"
-        fetchJsonFile(periodDataUrl, console.log, function (){});
+        
+        showLoading();
+
+        let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T05%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z"
+        fetchJsonFile(periodDataUrl, function(data) {
+
+            let monthConvert = {
+                'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+                'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+            }
+
+            console.log(periodDataUrl);
+
+            if (dailyCheckbox.checked) {
+
+                let cstData = convertUTCtoCentralTime(data)['values'];
+                console.log(cstData);
+            
+            } else if (hourlyCheckbox.checked) {
+
+                let cstData = convertUTCtoCentralTime(data)['values'];
+
+                cstData.forEach(element => {
+                    globalData.push({
+                        date: formatDate(element[0], monthConvert),
+                        stage: element[1]
+                    });
+                });
+
+                console.log(globalData);
+
+                createTable(globalData);
+
+            }
+
+            showLoading();
+            
+        }, function (){ 
+            showLoading();
+            popupMessage("error", "There was an error getting the data.<br>Error:<br>" + error) 
+        });
+
     } else {
         popupMessage('error', 'The total record must be greater than 1 year.')
         popupWindowBtn.click()
@@ -253,6 +294,15 @@ function addGageNames(data) {
 }
 
 // Create Table
-function createTable() {
-    
+function createTable(data) {
+
+    let tableBody = document.querySelector('#result-table tbody');
+
+    data.forEach(element => {
+        let newRow = document.createElement('tr');
+        newRow.innerHTML = `<td>${element.date}</td>
+                            <td>${element.stage}</td>`;
+        tableBody.appendChild(newRow); 
+    });
+
 }
