@@ -3,13 +3,15 @@ import {
     blurBackground,
     getNames,
     popupMessage,
-    addBasinNames
+    addBasinNames,
+    haveOneYearOfData,
+    showLoading
 } from './functions.js';
 
 let domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
 let generalInfoURL = domain + "/catalog/TIMESERIES?office=MVS&like=";
 let gageJsonUrl = "../../../../php_data_api/public/json/gage_control.json";
-//let periodDataUrl = domain + "/timeseries?" + name=Mt%20Vernon-Big%20Muddy.Stage.Inst.15Minutes.0.lrgsShef-rev&office=MVS&begin=2024-01-01T00%3A00%3A00.00Z&end=2024-12-31T23%3A59%3A59.59Z&timezone=CST6CDT
+//let  = domain + "/timeseries?" + name=Mt%20Vernon-Big%20Muddy.Stage.Inst.15Minutes.0.lrgsShef-rev&office=MVS&begin=2024-01-01T00%3A00%3A00.00Z&end=2024-12-31T23%3A59%3A59.59Z&timezone=CST6CDT
 
 // Const Elements
 const basinName = document.getElementById('basinCombobox'),
@@ -34,7 +36,15 @@ const basinName = document.getElementById('basinCombobox'),
 // Global Variable
 let globalData;
 
+/*======================= Beginning of Script ========================*/
+// Fetch the gages names
+fetchJsonFile(gageJsonUrl, initialize, function(error){
+    popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+    popupWindowBtn.click();
+});
 
+
+/*======================= Functions For Script =======================*/
 function initialize(data) {
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
@@ -48,57 +58,30 @@ function initialize(data) {
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);
 
+    // Checkbox Functions
+    dailyCheckbox.addEventListener('click', function() {
+        if (hourlyCheckbox.checked) {
+            hourlyCheckbox.checked = false;
+        }
+        addGageNames(namesObject);
+    });
+
+    hourlyCheckbox.addEventListener('click', function() {
+        if (dailyCheckbox.checked) {
+            dailyCheckbox.checked = false;
+        }
+        addGageNames(namesObject);
+    });
+
     // Add the basins names to the basin combobox
     addBasinNames(basinName, namesObject);
 
     // Add data to the gage combobox at the beggining of the code
-    gageName.options.length = 0;
-    namesObject.forEach(element => {
-        if (element['basin'] === basinName.value) {
-
-            if (dailyCheckbox.checked) {
-                element['datman'].forEach(item => {
-                    let option = document.createElement('option');
-                    option.value = item;
-                    option.textContent = item.split('.')[0];
-                    gageName.appendChild(option);
-                });
-            } else if (hourlyCheckbox.checked) {
-                element['rev'].forEach(item => {
-                    let option = document.createElement('option');
-                    option.value = item;
-                    option.textContent = item.split('.')[0];
-                    gageName.appendChild(option);
-                });
-            }
-            
-        }
-    });
+    addGageNames(namesObject);
 
     // Change the gage values each time the basin value is changed
     basinName.addEventListener('change', function() {
-        gageName.options.length = 0;
-        namesObject.forEach(element => {
-            if (element['basin'] === basinName.value) {
-
-                if (dailyCheckbox.checked) {
-                    element['datman'].forEach(item => {
-                        let option = document.createElement('option');
-                        option.value = item;
-                        option.textContent = item.split('.')[0];
-                        gageName.appendChild(option);
-                    });
-                } else if (hourlyCheckbox.checked) {
-                    element['rev'].forEach(item => {
-                        let option = document.createElement('option');
-                        option.value = item;
-                        option.textContent = item.split('.')[0];
-                        gageName.appendChild(option);
-                    });
-                }
-                
-            }
-        });
+        addGageNames(namesObject);
     })
 
     // Get the gage 'tsid_stage_rev' for the 'Available POR' table
@@ -158,7 +141,7 @@ function initialize(data) {
             data.forEach(element => {
                 if (element.basin === basinName.value) {
                     element.gages.forEach(gage => {
-                        if (gage.tsid_datman === gageName.value) {
+                        if (gage.tsid_datman === gageName.value || gage.tsid_stage_rev === gageName.value) {
                             is_gage29 = gage.display_stage_29;
                         }
                     });
@@ -182,7 +165,7 @@ function initialize(data) {
         data.forEach(element => {
             if (element.basin === basinName.value) {
                 element.gages.forEach(gage => {
-                    if (gage.tsid_datman === gageName.value) {
+                    if (gage.tsid_datman === gageName.value || gage.tsid_stage_rev === gageName.value) {
                         is_gage29 = gage.display_stage_29;
                     }
                 });
@@ -201,13 +184,10 @@ function initialize(data) {
         popupWindowBtn.click();
     });
 
-
-
 }
 
 // Update Available POR Function
 function updateAvailablePORTable(data) {
-    console.log(data);
     let tempData = data.entries[0].extents[0];
 
     let startPORDate = document.querySelector('#info-table .por-start');
@@ -231,29 +211,48 @@ function updateAvailablePORTable(data) {
     
 }
 
-// Checkbox Functions
-dailyCheckbox.addEventListener('click', function() {
-    if (hourlyCheckbox.checked) {
-        hourlyCheckbox.checked = false;
-    }
-});
-
-hourlyCheckbox.addEventListener('click', function() {
-    if (dailyCheckbox.checked) {
-        dailyCheckbox.checked = false;
-    }
-});
-
 // Buttons Functions
 getDataBtn.addEventListener('click', function() {
-    console.log(gageName.value);
-    console.log(beginDate.value);
-    console.log(endDate.value);
-    //fetchJsonFile();
+
+    if (haveOneYearOfData(beginDate.value, endDate.value)) {
+        console.log(gageName.value);
+        console.log(beginDate.value);
+        console.log(endDate.value);
+        let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T00%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z&timezone=CST6CDT"
+        fetchJsonFile(periodDataUrl, console.log, function (){});
+    } else {
+        popupMessage('error', 'The total record must be greater than 1 year.')
+        popupWindowBtn.click()
+    };
 });
 
-// Fetch the gages names
-fetchJsonFile(gageJsonUrl, initialize, function(error){
-    popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
-    popupWindowBtn.click();
-});
+// Function to add gages names in combobox
+function addGageNames(data) {
+    gageName.options.length = 0;
+    data.forEach(element => {
+        if (element['basin'] === basinName.value) {
+
+            if (dailyCheckbox.checked) {
+                element['datman'].forEach(item => {
+                    let option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item.split('.')[0];
+                    gageName.appendChild(option);
+                });
+            } else if (hourlyCheckbox.checked) {
+                element['rev'].forEach(item => {
+                    let option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item.split('.')[0];
+                    gageName.appendChild(option);
+                });
+            }
+            
+        }
+    });
+}
+
+// Create Table
+function createTable() {
+    
+}

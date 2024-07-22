@@ -1,6 +1,7 @@
+
 export function blurBackground () {
-    let blur = document.querySelector('#page-container .page-wrap');
-    blur.classList.toggle('active');
+    let blur = document.querySelector('#page-container .page-content');
+    blur.classList.toggle('blur');
     let popupWindow = document.getElementById('popup-window');
     popupWindow.classList.toggle('active');
 }
@@ -37,7 +38,6 @@ export function getNames(data) {
             })
         };
     });
-    console.log(objArray);
     return objArray;
 }
 
@@ -62,4 +62,40 @@ export function addBasinNames(combobox, objectList) {
         option.textContent = element['basin']; 
         combobox.appendChild(option);
     });
+}
+
+// Check is the dates have at least one year data
+export function haveOneYearOfData(startDate, endDate) {
+    let startYear = startDate.split('-')[0];
+    let startMonth = startDate.split('-')[1];
+    let startDay = startDate.split('-')[2];
+
+    let endYear = endDate.split('-')[0];
+    let endMonth = endDate.split('-')[1];
+    let endDay = endDate.split('-')[2];
+    
+    if (parseInt(endYear) - parseInt(startYear) === 0) {
+        if (parseInt(endMonth) - parseInt(startMonth) === 11 && parseInt(endDay) - parseInt(startDay) === 30) {
+            return true;
+        } else {
+            return false;
+        };
+    } else if (parseInt(endYear) - parseInt(startYear) === 1) {
+        if (parseInt(endMonth) >= parseInt(startMonth) && parseInt(endDay) >= parseInt(startDay)) {
+            return true;
+        } else {
+            return false;
+        };
+    } else {
+        return true;
+    };
+
+}
+
+// Show loading animation
+export function showLoading() {
+    let blur = document.querySelector('#page-container .page-content');
+    blur.classList.toggle('blur');
+    let loading = document.getElementById('loading-image');
+    loading.classList.toggle('show');
 }

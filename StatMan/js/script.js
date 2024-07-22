@@ -199,6 +199,7 @@ function initialize(data) {
 
             // Create the URL to get the data
             let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
+            console.log(stageUrl);
 
             let isHidden = false;
             resultsDiv.classList.forEach(element => {
