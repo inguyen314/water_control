@@ -1,5 +1,6 @@
 import {
     fetchJsonFile,
+    fetchJsonFileV01,
     convertUTCtoCentralTime
 } from '../../js/requestData.js';
 import {
@@ -23,11 +24,6 @@ const basinName = document.getElementById('basinCombobox'),
       beginDate = document.getElementById('begin-input'),
       endDate = document.getElementById('end-input'),
       resultsDiv = document.querySelector('.results'),
-      averageTable = document.getElementById('mean-table'),
-      maxTable = document.getElementById('max-table'),
-      minTable = document.getElementById('min-table'),
-      locationInformation = document.getElementById('location-data'),
-      zeroGageData = document.getElementById('zero-gage-data'),
       darkModeCheckbox = document.querySelector('.header label input'),
       popupWindowBtn = document.getElementById('popup-button'),
       getDataBtn = document.getElementById('button-data'),
@@ -37,7 +33,7 @@ const basinName = document.getElementById('basinCombobox'),
       dailyCheckbox = document.getElementById('daily'),
       hourlyCheckbox = document.getElementById('hourly');
 
-// Global Variable
+
 let globalData = [];
 
 /*======================= Beginning of Script ========================*/
@@ -50,6 +46,10 @@ fetchJsonFile(gageJsonUrl, initialize, function(error){
 
 /*======================= Functions For Script =======================*/
 function initialize(data) {
+
+    // CSV initial function (Alert)
+    getCSVBtn.addEventListener('click', csvNoDataMessage);
+
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
         document.getElementById('content-body').classList.toggle('dark');
@@ -218,53 +218,88 @@ function updateAvailablePORTable(data) {
 // Buttons Functions
 getDataBtn.addEventListener('click', function() {
 
-    if (haveOneYearOfData(beginDate.value, endDate.value)) {
-        
-        showLoading();
+    // CSV initial function (Alert)
+    getCSVBtn.removeEventListener('click', csvNoDataMessage);
 
-        let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T05%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z"
-        fetchJsonFile(periodDataUrl, function(data) {
+    // Hide result div before getting the data if the result div is showing
+    resultsDiv.classList.add('hidden');
 
-            let monthConvert = {
-                'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-                'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
-            }
+    // Show loading animation
+    showLoading();
 
-            console.log(periodDataUrl);
+    // Get data for the period of record
+    let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T05%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z" + "&page-size=5000";
+    fetchJsonFile(periodDataUrl, function(data) {
 
-            if (dailyCheckbox.checked) {
+        // Month to Number object (For converting string months to numbers)
+        let monthConvert = {
+            'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
+            'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+        }
 
-                let cstData = convertUTCtoCentralTime(data)['values'];
-                console.log(cstData);
-            
-            } else if (hourlyCheckbox.checked) {
+        console.log(periodDataUrl);
 
-                let cstData = convertUTCtoCentralTime(data)['values'];
+        // If the daily checkbox is checked
+        if (dailyCheckbox.checked) {
+            let cstData = convertUTCtoCentralTime(data)['values']; // Convert number dates to actual date and change from UTC to CST
 
-                cstData.forEach(element => {
-                    globalData.push({
-                        date: formatDate(element[0], monthConvert),
-                        stage: element[1]
-                    });
+            globalData = [];
+
+            console.log(cstData);
+
+            cstData.forEach(element => {
+                globalData.push({
+                    date: formatDate(element[0], monthConvert),
+                    stage: element[1]
+                });
+            });
+
+            clearAllTables();
+
+            createMultipleTables(globalData);
+
+            resultsDiv.classList.remove('hidden');
+
+            getCSVBtn.addEventListener('click', function() {
+
+                let csvString = 'Date,Stage\n';
+                
+                globalData.forEach(element => {
+                    csvString += `${element.date},${element.stage}\n`;
                 });
 
-                console.log(globalData);
+                exportToCSV(csvString);
+            })
 
-                createTable(globalData);
+        // If the hourly checkbox is checked
+        } else if (hourlyCheckbox.checked) {
 
-            }
+            let cstData = convertUTCtoCentralTime(data)['values']; // Convert number dates to actual date and change from UTC to CST
 
-            showLoading();
-            
-        }, function (){ 
-            showLoading();
-            popupMessage("error", "There was an error getting the data.<br>Error:<br>" + error) 
-        });
+            globalData = [];
 
-    } else {
-        popupMessage('error', 'The total record must be greater than 1 year.')
-        popupWindowBtn.click()
-    };
+            console.log(cstData);
+
+            cstData.forEach(element => {
+                globalData.push({
+                    date: formatDate(element[0], monthConvert),
+                    stage: element[1]
+                });
+            });
+
+            clearAllTables();
+
+            createMultipleTables(globalData);
+
+            resultsDiv.classList.remove('hidden');
+
+        }
+
+        showLoading();
+
+    }, function(error) { showLoading(); popupMessage('error', `There was an error getting the data.<br>Error:<br>${error}`); popupWindowBtn.click();});
+
+
 });
 
 // Function to add gages names in combobox
@@ -300,9 +335,386 @@ function createTable(data) {
 
     data.forEach(element => {
         let newRow = document.createElement('tr');
+        let parseNum = parseFloat(element.stage).toFixed(2);
         newRow.innerHTML = `<td>${element.date}</td>
-                            <td>${element.stage}</td>`;
+                            <td>${parseNum}</td>`;
         tableBody.appendChild(newRow); 
     });
 
+}
+
+function createMultipleTables(data) {
+    
+    // Check how many pages of tables will be
+    let pages = 1;
+    let pageCapacity = 100;
+    if (data.length > 100) {
+        pages = Math.ceil(data.length/100);
+    }
+
+    /*=================== Create Buttons =========================*/
+    // Create Previous Button
+    let arrowLeft = document.createElement('button');
+    arrowLeft.id = 'previous-btn';
+    arrowLeft.classList.add('disabled');
+
+    // Style Button
+    arrowLeft.textContent = "Previous Page";
+    arrowLeft.style.visibility = 'hidden';
+    arrowLeft.style.background = 'rgb(224, 224, 224)';
+    arrowLeft.style.color = 'black';
+    arrowLeft.style.position = 'absolute';
+    arrowLeft.style.left = '50px';
+    arrowLeft.style.top = '50px';
+    arrowLeft.style.padding = '5px 15px';
+    arrowLeft.style.fontSize = '1em';
+    arrowLeft.style.fontWeight = '500';
+    arrowLeft.style.borderRadius = '5px';
+    arrowLeft.style.border = '1px solid black';
+    arrowLeft.style.cursor = 'pointer';
+
+    // Create Next Button
+    let arrowRight = document.createElement('button');
+    arrowRight.id = 'next-btn';
+
+    // Style Button
+    arrowRight.textContent = "Next Page";
+    arrowRight.style.background = 'rgb(224, 224, 224)';
+    arrowRight.style.color = 'black';
+    arrowRight.style.position = 'absolute';
+    arrowRight.style.right = '50px';
+    arrowRight.style.top = '50px';
+    arrowRight.style.padding = '5px 15px';
+    arrowRight.style.fontSize = '1em';
+    arrowRight.style.fontWeight = '500';
+    arrowRight.style.borderRadius = '5px';
+    arrowRight.style.border = '1px solid black';
+    arrowRight.style.cursor = 'pointer';
+
+    // Store Buttons in Array for adding functions easily
+    let buttonList = [arrowLeft, arrowRight];
+
+    // Add Click function Left Button
+    buttonList.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            button.style.fontWeight = '600';
+            button.style.background = 'rgb(77, 107, 212)';
+            button.style.color = 'white';
+        });
+        button.addEventListener('mouseleave', function() {
+            button.style.fontWeight = '500';
+            button.style.background = 'rgb(224, 224, 224)';
+            button.style.color = 'black';
+        })
+    });
+
+    // Add button to the page
+    resultsDiv.appendChild(arrowLeft);
+    resultsDiv.appendChild(arrowRight);
+
+
+    /*=================== Create Page Number =========================*/
+    // Create page label element
+    let pageLabel = document.createElement('span');
+    pageLabel.style.position = 'absolute';
+    pageLabel.style.top = '15px';
+    pageLabel.style.left = '50%';
+    pageLabel.style.transform = 'translateX(-50%)';
+    pageLabel.style.fontSize = '1em';
+
+    // Create textbox
+    let textboxStyle = `
+    width: 2.1em; height: 1.5em; background: rgb(241, 244, 255); border: 1px solid grey; outline: none; padding: 2px; border-radius: 2px; text-align: center;
+    `;
+    pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="1"> /100`;
+
+    resultsDiv.appendChild(pageLabel);
+
+
+    /*=================== Create Tables =========================*/
+
+    // Create the tables
+    for (let i = 0; i < pages; i++) { // Amount of tables
+
+        // Create the table element
+        let newPage = document.createElement('table');
+        newPage.id = `page-${i+1}`;
+        newPage.innerHTML = `
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            
+        </tbody>
+        `;
+
+        // Make the first tables visible
+        if (i === 0) {
+            newPage.classList.add('visible');
+        }
+
+        resultsDiv.appendChild(newPage);
+        
+        // Get the numbers of row for the last table
+        if (i === (pages - 1)) {
+            pageCapacity = (pages * pageCapacity) - data.length;
+        }
+
+        // Create the rows
+        for (let j = 0; j < pageCapacity; j++) { // Amount of rows for the table
+            let index = j + (i * pageCapacity)
+            let parseNum = parseFloat(data[index].stage).toFixed(2);
+            let newRow = document.createElement('tr');
+
+            newRow.innerHTML = `
+            <td>${data[index].date}</td>
+            <td>${parseNum}</td>
+            `;
+
+            newRow.style.textAlign = 'center';
+            newRow.style.border = 'none';
+
+            if (j % 2 !== 0) {
+                newRow.style.background = 'rgb(77, 107, 212)';
+                newRow.style.color = 'white';
+            }
+
+            document.getElementById(`${newPage.id}`).appendChild(newRow);
+        };
+
+    };
+
+    // Get all the tables in a list
+    let newList = [];
+    resultsDiv.childNodes.forEach(child => {
+        if (child.id && child.id.split('-')[0] === 'page') {
+            newList.push(child);
+        }
+    });
+
+    // Variable for the active table
+    let activeTable = null;
+
+    // Get the active table
+    newList.forEach((element, index) => {
+
+        let isVisible = false;
+
+        element.classList.forEach(item => {
+            if (item === 'visible') {
+                isVisible = true
+            }
+        });
+
+        if (isVisible) {
+            activeTable = {
+                table: element,
+                index: index
+            };
+        }
+    });
+
+    // Update page label
+    pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="1"> /${newList.length}`;
+
+    // Change page when buttons are pressed
+    arrowRight.addEventListener('click', function() {
+
+        // Change table to the next
+        activeTable.table.classList.remove('visible');
+        newList[activeTable.index + 1].classList.add('visible');
+
+        // Update page label
+        pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="${activeTable.index + 2}"> /${newList.length}`;
+        pageTxtb = document.getElementById('page-txtb');
+        pageTxtb.addEventListener('change', function() {
+
+            if (pageTxtb.value > newList.length) {
+                pageTxtb.value = newList.length;
+            } else if (pageTxtb.value < 1) {
+                pageTxtb.value = 1;
+            }
+    
+            // Change table to the previous
+            activeTable.table.classList.remove('visible');
+            newList[pageTxtb.value - 1].classList.add('visible');
+    
+            // Make the new table the active table
+            activeTable = {
+                table: newList[pageTxtb.value - 1],
+                index: pageTxtb.value - 1
+            };
+    
+            // Diable button depending on the active table
+            if (activeTable.index === 0) {
+                arrowLeft.style.visibility = 'hidden';
+                arrowRight.style.visibility = 'visible';
+            } else if (activeTable.index === (newList.length - 1)) {
+                arrowRight.style.visibility = 'hidden';
+                arrowLeft.style.visibility = 'visible';
+            } else {
+                arrowLeft.style.visibility = 'visible';
+                arrowRight.style.visibility = 'visible';
+            }
+    
+        });
+
+        // Make the new table the active table
+        activeTable = {
+            table: newList[activeTable.index + 1],
+            index: activeTable.index + 1
+        };
+
+        // Diable button depending on the active table
+        if (activeTable.index === 0) {
+            arrowLeft.style.visibility = 'hidden';
+        } else if (activeTable.index === (newList.length - 1)) {
+            arrowRight.style.visibility = 'hidden';
+        } else {
+            arrowLeft.style.visibility = 'visible';
+            arrowRight.style.visibility = 'visible';
+        }
+        
+    });
+
+    // Change page when buttons are pressed
+    arrowLeft.addEventListener('click', function() {
+
+        // Change table to the previous
+        activeTable.table.classList.remove('visible');
+        newList[activeTable.index - 1].classList.add('visible');
+
+        // Update page label
+        pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="${activeTable.index}"> /${newList.length}`;
+        pageTxtb = document.getElementById('page-txtb');
+        pageTxtb.addEventListener('change', function() {
+
+            if (pageTxtb.value > newList.length) {
+                pageTxtb.value = newList.length;
+            } else if (pageTxtb.value < 1) {
+                pageTxtb.value = 1;
+            }
+    
+            // Change table to the previous
+            activeTable.table.classList.remove('visible');
+            newList[pageTxtb.value - 1].classList.add('visible');
+    
+            // Make the new table the active table
+            activeTable = {
+                table: newList[pageTxtb.value - 1],
+                index: pageTxtb.value - 1
+            };
+    
+            // Diable button depending on the active table
+            if (activeTable.index === 0) {
+                arrowLeft.style.visibility = 'hidden';
+                arrowRight.style.visibility = 'visible';
+            } else if (activeTable.index === (newList.length - 1)) {
+                arrowRight.style.visibility = 'hidden';
+                arrowLeft.style.visibility = 'visible';
+            } else {
+                arrowLeft.style.visibility = 'visible';
+                arrowRight.style.visibility = 'visible';
+            }
+    
+        });
+
+        // Make the new table the active table
+        activeTable = {
+            table: newList[activeTable.index - 1],
+            index: activeTable.index - 1
+        };
+
+        // Diable button depending on the active table
+        if (activeTable.index === 0) {
+            arrowLeft.style.visibility = 'hidden';
+        } else if (activeTable.index === (newList.length - 1)) {
+            arrowRight.style.visibility = 'hidden';
+        } else {
+            arrowLeft.style.visibility = 'visible';
+            arrowRight.style.visibility = 'visible';
+        }
+        
+    });
+
+    // Change the page to the page inputed into the textbox
+    let pageTxtb = document.getElementById('page-txtb');
+    pageTxtb.addEventListener('change', function() {
+
+        if (pageTxtb.value > newList.length) {
+            pageTxtb.value = newList.length;
+        } else if (pageTxtb.value < 1) {
+            pageTxtb.value = 1;
+        }
+
+        // Change table to the previous
+        activeTable.table.classList.remove('visible');
+        newList[pageTxtb.value - 1].classList.add('visible');
+
+        // Make the new table the active table
+        activeTable = {
+            table: newList[pageTxtb.value - 1],
+            index: pageTxtb.value - 1
+        };
+
+        // Diable button depending on the active table
+        if (activeTable.index === 0) {
+            arrowLeft.style.visibility = 'hidden';
+            arrowRight.style.visibility = 'visible';
+        } else if (activeTable.index === (newList.length - 1)) {
+            arrowRight.style.visibility = 'hidden';
+            arrowLeft.style.visibility = 'visible';
+        } else {
+            arrowLeft.style.visibility = 'visible';
+            arrowRight.style.visibility = 'visible';
+        }
+
+    });
+
+}
+
+// Clear Table
+function clearTable() {
+    let tableBody = document.querySelector('#result-table tbody');
+    tableBody.innerHTML = ' ';
+}
+
+function clearAllTables() {
+    resultsDiv.innerHTML = ' ';
+}
+
+function csvNoDataMessage() {
+    popupMessage('error', 'There is no data to create the csv file. Get the data first and try again.');
+    popupWindowBtn.click();
+}
+
+// Export CSV file
+function exportToCSV(data, filename = 'data.csv') {
+    // Convert the array of arrays to a CSV string
+    /* const csvContent = convertArrayToCSV(data); */
+    const csvContent = data;
+
+    // Create a Blob from the CSV string
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    // Create a link element
+    const link = document.createElement('a');
+    if (link.download !== undefined) { // feature detection
+        // Create a URL for the Blob and set it as the href attribute
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        
+        // Append the link to the body
+        document.body.appendChild(link);
+        
+        // Programmatically click the link to trigger the download
+        link.click();
+        
+        // Remove the link from the document
+        document.body.removeChild(link);
+    }
 }
