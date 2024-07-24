@@ -27,7 +27,7 @@ const basinName = document.getElementById('basinCombobox'),
       darkModeCheckbox = document.querySelector('.header label input'),
       popupWindowBtn = document.getElementById('popup-button'),
       getDataBtn = document.getElementById('button-data'),
-      getCSVBtn = document.getElementById('button-csv'),
+      getExcelBtn = document.getElementById('button-csv'),
       getJSONBtn = document.getElementById('button-json'),
       emailBtn = document.getElementById('button-email'),
       dailyCheckbox = document.getElementById('daily'),
@@ -47,8 +47,14 @@ fetchJsonFile(gageJsonUrl, initialize, function(error){
 /*======================= Functions For Script =======================*/
 function initialize(data) {
 
-    // CSV initial function (Alert)
-    getCSVBtn.addEventListener('click', csvNoDataMessage);
+    // Excel initial function (Alert)
+    getExcelBtn.addEventListener('click', excelNoDataMessage);
+
+    // Json initial function (Alert)
+    getJSONBtn.addEventListener('click', jsonNoDataMessage)
+
+    // Email initial function (Alert)
+    emailBtn.addEventListener('click', emailNoDataMessage)
 
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
@@ -218,8 +224,11 @@ function updateAvailablePORTable(data) {
 // Buttons Functions
 getDataBtn.addEventListener('click', function() {
 
-    // CSV initial function (Alert)
-    getCSVBtn.removeEventListener('click', csvNoDataMessage);
+    // Excel initial function (Alert)
+    getExcelBtn.removeEventListener('click', excelNoDataMessage);
+
+    // Json initial function (Alert)
+    getJSONBtn.removeEventListener('click', jsonNoDataMessage)
 
     // Hide result div before getting the data if the result div is showing
     resultsDiv.classList.add('hidden');
@@ -228,7 +237,7 @@ getDataBtn.addEventListener('click', function() {
     showLoading();
 
     // Get data for the period of record
-    let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T05%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z" + "&page-size=5000";
+    let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T05%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z" + "&page-size=200000";
     fetchJsonFile(periodDataUrl, function(data) {
 
         // Month to Number object (For converting string months to numbers)
@@ -260,16 +269,13 @@ getDataBtn.addEventListener('click', function() {
 
             resultsDiv.classList.remove('hidden');
 
-            getCSVBtn.addEventListener('click', function() {
+            getExcelBtn.addEventListener('click', function() {
+                exportTableToExcel(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-daily.xlsx`);
+            });
 
-                let csvString = 'Date,Stage\n';
-                
-                globalData.forEach(element => {
-                    csvString += `${element.date},${element.stage}\n`;
-                });
-
-                exportToCSV(csvString);
-            })
+            getJSONBtn.addEventListener('click', function() {
+                exportTableToJSON(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-daily.json`)
+            });
 
         // If the hourly checkbox is checked
         } else if (hourlyCheckbox.checked) {
@@ -292,6 +298,14 @@ getDataBtn.addEventListener('click', function() {
             createMultipleTables(globalData);
 
             resultsDiv.classList.remove('hidden');
+
+            getExcelBtn.addEventListener('click', function() {
+                exportTableToExcel(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-hourly.xlsx`);
+            });
+
+            getJSONBtn.addEventListener('click', function() {
+                exportTableToJSON(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-hourly.json`)
+            });
 
         }
 
@@ -329,9 +343,23 @@ function addGageNames(data) {
 }
 
 // Create Table
-function createTable(data) {
+function createTable(data, columnsNameArray) {
 
-    let tableBody = document.querySelector('#result-table tbody');
+    let table = document.createElement('table');
+    table.id = 'table-data';
+
+    table.innerHTML = `
+    <thead>
+        <tr>
+            <th>${columnsNameArray[0]}</th>
+            <th>${columnsNameArray[1]}</th>
+        </tr>
+    </thead>
+    `;
+
+    let tableBody = document.createElement('tbody');
+
+    table.appendChild(tableBody);
 
     data.forEach(element => {
         let newRow = document.createElement('tr');
@@ -340,6 +368,8 @@ function createTable(data) {
                             <td>${parseNum}</td>`;
         tableBody.appendChild(newRow); 
     });
+
+    return table;
 
 }
 
@@ -424,7 +454,14 @@ function createMultipleTables(data) {
 
     // Create textbox
     let textboxStyle = `
-    width: 2.1em; height: 1.5em; background: rgb(241, 244, 255); border: 1px solid grey; outline: none; padding: 2px; border-radius: 2px; text-align: center;
+    width: 2.1em;
+    height: 1.5em; 
+    background: rgb(241, 244, 255); 
+    border: 1px solid grey; 
+    outline: none; 
+    padding: 2px; 
+    border-radius: 2px; 
+    text-align: center;
     `;
     pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="1"> /100`;
 
@@ -457,15 +494,15 @@ function createMultipleTables(data) {
         }
 
         resultsDiv.appendChild(newPage);
-        
-        // Get the numbers of row for the last table
-        if (i === (pages - 1)) {
-            pageCapacity = (pages * pageCapacity) - data.length;
-        }
 
         // Create the rows
         for (let j = 0; j < pageCapacity; j++) { // Amount of rows for the table
-            let index = j + (i * pageCapacity)
+            let index = j + (i * pageCapacity);
+
+            if (index > (data.length - 1)) {
+                break;
+            }
+
             let parseNum = parseFloat(data[index].stage).toFixed(2);
             let newRow = document.createElement('tr');
 
@@ -474,15 +511,7 @@ function createMultipleTables(data) {
             <td>${parseNum}</td>
             `;
 
-            newRow.style.textAlign = 'center';
-            newRow.style.border = 'none';
-
-            if (j % 2 !== 0) {
-                newRow.style.background = 'rgb(77, 107, 212)';
-                newRow.style.color = 'white';
-            }
-
-            document.getElementById(`${newPage.id}`).appendChild(newRow);
+            document.querySelector(`#${newPage.id} tbody`).appendChild(newRow);
         };
 
     };
@@ -686,8 +715,18 @@ function clearAllTables() {
     resultsDiv.innerHTML = ' ';
 }
 
-function csvNoDataMessage() {
-    popupMessage('error', 'There is no data to create the csv file. Get the data first and try again.');
+function excelNoDataMessage() {
+    popupMessage('error', 'There is no data to create the excel file. Get the data first and try again.');
+    popupWindowBtn.click();
+}
+
+function jsonNoDataMessage() {
+    popupMessage('error', 'There is no data to create the json file. Get the data first and try again.');
+    popupWindowBtn.click();
+}
+
+function emailNoDataMessage() {
+    popupMessage('info', 'Coming Soon');
     popupWindowBtn.click();
 }
 
@@ -717,4 +756,50 @@ function exportToCSV(data, filename = 'data.csv') {
         // Remove the link from the document
         document.body.removeChild(link);
     }
+}
+
+function exportTableToExcel(table, filename) {
+    // Convert the table to a worksheet
+    let worksheet = XLSX.utils.table_to_sheet(table);
+    // Create a new workbook
+    let workbook = XLSX.utils.book_new();
+    // Append the worksheet to the workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    // Generate the Excel file and trigger a download
+    XLSX.writeFile(workbook, filename);
+}
+
+function exportTableToJSON(table, filename) {
+    let rows = table.querySelectorAll('tr');
+    let data = [];
+
+    // Get headers
+    let headers = [];
+    let headerCells = rows[0].querySelectorAll('th');
+    for (let i = 0; i < headerCells.length; i++) {
+        headers[i] = headerCells[i].innerText;
+    }
+
+    // Get rows data
+    for (let i = 1; i < rows.length; i++) {
+        let row = rows[i];
+        let cells = row.querySelectorAll('td');
+        let rowData = {};
+        for (let j = 0; j < cells.length; j++) {
+            rowData[headers[j]] = cells[j].innerText;
+        }
+        data.push(rowData);
+    }
+
+    // Convert data to JSON
+    let json = JSON.stringify(data, null, 2);
+
+    // Create a blob from the JSON
+    let blob = new Blob([json], { type: 'application/json' });
+
+    // Create a link to download the JSON file
+    let link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
 }

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../css/customDropbox.css">
+    <style>
+        body {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #dfdddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="custom-combobox">
+        <label>
+            <span data-value="Some-Text Value">Make a Selection</span>
+        </label>
+        <ul>
+            <a href="#"><li data-value="Item one value">Item 1</li></a>
+            <a href="#"><li data-value="Item two value">Item 2</li></a>
+            <a href="#"><li data-value="Item three value">Item 3</li></a>
+            <a href="#"><li data-value="Item four value">Item 4</li></a>
+            <a href="#"><li data-value="Item five value">Item 5</li></a>
+        </ul>
+    </div>
+    <script>
+
+        let dropbox = document.querySelectorAll('.custom-combobox');
+
+        dropbox.forEach(box => {
+            box.childNodes[1].addEventListener('click', function() {
+                box.childNodes[1].classList.toggle('active');
+                box.childNodes[3].classList.toggle('active');
+            });
+
+            box.childNodes[3].childNodes.forEach(item => {
+                item.addEventListener('click', function() {
+                    box.childNodes[1].childNodes[1].textContent = item.childNodes[0].textContent;
+                    box.childNodes[1].childNodes[1].dataset.value = item.childNodes[0].dataset.value
+
+                    box.childNodes[1].classList.toggle('active');
+                    box.childNodes[3].classList.toggle('active');
+                });
+            });
+
+        });
+
+    </script>
+</body>
+</html>
