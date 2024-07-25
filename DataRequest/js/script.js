@@ -183,6 +183,7 @@ function initialize(data) {
 
     dailyCheckbox.addEventListener('change', function() {
         // Get the gage 'tsid_stage_rev' for the 'Available POR' table
+        console.log(gageName.value);
         let tsIdStagRev;
         data.forEach(element => {
             if (element.basin === basinName.value) {
@@ -237,6 +238,7 @@ function initialize(data) {
     hourlyCheckbox.addEventListener('change', function() {
         // Get the gage 'tsid_stage_rev' for the 'Available POR' table
         let tsIdStagRev;
+        console.log(gageName.value);
         data.forEach(element => {
             if (element.basin === basinName.value) {
                 if (dailyCheckbox.checked) {
