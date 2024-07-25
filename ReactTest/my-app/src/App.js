@@ -1,12 +1,14 @@
 
 import './App.css';
+import SearchBar from './Components/SearchBar';
+import Dropbox from './Components/DropBox';
 
 function App() {
   return (
-  <div class="search-bar">
-    <input type="text" placeholder="Search"/>
-    <span className="material-symbols-outlined">search</span>
-  </div>
+    <>
+    <SearchBar placeHolder={"Search"} />
+    <Dropbox />
+    </>
   );
 }
 
