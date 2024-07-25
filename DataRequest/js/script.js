@@ -47,6 +47,18 @@ fetchJsonFile(gageJsonUrl, initialize, function(error){
 /*======================= Functions For Script =======================*/
 function initialize(data) {
 
+    dailyCheckbox.addEventListener('click', function() {
+        if (!dailyCheckbox.checked) {
+            dailyCheckbox.click();
+        }
+    });
+
+    hourlyCheckbox.addEventListener('click', function() {
+        if (!hourlyCheckbox.checked) {
+            hourlyCheckbox.click();
+        }
+    });
+
     // Excel initial function (Alert)
     getExcelBtn.addEventListener('click', excelNoDataMessage);
 
@@ -167,7 +179,166 @@ function initialize(data) {
 
         }, function(){});
 
-    })
+    });
+
+    dailyCheckbox.addEventListener('change', function() {
+        // Get the gage 'tsid_stage_rev' for the 'Available POR' table
+        let tsIdStagRev;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                if (dailyCheckbox.checked) {
+                    element.gages.forEach(item => {
+                        if (item.tsid_datman === gageName.value) {
+                            tsIdStagRev = item.tsid_stage_rev;
+                        }
+                    });
+                } else if (hourlyCheckbox.checked) {
+                    element.gages.forEach(item => {
+                        if (item.tsid_stage_rev === gageName.value) {
+                            tsIdStagRev = item.tsid_stage_rev;
+                        }
+                    });
+                }
+                
+            };
+        });
+
+        // If is not local it will add the 'tsid_stage_rev' to the URL
+        let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
+        console.log(newGeneralInfoURL);
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+            popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+            popupWindowBtn.click();
+        }) // Change URL for the online version
+
+        // Is the gage a project?
+        fetchJsonFile(gageJsonUrl, function(data){
+            let is_gage29 = false;
+            data.forEach(element => {
+                if (element.basin === basinName.value) {
+                    element.gages.forEach(gage => {
+                        if (gage.tsid_datman === gageName.value || gage.tsid_stage_rev === gageName.value) {
+                            is_gage29 = gage.display_stage_29;
+                        }
+                    });
+                } 
+            });
+
+            if (!is_gage29) {
+                // Change the datum info to show
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NAV88";
+            } else {
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
+            }
+
+        }, function(){});
+    });
+
+    hourlyCheckbox.addEventListener('change', function() {
+        // Get the gage 'tsid_stage_rev' for the 'Available POR' table
+        let tsIdStagRev;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                if (dailyCheckbox.checked) {
+                    element.gages.forEach(item => {
+                        if (item.tsid_datman === gageName.value) {
+                            tsIdStagRev = item.tsid_stage_rev;
+                        }
+                    });
+                } else if (hourlyCheckbox.checked) {
+                    element.gages.forEach(item => {
+                        if (item.tsid_stage_rev === gageName.value) {
+                            tsIdStagRev = item.tsid_stage_rev;
+                        }
+                    });
+                }
+                
+            };
+        });
+
+        // If is not local it will add the 'tsid_stage_rev' to the URL
+        let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
+        console.log(newGeneralInfoURL);
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+            popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+            popupWindowBtn.click();
+        }) // Change URL for the online version
+
+        // Is the gage a project?
+        fetchJsonFile(gageJsonUrl, function(data){
+            let is_gage29 = false;
+            data.forEach(element => {
+                if (element.basin === basinName.value) {
+                    element.gages.forEach(gage => {
+                        if (gage.tsid_datman === gageName.value || gage.tsid_stage_rev === gageName.value) {
+                            is_gage29 = gage.display_stage_29;
+                        }
+                    });
+                } 
+            });
+
+            if (!is_gage29) {
+                // Change the datum info to show
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NAV88";
+            } else {
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
+            }
+
+        }, function(){});
+    });
+
+    basinName.addEventListener('change', function() {
+        // Get the gage 'tsid_stage_rev' for the 'Available POR' table
+        let tsIdStagRev;
+        data.forEach(element => {
+            if (element.basin === basinName.value) {
+                if (dailyCheckbox.checked) {
+                    element.gages.forEach(item => {
+                        if (item.tsid_datman === gageName.value) {
+                            tsIdStagRev = item.tsid_stage_rev;
+                        }
+                    });
+                } else if (hourlyCheckbox.checked) {
+                    element.gages.forEach(item => {
+                        if (item.tsid_stage_rev === gageName.value) {
+                            tsIdStagRev = item.tsid_stage_rev;
+                        }
+                    });
+                }
+                
+            };
+        });
+
+        // If is not local it will add the 'tsid_stage_rev' to the URL
+        let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
+        console.log(newGeneralInfoURL);
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+            popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+            popupWindowBtn.click();
+        }) // Change URL for the online version
+
+        // Is the gage a project?
+        fetchJsonFile(gageJsonUrl, function(data){
+            let is_gage29 = false;
+            data.forEach(element => {
+                if (element.basin === basinName.value) {
+                    element.gages.forEach(gage => {
+                        if (gage.tsid_datman === gageName.value || gage.tsid_stage_rev === gageName.value) {
+                            is_gage29 = gage.display_stage_29;
+                        }
+                    });
+                } 
+            });
+
+            if (!is_gage29) {
+                // Change the datum info to show
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NAV88";
+            } else {
+                document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
+            }
+
+        }, function(){});
+    });
 
     // Is the gage a project?
     fetchJsonFile(gageJsonUrl, function(data){
@@ -198,6 +369,7 @@ function initialize(data) {
 
 // Update Available POR Function
 function updateAvailablePORTable(data) {
+    console.log(data);
     let tempData = data.entries[0].extents[0];
 
     let startPORDate = document.querySelector('#info-table .por-start');
