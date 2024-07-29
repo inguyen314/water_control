@@ -4,100 +4,21 @@
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 4em 1fr;
     grid-template-areas: 
-    "search search"
+    "banner banner"
     "inputs info";
     width: 100%;
     height: 28em;
     background: #fff;
-    margin: 1em;
     box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
-    border-radius: 1em;
 }
 
-/*=========== Search Section ==================*/
-#content-header .search {
-    position: relative;
-    grid-area: search;
+/*============= Top Banner ====================*/
+
+#content-header .top-banner {
+    grid-area: banner;
     width: 100%;
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgb(82, 93, 246);
-    border-top-left-radius: 1em;
-    border-top-right-radius: 1em;
-}
-
-#content-header .search-bar {
-    position: absolute;
-    display: grid;
-    grid-template-columns: 3em 1fr;
-    grid-template-rows: 2em 1fr;
-    grid-template-areas: 
-    "ico bar"
-    "list list";
-    width: 400px;
-    top: 0.75em;
-    left: 50%;
-    padding: 0.2em 0.2em;
-    transform: translateX(-50%);
-    border: 1px solid #cccccc;
-    border-radius: 1.5em;
-    background: white;
-    box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
-}
-
-#content-header .search-bar input {
-    grid-area: bar;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    outline: none;
-    background: transparent;
-    border: none;
-    padding-left: 2em;
-    font-size: 1em;
-}
-
-#content-header .search-bar span {
-    grid-area: ico;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-}
-
-#content-header .search-bar ul {
-    grid-area: list;
-    display: none;
-}
-
-/*-- Search bar active --*/
-/* Suggest List */
-
-#content-header .search-bar.active ul {
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    justify-content: center;
-}
-
-#content-header .search-bar.active ul li {
-    text-decoration: none;
-    list-style: none;
-    padding-left: 3em;
-}
-
-#content-header .search-bar.active ul li:hover {
-    font-weight: 600;
-}
-
-#content-header .search-bar.active ul li a {
-    text-decoration: none;
-    color: black;
+    background: rgb(71, 71, 255);
 }
 
 /*=========== Inputs Section ==================*/
@@ -106,23 +27,8 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 1em;
-    padding: 0 5em;
-}
-
-
-#content-header .inputs > div {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 1.5em;
-    box-shadow: 5px 5px 10px rgba(0,0,0,0.2),
-                inset -2px -2px 10px rgba(0,0,0,0.1);
-    margin: 1em;
-    padding: 1em 2em;
-    border-radius: 1em;
+    align-items: center;
+    padding: 1em;
 }
 
 #content-header .inputs div > div {
@@ -139,7 +45,6 @@
     height: 2em;
     width: 30em;
     outline: none;
-    border-radius: 0.75em;
     box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
     padding-left: 1em;
 }
@@ -147,7 +52,6 @@
 #content-header .inputs div input[type='date'] {
     width: 10em;
     height: 2em;
-    border-radius: 0.75em;
     outline: none;
     border: 1px solid rgb(107, 107, 107);
     padding-left: 2em;
@@ -162,23 +66,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-#content-header .information > div {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 1.5em;
-    box-shadow: 5px 5px 10px rgba(0,0,0,0.2),
-                inset -2px -2px 10px rgba(0,0,0,0.1);
-    padding: 2em 5em;
-    border-radius: 1em;
+    padding: 1em;
 }
 
 #content-header .information table {
+    margin-left: 2em;
+    margin-right: 2em;
     padding: 1em;
     box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
-    border-radius: 1em;
 }
 
 #content-header .information table th {
@@ -192,9 +87,12 @@
 
 #content-header .information table td {
     text-align: center;
-    border-radius: 0.5em;
     padding: 0.2em 1em;
     box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+}
+
+#content-header .information p {
+    text-align: center;
 }
 
 /*--- Checkbox ---*/
@@ -209,7 +107,7 @@
     margin: auto;
     justify-content: center;
     align-items: center;
-    gap: 1em;
+    gap: 0.5em;
 }
 
 #content-header .information .checkbox input {
@@ -225,6 +123,12 @@
     background: white;
     box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
     cursor: pointer;
+}
+
+#content-header .information .checkbox p {
+    text-align: center;
+    margin: 0;
+    font-weight: 600;
 }
 
 #content-header .information .checkbox input:checked ~ label {

@@ -1,9 +1,9 @@
 
 
-.page-wrap.active {
+.page-wrap.blur {
     filter: blur(20px);
     pointer-events: none;
-    user-select: none;
+    transition: 0.5s;
 }
 
 #popup-window {
@@ -12,7 +12,7 @@
     flex-direction: column;
     border-radius: 15px;
     gap: 10px;
-    top: 40%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
     width: 600px;
@@ -20,8 +20,6 @@
     padding: 30px;
     box-shadow: 0 5px 30px rgba(0,0,0,0.30);
     background: white;
-    visibility: hidden;
-    opacity: 0;
     transition: 0.5s;
     z-index: 100;
 }
@@ -31,15 +29,10 @@
     height: auto;
 }
 
-#popup-window.active {
-    top: 50%;
-    visibility: visible;
-    opacity: 1;
+#popup-window.hidden {
+    display: none;
+    top: 30%;
     transition: 0.5s;
-}
-
-#popup-window.active::before {
-    content: '';
 }
 
 #popup-button {
