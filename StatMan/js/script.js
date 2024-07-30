@@ -514,7 +514,9 @@ function main(data) {
         dataStringForCSV += "\nMax Table\n";
         dataStringForCSV += formatDataToCSV(maxDataTable);
 
-        exportToCSV(dataStringForCSV);
+        //exportToCSV(dataStringForCSV);
+        let tablesList = [averageTable, maxTable, minTable];
+        exportTableToExcel(tablesList, `${gageName.value.split('.')[0]}-StatMan.xlsx`);
     });
 
     // Check if the checkbox are checked
@@ -682,6 +684,22 @@ function formatDataToCSV(data) {
     stringCSV += "MIN,=MIN(B3:B33),=MIN(C3:C33),=MIN(D3:D33),=MIN(E3:E33),=MIN(F3:F33),=MIN(G3:G33),=MIN(H3:H33),=MIN(I3:I33),=MIN(J3:J33),=MIN(K3:K33),=MIN(L3:L33),=MIN(M3:M33)\n";
     stringCSV += "MAX,=MAX(B3:B33),=MAX(C3:C33),=MAX(D3:D33),=MAX(E3:E33),=MAX(F3:F33),=MAX(G3:G33),=MAX(H3:H33),=MAX(I3:I33),=MAX(J3:J33),=MAX(K3:K33),=MAX(L3:L33),=MAX(M3:M33)\n";
     return stringCSV;
+}
+
+function exportTableToExcel(tableList, filename) {
+
+    // Create a new workbook
+    let workbook = XLSX.utils.book_new();
+
+    tableList.forEach((table, index) => {
+        // Convert the table to a worksheet
+        let worksheet = XLSX.utils.table_to_sheet(table);
+        // Append the worksheet to the workbook
+        XLSX.utils.book_append_sheet(workbook, worksheet, `Sheet${index + 1}`); 
+    });
+
+    // Generate the Excel file and trigger a download
+    XLSX.writeFile(workbook, filename);
 }
 
 let jsonUrl;
