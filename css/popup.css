@@ -1,4 +1,12 @@
 
+/* For this CSS to work, the Div html should look like this: 
+<div id="popup-window" class="hidden">
+    <img src="../images/usace_logo.png" alt="usace-logo">
+    <h2 id="popup-title">This is the POPUP window Title.</h2>
+    <p id="popup-message">Lorem ipsum dolor sit amet consectetur adipisicing elit. Maxime delectus quasi alias dolore maiores enim nulla exercitationem quos, minus non?</p>
+    <a href="#" id="popup-button">Close</a>
+</div>
+*/
 
 .page-wrap.blur {
     filter: blur(20px);

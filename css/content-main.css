@@ -1,0 +1,16 @@
+
+/* Add light or dark class to the body to use this colors */
+
+.light {
+    --background-color-1: #fff;
+    --banner-color-1: #1540ff;
+    --font-color-1: #000;
+    --shadow-color-1: rgba(0,0,0,0.2);
+}
+
+.dark {
+    --background-color-1: #2b2b2b;
+    --banner-color-1: #5574ff;
+    --font-color-1: #fff;
+    --shadow-color-1: rgba(255, 255, 255, 0.2);
+}

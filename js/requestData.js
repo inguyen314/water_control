@@ -1,6 +1,6 @@
 
 // Fetch Json Data
-export function fetchJsonFile(urlToFetch, sucessFunction, errorFunction=function(){alert("There was an error getting the data.")}){
+export function fetchJsonFile(urlToFetch, sucessFunction, errorFunction=function(){console.log("There was an error getting the data.")}){
     fetch(urlToFetch, {
         method: 'GET',
         headers: {
@@ -22,7 +22,7 @@ export function fetchJsonFile(urlToFetch, sucessFunction, errorFunction=function
 }
 
 // Fetch Json Data
-export function fetchJsonFileV01(urlToFetch, sucessFunction, errorFunction=function(){alert("There was an error getting the data.")}){
+export function fetchJsonFileV01(urlToFetch, sucessFunction, errorFunction=function(){console.log("There was an error getting the data.")}){
     fetch(urlToFetch)
     .then(response => {
         if (!response.ok) {
