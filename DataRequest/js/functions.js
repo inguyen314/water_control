@@ -1,5 +1,5 @@
 
-export function blurBackground () {
+export function blurBackground() {
     let blur = document.querySelector('#page-container .page-content');
     blur.classList.toggle('blur');
     let popupWindow = document.getElementById('popup-window');
@@ -41,7 +41,7 @@ export function getNames(data) {
     return objArray;
 }
 
-export function popupMessage (msgType, message) {
+export function popupMessage(msgType, message) {
     let popupTitle = document.getElementById('popup-title');
     let popupMessage = document.getElementById('popup-message');
     if (msgType === "warning") {
@@ -59,7 +59,7 @@ export function addBasinNames(combobox, objectList) {
     objectList.forEach(element => {
         let option = document.createElement('option');
         option.value = element['basin'];
-        option.textContent = element['basin']; 
+        option.textContent = element['basin'];
         combobox.appendChild(option);
     });
 }
@@ -73,7 +73,7 @@ export function haveOneYearOfData(startDate, endDate) {
     let endYear = endDate.split('-')[0];
     let endMonth = endDate.split('-')[1];
     let endDay = endDate.split('-')[2];
-    
+
     if (parseInt(endYear) - parseInt(startYear) === 0) {
         if (parseInt(endMonth) - parseInt(startMonth) === 11 && parseInt(endDay) - parseInt(startDay) === 30) {
             return true;

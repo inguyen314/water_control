@@ -20,25 +20,25 @@ let gageJsonUrl = "../../../../php_data_api/public/json/gage_control.json";
 
 // Const Elements
 const basinName = document.getElementById('basinCombobox'),
-      gageName = document.getElementById('gageCombobox'),
-      beginDate = document.getElementById('begin-input'),
-      endDate = document.getElementById('end-input'),
-      resultsDiv = document.querySelector('.results'),
-      darkModeCheckbox = document.querySelector('.header label input'),
-      popupWindowBtn = document.getElementById('popup-button'),
-      getDataBtn = document.getElementById('button-data'),
-      getExcelBtn = document.getElementById('button-csv'),
-      getJSONBtn = document.getElementById('button-json'),
-      emailBtn = document.getElementById('button-email'),
-      dailyCheckbox = document.getElementById('daily'),
-      hourlyCheckbox = document.getElementById('hourly');
+    gageName = document.getElementById('gageCombobox'),
+    beginDate = document.getElementById('begin-input'),
+    endDate = document.getElementById('end-input'),
+    resultsDiv = document.querySelector('.results'),
+    darkModeCheckbox = document.querySelector('.header label input'),
+    popupWindowBtn = document.getElementById('popup-button'),
+    getDataBtn = document.getElementById('button-data'),
+    getExcelBtn = document.getElementById('button-csv'),
+    getJSONBtn = document.getElementById('button-json'),
+    emailBtn = document.getElementById('button-email'),
+    dailyCheckbox = document.getElementById('daily'),
+    hourlyCheckbox = document.getElementById('hourly');
 
 
 let globalData = [];
 
 /*======================= Beginning of Script ========================*/
 // Fetch the gages names
-fetchJsonFile(gageJsonUrl, initialize, function(error){
+fetchJsonFile(gageJsonUrl, initialize, function (error) {
     popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
     popupWindowBtn.click();
 });
@@ -47,13 +47,13 @@ fetchJsonFile(gageJsonUrl, initialize, function(error){
 /*======================= Functions For Script =======================*/
 function initialize(data) {
 
-    dailyCheckbox.addEventListener('click', function() {
+    dailyCheckbox.addEventListener('click', function () {
         if (!dailyCheckbox.checked) {
             dailyCheckbox.click();
         }
     });
 
-    hourlyCheckbox.addEventListener('click', function() {
+    hourlyCheckbox.addEventListener('click', function () {
         if (!hourlyCheckbox.checked) {
             hourlyCheckbox.click();
         }
@@ -69,7 +69,7 @@ function initialize(data) {
     emailBtn.addEventListener('click', emailNoDataMessage)
 
     // Add dark mode functionality
-    darkModeCheckbox.addEventListener('click', function() {
+    darkModeCheckbox.addEventListener('click', function () {
         document.getElementById('content-body').classList.toggle('dark');
         document.getElementById('page-container').classList.toggle('dark');
     });
@@ -81,14 +81,14 @@ function initialize(data) {
     let namesObject = getNames(data);
 
     // Checkbox Functions
-    dailyCheckbox.addEventListener('click', function() {
+    dailyCheckbox.addEventListener('click', function () {
         if (hourlyCheckbox.checked) {
             hourlyCheckbox.checked = false;
         }
         addGageNames(namesObject);
     });
 
-    hourlyCheckbox.addEventListener('click', function() {
+    hourlyCheckbox.addEventListener('click', function () {
         if (dailyCheckbox.checked) {
             dailyCheckbox.checked = false;
         }
@@ -102,7 +102,7 @@ function initialize(data) {
     addGageNames(namesObject);
 
     // Change the gage values each time the basin value is changed
-    basinName.addEventListener('change', function() {
+    basinName.addEventListener('change', function () {
         addGageNames(namesObject);
     })
 
@@ -121,13 +121,13 @@ function initialize(data) {
     let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
 
     // Update 'Available POR' when the page load.
-    fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+    fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function (error) {
         popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
         popupWindowBtn.click();
     }); // Change URL for the online version
 
     // Update 'Avaliable POR' table everytime the gage name is changed
-    gageName.addEventListener('change', function(){
+    gageName.addEventListener('change', function () {
         // Get the gage 'tsid_stage_rev' for the 'Available POR' table
         let tsIdStagRev;
         data.forEach(element => {
@@ -145,20 +145,20 @@ function initialize(data) {
                         }
                     });
                 }
-                
+
             };
         });
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
         console.log(newGeneralInfoURL);
-        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function (error) {
             popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
             popupWindowBtn.click();
         }) // Change URL for the online version
 
         // Is the gage a project?
-        fetchJsonFile(gageJsonUrl, function(data){
+        fetchJsonFile(gageJsonUrl, function (data) {
             let is_gage29 = false;
             data.forEach(element => {
                 if (element.basin === basinName.value) {
@@ -167,7 +167,7 @@ function initialize(data) {
                             is_gage29 = gage.display_stage_29;
                         }
                     });
-                } 
+                }
             });
 
             if (!is_gage29) {
@@ -177,11 +177,11 @@ function initialize(data) {
                 document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
             }
 
-        }, function(){});
+        }, function () { });
 
     });
 
-    dailyCheckbox.addEventListener('change', function() {
+    dailyCheckbox.addEventListener('change', function () {
         // Get the gage 'tsid_stage_rev' for the 'Available POR' table
         console.log(gageName.value);
         let tsIdStagRev;
@@ -200,20 +200,20 @@ function initialize(data) {
                         }
                     });
                 }
-                
+
             };
         });
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
         console.log(newGeneralInfoURL);
-        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function (error) {
             popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
             popupWindowBtn.click();
         }) // Change URL for the online version
 
         // Is the gage a project?
-        fetchJsonFile(gageJsonUrl, function(data){
+        fetchJsonFile(gageJsonUrl, function (data) {
             let is_gage29 = false;
             data.forEach(element => {
                 if (element.basin === basinName.value) {
@@ -222,7 +222,7 @@ function initialize(data) {
                             is_gage29 = gage.display_stage_29;
                         }
                     });
-                } 
+                }
             });
 
             if (!is_gage29) {
@@ -232,10 +232,10 @@ function initialize(data) {
                 document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
             }
 
-        }, function(){});
+        }, function () { });
     });
 
-    hourlyCheckbox.addEventListener('change', function() {
+    hourlyCheckbox.addEventListener('change', function () {
         // Get the gage 'tsid_stage_rev' for the 'Available POR' table
         let tsIdStagRev;
         console.log(gageName.value);
@@ -254,20 +254,20 @@ function initialize(data) {
                         }
                     });
                 }
-                
+
             };
         });
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
         console.log(newGeneralInfoURL);
-        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function (error) {
             popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
             popupWindowBtn.click();
         }) // Change URL for the online version
 
         // Is the gage a project?
-        fetchJsonFile(gageJsonUrl, function(data){
+        fetchJsonFile(gageJsonUrl, function (data) {
             let is_gage29 = false;
             data.forEach(element => {
                 if (element.basin === basinName.value) {
@@ -276,7 +276,7 @@ function initialize(data) {
                             is_gage29 = gage.display_stage_29;
                         }
                     });
-                } 
+                }
             });
 
             if (!is_gage29) {
@@ -286,10 +286,10 @@ function initialize(data) {
                 document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
             }
 
-        }, function(){});
+        }, function () { });
     });
 
-    basinName.addEventListener('change', function() {
+    basinName.addEventListener('change', function () {
         // Get the gage 'tsid_stage_rev' for the 'Available POR' table
         let tsIdStagRev;
         data.forEach(element => {
@@ -307,20 +307,20 @@ function initialize(data) {
                         }
                     });
                 }
-                
+
             };
         });
 
         // If is not local it will add the 'tsid_stage_rev' to the URL
         let newGeneralInfoURL = generalInfoURL + tsIdStagRev;
         console.log(newGeneralInfoURL);
-        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function(error){
+        fetchJsonFile(newGeneralInfoURL, updateAvailablePORTable, function (error) {
             popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
             popupWindowBtn.click();
         }) // Change URL for the online version
 
         // Is the gage a project?
-        fetchJsonFile(gageJsonUrl, function(data){
+        fetchJsonFile(gageJsonUrl, function (data) {
             let is_gage29 = false;
             data.forEach(element => {
                 if (element.basin === basinName.value) {
@@ -329,7 +329,7 @@ function initialize(data) {
                             is_gage29 = gage.display_stage_29;
                         }
                     });
-                } 
+                }
             });
 
             if (!is_gage29) {
@@ -339,11 +339,11 @@ function initialize(data) {
                 document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
             }
 
-        }, function(){});
+        }, function () { });
     });
 
     // Is the gage a project?
-    fetchJsonFile(gageJsonUrl, function(data){
+    fetchJsonFile(gageJsonUrl, function (data) {
         let is_gage29 = false;
         data.forEach(element => {
             if (element.basin === basinName.value) {
@@ -352,7 +352,7 @@ function initialize(data) {
                         is_gage29 = gage.display_stage_29;
                     }
                 });
-            } 
+            }
         });
 
         if (!is_gage29) {
@@ -362,7 +362,7 @@ function initialize(data) {
             document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
         }
 
-    }, function(error){
+    }, function (error) {
         popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
         popupWindowBtn.click();
     });
@@ -392,11 +392,11 @@ function updateAvailablePORTable(data) {
         startPORDate.innerText = `${startDateList[2]}-${startDateList[0]}-${startDateList[1]}`;
         endPORDate.innerHTML = `${endDateList[2]}-${endDateList[0]}-${endDateList[1]}`;
     }
-    
+
 }
 
 // Buttons Functions
-getDataBtn.addEventListener('click', function() {
+getDataBtn.addEventListener('click', function () {
 
     // Excel initial function (Alert)
     getExcelBtn.removeEventListener('click', excelNoDataMessage);
@@ -412,7 +412,7 @@ getDataBtn.addEventListener('click', function() {
 
     // Get data for the period of record
     let periodDataUrl = domain + "/timeseries?" + "name=" + gageName.value + "&office=MVS&begin=" + beginDate.value + "T05%3A00%3A00.00Z&end=" + endDate.value + "T23%3A59%3A59.59Z" + "&page-size=200000";
-    fetchJsonFile(periodDataUrl, function(data) {
+    fetchJsonFile(periodDataUrl, function (data) {
 
         // Month to Number object (For converting string months to numbers)
         let monthConvert = {
@@ -443,15 +443,15 @@ getDataBtn.addEventListener('click', function() {
 
             resultsDiv.classList.remove('hidden');
 
-            getExcelBtn.addEventListener('click', function() {
+            getExcelBtn.addEventListener('click', function () {
                 exportTableToExcel(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-daily.xlsx`);
             });
 
-            getJSONBtn.addEventListener('click', function() {
+            getJSONBtn.addEventListener('click', function () {
                 exportTableToJSON(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-daily.json`)
             });
 
-        // If the hourly checkbox is checked
+            // If the hourly checkbox is checked
         } else if (hourlyCheckbox.checked) {
 
             let cstData = convertUTCtoCentralTime(data)['values']; // Convert number dates to actual date and change from UTC to CST
@@ -473,11 +473,11 @@ getDataBtn.addEventListener('click', function() {
 
             resultsDiv.classList.remove('hidden');
 
-            getExcelBtn.addEventListener('click', function() {
+            getExcelBtn.addEventListener('click', function () {
                 exportTableToExcel(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-hourly.xlsx`);
             });
 
-            getJSONBtn.addEventListener('click', function() {
+            getJSONBtn.addEventListener('click', function () {
                 exportTableToJSON(createTable(globalData, ['Date', 'Stage']), `${gageName.value.split('.')[0]}-hourly.json`)
             });
 
@@ -485,7 +485,7 @@ getDataBtn.addEventListener('click', function() {
 
         showLoading();
 
-    }, function(error) { showLoading(); popupMessage('error', `There was an error getting the data.<br>Error:<br>${error}`); popupWindowBtn.click();});
+    }, function (error) { showLoading(); popupMessage('error', `There was an error getting the data.<br>Error:<br>${error}`); popupWindowBtn.click(); });
 
 
 });
@@ -511,7 +511,7 @@ function addGageNames(data) {
                     gageName.appendChild(option);
                 });
             }
-            
+
         }
     });
 }
@@ -540,7 +540,7 @@ function createTable(data, columnsNameArray) {
         let parseNum = parseFloat(element.stage).toFixed(2);
         newRow.innerHTML = `<td>${element.date}</td>
                             <td>${parseNum}</td>`;
-        tableBody.appendChild(newRow); 
+        tableBody.appendChild(newRow);
     });
 
     return table;
@@ -548,12 +548,12 @@ function createTable(data, columnsNameArray) {
 }
 
 function createMultipleTables(data) {
-    
+
     // Check how many pages of tables will be
     let pages = 1;
     let pageCapacity = 100;
     if (data.length > 100) {
-        pages = Math.ceil(data.length/100);
+        pages = Math.ceil(data.length / 100);
     }
 
     /*=================== Create Buttons =========================*/
@@ -600,12 +600,12 @@ function createMultipleTables(data) {
 
     // Add Click function Left Button
     buttonList.forEach(button => {
-        button.addEventListener('mouseenter', function() {
+        button.addEventListener('mouseenter', function () {
             button.style.fontWeight = '600';
             button.style.background = 'rgb(77, 107, 212)';
             button.style.color = 'white';
         });
-        button.addEventListener('mouseleave', function() {
+        button.addEventListener('mouseleave', function () {
             button.style.fontWeight = '500';
             button.style.background = 'rgb(224, 224, 224)';
             button.style.color = 'black';
@@ -649,7 +649,7 @@ function createMultipleTables(data) {
 
         // Create the table element
         let newPage = document.createElement('table');
-        newPage.id = `page-${i+1}`;
+        newPage.id = `page-${i + 1}`;
         newPage.innerHTML = `
         <thead>
             <tr>
@@ -724,7 +724,7 @@ function createMultipleTables(data) {
     pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="1"> /${newList.length}`;
 
     // Change page when buttons are pressed
-    arrowRight.addEventListener('click', function() {
+    arrowRight.addEventListener('click', function () {
 
         // Change table to the next
         activeTable.table.classList.remove('visible');
@@ -733,24 +733,24 @@ function createMultipleTables(data) {
         // Update page label
         pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="${activeTable.index + 2}"> /${newList.length}`;
         pageTxtb = document.getElementById('page-txtb');
-        pageTxtb.addEventListener('change', function() {
+        pageTxtb.addEventListener('change', function () {
 
             if (pageTxtb.value > newList.length) {
                 pageTxtb.value = newList.length;
             } else if (pageTxtb.value < 1) {
                 pageTxtb.value = 1;
             }
-    
+
             // Change table to the previous
             activeTable.table.classList.remove('visible');
             newList[pageTxtb.value - 1].classList.add('visible');
-    
+
             // Make the new table the active table
             activeTable = {
                 table: newList[pageTxtb.value - 1],
                 index: pageTxtb.value - 1
             };
-    
+
             // Diable button depending on the active table
             if (activeTable.index === 0) {
                 arrowLeft.style.visibility = 'hidden';
@@ -762,7 +762,7 @@ function createMultipleTables(data) {
                 arrowLeft.style.visibility = 'visible';
                 arrowRight.style.visibility = 'visible';
             }
-    
+
         });
 
         // Make the new table the active table
@@ -780,11 +780,11 @@ function createMultipleTables(data) {
             arrowLeft.style.visibility = 'visible';
             arrowRight.style.visibility = 'visible';
         }
-        
+
     });
 
     // Change page when buttons are pressed
-    arrowLeft.addEventListener('click', function() {
+    arrowLeft.addEventListener('click', function () {
 
         // Change table to the previous
         activeTable.table.classList.remove('visible');
@@ -793,24 +793,24 @@ function createMultipleTables(data) {
         // Update page label
         pageLabel.innerHTML = `Page <input type="text" id="page-txtb" style="${textboxStyle}" value="${activeTable.index}"> /${newList.length}`;
         pageTxtb = document.getElementById('page-txtb');
-        pageTxtb.addEventListener('change', function() {
+        pageTxtb.addEventListener('change', function () {
 
             if (pageTxtb.value > newList.length) {
                 pageTxtb.value = newList.length;
             } else if (pageTxtb.value < 1) {
                 pageTxtb.value = 1;
             }
-    
+
             // Change table to the previous
             activeTable.table.classList.remove('visible');
             newList[pageTxtb.value - 1].classList.add('visible');
-    
+
             // Make the new table the active table
             activeTable = {
                 table: newList[pageTxtb.value - 1],
                 index: pageTxtb.value - 1
             };
-    
+
             // Diable button depending on the active table
             if (activeTable.index === 0) {
                 arrowLeft.style.visibility = 'hidden';
@@ -822,7 +822,7 @@ function createMultipleTables(data) {
                 arrowLeft.style.visibility = 'visible';
                 arrowRight.style.visibility = 'visible';
             }
-    
+
         });
 
         // Make the new table the active table
@@ -840,12 +840,12 @@ function createMultipleTables(data) {
             arrowLeft.style.visibility = 'visible';
             arrowRight.style.visibility = 'visible';
         }
-        
+
     });
 
     // Change the page to the page inputed into the textbox
     let pageTxtb = document.getElementById('page-txtb');
-    pageTxtb.addEventListener('change', function() {
+    pageTxtb.addEventListener('change', function () {
 
         if (pageTxtb.value > newList.length) {
             pageTxtb.value = newList.length;
@@ -920,13 +920,13 @@ function exportToCSV(data, filename = 'data.csv') {
         const url = URL.createObjectURL(blob);
         link.setAttribute('href', url);
         link.setAttribute('download', filename);
-        
+
         // Append the link to the body
         document.body.appendChild(link);
-        
+
         // Programmatically click the link to trigger the download
         link.click();
-        
+
         // Remove the link from the document
         document.body.removeChild(link);
     }
