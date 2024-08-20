@@ -282,6 +282,10 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
   let otherEventsDates = [];
   let lastIndex = 0;
   let eventsIndex = 0;
+
+  // Day count
+  let amountOfDays = 30;
+
   stageList.forEach((value, index) => {
     
     if (value < (upperLimit - eventFt)) {
@@ -291,7 +295,7 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
       lastIndex += 1;
 
       if (index + 1 == stageList.length) {
-        if (tempStage.length > 30 && tempStage.length > eventStage.length) {
+        if (tempStage.length > amountOfDays && tempStage.length > eventStage.length) {
           eventStage = tempStage;
           eventDate = tempDate;
           otherEvents[eventsIndex] = tempStage;
@@ -301,7 +305,7 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
           eventDatesStr = [];
           lastIndex = 0;
           eventsIndex += 1;
-        } else if (tempStage.length > 30 && tempStage.length < eventStage.length) {
+        } else if (tempStage.length > amountOfDays && tempStage.length < eventStage.length) {
           otherEvents[eventsIndex] = tempStage;
           otherEventsDates[eventsIndex] = eventDatesStr;
           tempStage = [];
@@ -309,7 +313,7 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
           eventDatesStr = [];
           lastIndex = 0;
           eventsIndex += 1;
-        } else if (tempStage.length < 30) {
+        } else if (tempStage.length < amountOfDays) {
           tempStage = [];
           tempDate = [];
           eventDatesStr = [];
@@ -318,7 +322,7 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
       }
 
     } else {
-      if (tempStage.length > 30 && tempStage.length > eventStage.length) {
+      if (tempStage.length > amountOfDays && tempStage.length > eventStage.length) {
         eventStage = tempStage;
         eventDate = tempDate;
         otherEvents[eventsIndex] = tempStage;
@@ -328,7 +332,7 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
         eventDatesStr = [];
         lastIndex = 0;
         eventsIndex += 1;
-      } else if (tempStage.length > 30 && tempStage.length < eventStage.length) {
+      } else if (tempStage.length > amountOfDays && tempStage.length < eventStage.length) {
         otherEvents[eventsIndex] = tempStage;
         otherEventsDates[eventsIndex] = eventDatesStr;
         tempStage = [];
@@ -336,7 +340,7 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
         eventDatesStr = [];
         lastIndex = 0;
         eventsIndex += 1;
-      } else if (tempStage.length < 30) {
+      } else if (tempStage.length < amountOfDays) {
         tempStage = [];
         tempDate = [];
         eventDatesStr = [];
