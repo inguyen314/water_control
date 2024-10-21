@@ -29,8 +29,8 @@ export function getNames(data) {
         let tempList = [];
 
         // Loop through all the gages in the current basin and add the datman name to the temp list
-        element['gages'].forEach(item => {
-            tempList.push(item['tsid_datman']);
+        element['assigned-locations'].forEach(item => {
+            tempList.push(item['location-id']);
         });
 
         let gagesList = tempList.filter(n => n != null);
@@ -38,7 +38,7 @@ export function getNames(data) {
         // Add a new object with the basin name and gages list to the object array
         if (gagesList.length > 0) {
             objArray.push({
-                basin: element['basin'],
+                basin: element['id'],
                 datman: gagesList,
             })
         };
