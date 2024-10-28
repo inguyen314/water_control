@@ -23,6 +23,11 @@
     --checkbox-border-color: #000;
 }
 
+.page-content.blur {
+    filter: blur(20px);
+    pointer-events: none;
+}
+
 #content-body {
     width: var(--body-width);
     margin: auto;
@@ -57,6 +62,7 @@
     background: var(--background-color-2);
     box-shadow: var(--shadow-box);
     margin: 3px;
+    padding-right: 100px;
 }
 
 .header h1 {
@@ -252,6 +258,16 @@
     box-shadow: var(--shadow-box);
 }
 
+.container .buttons #loading-msg {
+    position: absolute;
+    left: 1em;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+}
+
 .container .buttons button{
     border-radius: 5px;
     border: 1px solid var(--border-color-1);
@@ -263,6 +279,51 @@
     background: var(--color-active);
     color: var(--font-color-1);
     font-weight: bold;
+}
+
+#loading-image {
+    display: none;
+}
+
+#loading-image.show {
+    position: relative;
+    display: flex;
+    height: 400px;
+    margin: 5px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    background: rgb(255, 255, 255);
+    box-shadow: 0 5px 30px rgba(0,0,0,0.30);
+}
+
+#loading-image .loader {
+    position: absolute;
+    top: 20%;
+    padding: 0;
+    margin: 0;
+}
+
+#loading-image .loader .text-string {
+    position: absolute;
+    width: 10em;
+    top: 140%;
+    left: 50%;
+    transform: translateX(-32%);
+    font-size: 1.5em;
+    font-weight: bold;
+    color: rgb(239, 19, 19);
+}
+
+#loading-image .loader .text-string b {
+    position: absolute;
+    width: 30em;
+    top: 140%;
+    left: 17%;
+    transform: translateX(-32%);
+    font-size: 0.65em;
+    font-style: italic;
+    color: rgb(51, 51, 51);
 }
 
 /** Results Section **/
@@ -521,43 +582,3 @@
     display: none;
 }
 
-/* Responsive */
-@media (max-width: 1000px) {
-    .container .input-container {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .container .input-container::before {
-        position: absolute;
-        content: '';
-        width: 100%;
-        height: 10px;
-        background-color: var(--background-color-2);
-        top: 0;
-        left: 0;
-    }
-
-    .header {
-        position: relative;
-        display: flex;
-        justify-content: end;
-        padding-right: 10px;
-        background: var(--background-color-2);
-        box-shadow: var(--shadow-box);
-    }
-}
-
-@media (max-width: 540px) {
-    *{
-        font-size: 10px;
-    }
-
-    #mean-table th,td{
-        font-size: 8px;
-    }
-}

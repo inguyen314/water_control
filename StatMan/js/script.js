@@ -11,7 +11,9 @@ import {
     clearTable,
     haveOneYearOfData,
     blurBackground,
-    popupMessage
+    popupMessage,
+    showLoading,
+    loadingPageData
 } from './functions.js'
 
 
@@ -32,10 +34,24 @@ const basinName = document.getElementById('basinCombobox'),
       locationInformation = document.getElementById('location-data'),
       zeroGageData = document.getElementById('zero-gage-data'),
       darkModeCheckbox = document.querySelector('.header label input'),
-      popupWindowBtn = document.getElementById('popup-button');
+      popupWindowBtn = document.getElementById('popup-button'),
+      isProjectLabel = document.getElementById('is-project'),
+      loadingElement = document.getElementById("loading-msg");
 
-// Const Variables
-const officeName = "MVS";
+
+let params = new URLSearchParams(window.location.search);
+const officeName = params.get("office") ? params.get("office").toUpperCase() : "MVS";
+const cda = params.get("cda") ? params.get("cda") : "internal";
+const type = params.get("type") ? params.get("type") : "statman";
+
+console.log("Office ID: ", officeName);
+console.log("CDA: ", cda);
+console.log("Type: ", type);
+
+// Add function to popup window button
+popupWindowBtn.addEventListener('click', blurBackground);
+
+loadingPageData();
 
 /**============= Main functions when data is retrieved ================**/
 // Initilize page
@@ -48,9 +64,6 @@ function initialize(data) {
         document.getElementById('content-body').classList.toggle('dark');
         document.getElementById('page-container').classList.toggle('dark');
     });
-
-    // Add function to popup window button
-    popupWindowBtn.addEventListener('click', blurBackground);
 
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);
@@ -84,7 +97,10 @@ function initialize(data) {
                 });
             }
         });
-    })
+
+        // Determine if it's project
+        isGageProject(data);
+    });
 
     updateAvailablePORTable(data);
 
@@ -93,32 +109,13 @@ function initialize(data) {
 
         updateAvailablePORTable(data);
 
-    })
+        // Determine if it's project
+        isGageProject(data);
 
-    // Is the gage a project?
-    fetchJsonFile(jsonUrl, function(data){
-        let is_gage29 = false;
-        data.forEach(element => {
-            if (element.basin === basinName.value) {
-                element.gages.forEach(gage => {
-                    if (gage.tsid_datman === gageName.value) {
-                        is_gage29 = gage.display_stage_29;
-                    }
-                });
-            } 
-        });
-
-        if (!is_gage29) {
-            // Change the datum info to show
-            document.querySelector('#content-body .container .data-type label').innerText = "Datum: NAV88";
-        } else {
-            document.querySelector('#content-body .container .data-type label').innerText = "Datum: NGVD29";
-        }
-
-    }, function(error){
-        popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
-        popupWindowBtn.click();
     });
+
+    // Determine if it's project
+    isGageProject(data);
 
     // Get all data to create the url
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -127,22 +124,28 @@ function initialize(data) {
 
     computeCSV.addEventListener('click' , alertMessageForCSVBtn);
 
+    inputsDisableAndEnable();
+
+    //loadingElement.hidden = true;
+
+    loadingPageData();
+
     // HTML button clicked
     computeHTMLBtn.addEventListener('click', function() {
 
         // Verify if the selected period is more than one year.
-        if (haveOneYearOfData(beginDate.value, endDate.value)) {
+        if (haveOneYearOfData(beginDate.value, endDate.value) && beginDate.value < endDate.value) {
 
             computeHTMLBtn.textContent = "Processing - One Moment";
 
+            // Get Datman name ID
             let datmanName;
-
             data.forEach(element => {
                 if (element['id'] === basinName.value) {
                     element['assigned-locations'].forEach(item => {
                         if (item['location-id'] === gageName.value) {
-                            datmanName = item['extents-data']['datman'][0]['name'];
-                        }
+                            datmanName = item['tsid-datman']['assigned-time-series'][0]['timeseries-id'];
+                        };
                     });
                 };
             });
@@ -166,14 +169,34 @@ function initialize(data) {
                 resultsDiv.classList.add('hidden');
             }
 
-            fetchJsonFile(stageUrl, main, function(){
+            fetchJsonFile(stageUrl, function(newData) { 
+
+                main(newData);
+                // Update Location Info
+                let gageInformation = null;
+                data.forEach(basin => {
+                    if (basin['id'] === basinName.value) {
+                        basin['assigned-locations'].forEach(gage => {
+                            if (gage['location-id'] === gageName.value) {
+                                gageInformation = gage['metadata'];
+                            };
+                        });
+                    };
+                });
+
+                console.log('Metadata: ', gageInformation);
+
+                locationInformation.textContent = gageInformation ? `LAT. ${gageInformation.latitude}, LONG. ${gageInformation.longitude}, ${gageInformation.description}` : 'No gage information found.';
+                zeroGageData.textContent = `${gageInformation.elevation.toFixed(2)} ft ${gageInformation['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+            
+            }, function(){
                 popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
                 popupWindowBtn.click();
             });
 
         } else {
 
-            popupMessage("error", "There was an error with the time window selected. Make sure the time window is <strong>ONE</strong> year or more and the ending date is greater than the starting date");
+            popupMessage("error", "There was an error with the time window selected. Make sure the time window is <strong>ONE</strong> year or more, and the ending date is greater than the starting date");
             popupWindowBtn.click();
         }
 
@@ -186,6 +209,9 @@ function initialize(data) {
 
 // Main function
 function main(data) {
+
+    console.log('Main Data: ', data);
+
     // Add function to the CSV button
     computeCSV.removeEventListener('click', alertMessageForCSVBtn)
 
@@ -193,64 +219,7 @@ function main(data) {
     document.querySelector('.results #gage-info-table th').textContent = gageName.value.split('.')[0];
 
     // Fetch data for general information
-    let formattedName = gageName.value.split('.')[0].split(' ').join('%20');
-
-    // Update Location Info
-    fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
-        locationInformation.textContent = `LAT. ${data.latitude}, LONG. ${data.longitude}, ${data.description}`;
-        //zeroGageData.textContent = `${elevation} ft NAVD ${navNum}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
-    }, function(){});
-
-    // Is the gage a project?
-    fetchJsonFile(jsonUrl, function(data){
-        let is_gage29 = false;
-        data.forEach(element => {
-            if (element.basin === basinName.value) {
-                element.gages.forEach(gage => {
-                    if (gage.tsid_datman === gageName.value) {
-                        is_gage29 = gage.display_stage_29;
-                    }
-                });
-            } 
-        });
-
-        // Update Zero Gage Datum
-        if (!is_gage29) {
-            fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
-                zeroGageData.textContent = `${data.elevation.toFixed(2)} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
-            }, function(){});
-        } else {
-
-            fetchJsonFile(jsonUrl, function (data) {
-                let basinData = data.filter(x => x.basin === basinName.value)[0].gages.filter(y => y.tsid_datman === gageName.value)[0];
-                let idNgvd29 = basinData.level_id_ngvd29;
-                let idEffectiveDate = basinData.level_id_effective_date_ngvd29;
-                let idUnits29 = basinData.unit_id;
-
-                let fetchURL = "https://cwms-data.usace.army.mil/cwms-data/levels";
-                
-                // example: https://cwms-data.usace.army.mil/cwms-data/levels/Sub-Casey%20Fork.Height.Inst.0.NGVD29?office=MVS&effective-date=2024-01-01T08:00:00&unit=ft
-
-                console.log("Gage Constant Value Url: " + fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29);
-
-                fetchJsonFile(fetchURL + "/" + idNgvd29 + "?office=" + officeName + "&effective-date=" + idEffectiveDate + "&unit=" + idUnits29, function (data) {
-                    let constantValue = data["constant-value"];
-
-                    console.log(`Gage Zero Datum Value Url: ${locationInfoURL}/${formattedName}?office=${officeName}`);
-
-                    fetchJsonFile(`${locationInfoURL}/${formattedName}?office=${officeName}`, function(data) {
-                        let newElev = constantValue - data.elevation;
-                        zeroGageData.textContent = `${newElev.toFixed(2)} ft ${data["vertical-datum"]}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
-                    }, function(){});
-
-                }, function() {});
-
-                zeroGageData.textContent = "${data.elevation} ft ${data['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.";
-                
-            }, function (){});
-        }
-
-    }, function(){});
+    //let formattedName = gageName.value.split('.')[0].split(' ').join('%20');    
 
     /* Update some other data */
     // Selected POR Statistic
@@ -264,11 +233,15 @@ function main(data) {
 
     document.querySelector('.selected-por-statistic h2').textContent = `Selected POR Statistics [${porNewStartDate} to ${porNewEndDate}]`
     
-    let objData = data["time-series"]["time-series"][0]["irregular-interval-values"]["values"];
+    let objData = data["values"];
     
     // Get list with all the years
     let wholePeriodList = getList(objData);
     let totalData = getMeanMinMaxList(wholePeriodList);
+
+    console.log('Whole Period List: ', wholePeriodList);
+
+    console.log('Total Data: ', totalData);
 
     // Separete data between mean, max and min
     let meanData = totalData[0],
@@ -460,17 +433,52 @@ function main(data) {
 
     computeCSV.addEventListener('click' , function() {
 
-        let dataStringForCSV = '';
-        dataStringForCSV += "Mean table\n";
-        dataStringForCSV += formatDataToCSV(meanDataTable);
-        dataStringForCSV += "\nMin Table\n";
-        dataStringForCSV += formatDataToCSV(minDataTable);
-        dataStringForCSV += "\nMax Table\n";
-        dataStringForCSV += formatDataToCSV(maxDataTable);
+        // // This is for a CSV File
+        // let dataStringForCSV = '';
+        // dataStringForCSV += "Mean table\n";
+        // dataStringForCSV += formatDataToCSV(meanDataTable);
+        // dataStringForCSV += "\nMin Table\n";
+        // dataStringForCSV += formatDataToCSV(minDataTable);
+        // dataStringForCSV += "\nMax Table\n";
+        // dataStringForCSV += formatDataToCSV(maxDataTable);
 
         //exportToCSV(dataStringForCSV);
         let tablesList = [averageTable, maxTable, minTable];
-        exportTableToExcel(tablesList, `${gageName.value.split('.')[0]}-StatMan.xlsx`);
+        console.log("Tables: ", tablesList);
+
+        let newMaxTable = document.createElement('table');
+        let newMaxThead = document.createElement('thead');
+        let newMaxTbody = document.createElement('tbody');
+
+        newMaxThead.innerHTML = maxTable.childNodes[0].innerHTML;
+
+        let tbody = document.querySelector('#max-table tbody');
+
+        // Array to store the data
+        let rowDataList = [];
+
+        for (let row of tbody.rows) {
+            // Temporary array to hold cell values for each row
+            let cellValues = [];
+            
+            // Loop through each cell in the row
+            for (let cell of row.cells) {
+                cellValues.push(cell.textContent); // Get cell text
+            }
+            
+            // Add the row's data as an array to the main list
+            rowDataList.push(cellValues);
+        }
+
+        console.log("Tbody: ", tbody);
+
+        console.log("Row Data List: ", rowDataList);
+
+        newMaxTable.appendChild(newMaxThead);
+
+        //console.log('New Table: ', newMaxTable);
+
+        // exportTableToExcel(tablesList, `${gageName.value.split('.')[0]}-StatMan.xlsx`);
     });
 
     // Check if the checkbox are checked
@@ -500,6 +508,47 @@ function main(data) {
 
     resultsDiv.classList.remove('hidden');
 
+}
+
+// Is Project Function
+function isGageProject(data) {
+    // Determine if it's project
+    let isProject = false;
+    data.forEach(element => {
+        if (element['id'] === basinName.value) {
+            element['assigned-locations'].forEach(item => {
+                if (item['location-id'] === gageName.value) {
+                    let projectsList = item['project']['assigned-locations'] ? item['project']['assigned-locations'] : null;
+                    console.log('Project List: ', projectsList);
+                    if (projectsList) {
+                        projectsList.forEach(gage => {
+                            if (gage['location-id'] === gageName.value) {
+                                isProject = true;
+                            };
+                        });
+                    };
+                };
+            });
+        };
+    });
+
+    // Change Datum type on the HTML
+    if (isProject) {
+        isProjectLabel.innerHTML = 'Datum: Elevation';
+    } else {
+        isProjectLabel.innerHTML = 'Datum: Stage';
+    }
+}
+
+// Disable and enable every input
+function inputsDisableAndEnable() {
+
+    let inputsList = [basinName, gageName, beginDate, endDate, computeHTMLBtn, computeCSV, aveCheckbox, maxCheckbox, minCheckbox, darkModeCheckbox];
+
+    inputsList.forEach(element => {
+        // Set disable if it's enabled and enables if it's disabled
+        element.disabled = element.disabled ? false : true;
+    });
 }
 
 // Update Available POR Function
@@ -554,7 +603,7 @@ function exportToCSV(data, filename = 'data.csv') {
 }
 
 function alertMessageForCSVBtn() {
-    popupMessage("warning", "You must calculate the HTML first before creating the CSV. At this point there is no data to create the CSV file.");
+    popupMessage("warning", "You must calculate the HTML first before creating the Excel File. At this point there is no data to create the Excel file.");
     popupWindowBtn.click();
 }
 
@@ -647,48 +696,14 @@ function exportTableToExcel(tableList, filename) {
     XLSX.writeFile(workbook, filename);
 }
 
-let jsonUrl;
-let isLocal;
-let domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
-let locationInfoURL = domain + "/locations";
-let generalInfoURL = domain + "/catalog/TIMESERIES?office=MVS&like=";
-
-// Check if the program is running in the web server or a host server
-const hostname = window.location.hostname; //Web: wm.mvs.ds.usace.army.mil;    Local: 127.0.0.1
-if (hostname === "wm.mvs.ds.usace.army.mil") {
-
-    jsonUrl = "../../../../php_data_api/public/json/gage_control.json";
-    /* generalInfoURL = "../../../../php_data_api/public/get_tsid_extents.php?cwms_ts_id="; */
-    isLocal = false;
-
-} else if (hostname === "127.0.0.1") {
-
-    jsonUrl = "../json/data.json";
-    generalInfoURL = "../json/test_available_por_data.json";
-    isLocal = true;
-
-} else {
-    alert("There was a problem getting the server name.");
-}
-
-// Fetch the gages names
-console.log(`Gage Data Url: ${jsonUrl}`);
-// fetchJsonFile(jsonUrl, initialize, function(error){
-//     popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
-//     popupWindowBtn.click();
-// });
-
 document.addEventListener('DOMContentLoaded', async function () {
-    // Display the loading indicator for water quality alarm
-    //const loadingIndicator = document.getElementById('loading_alarm_datman');
-    //loadingIndicator.style.display = 'block'; // Show the loading indicator
 
-    // Set the category and base URL for API calls
-    let setCategory = "Datman";
+    inputsDisableAndEnable();
 
-    let cda = "internal";
-    let office = "MVS";
-    let type = "no idea";
+    let setCategory = "Basins"; 
+
+    //let office = "MVS";
+    //let type = "no idea";
 
     // Get the current date and time, and compute a "look-back" time for historical data
     const currentDateTime = new Date();
@@ -696,7 +711,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let setBaseUrl = null;
     if (cda === "internal") {
-        setBaseUrl = `https://coe-${office.toLowerCase()}uwa04${office.toLowerCase()}.${office.toLowerCase()}.usace.army.mil:8243/${office.toLowerCase()}-data/`;
+        setBaseUrl = `https://coe-${officeName.toLowerCase()}uwa04${officeName.toLowerCase()}.${officeName.toLowerCase()}.usace.army.mil:8243/${officeName.toLowerCase()}-data/`;
         console.log("setBaseUrl: ", setBaseUrl);
     } else if (cda === "public") {
         setBaseUrl = `https://cwms-data.usace.army.mil/cwms-data/`;
@@ -704,18 +719,22 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Define the URL to fetch location groups based on category
-    const categoryApiUrl = setBaseUrl + `location/group?office=${office}&include-assigned=false&location-category-like=${setCategory}`;
+    const categoryApiUrl = setBaseUrl + `location/group?office=${officeName}&include-assigned=false&location-category-like=${setCategory}`;
     console.log("categoryApiUrl: ", categoryApiUrl);
 
     // Initialize maps to store metadata and time-series ID (TSID) data for various parameters
     const metadataMap = new Map();
     const ownerMap = new Map();
     const tsidDatmanMap = new Map();
+    const tsidStageMap = new Map();
+    const projectMap = new Map();
 
     // Initialize arrays for storing promises
     const metadataPromises = [];
     const ownerPromises = [];
     const datmanTsidPromises = [];
+    const stageTsidPromises = [];
+    const projectPromises = [];
 
     // Fetch location group data from the API
     fetch(categoryApiUrl)
@@ -732,7 +751,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             // Filter and map the returned data to basins belonging to the target category
-            const targetCategory = { "office-id": office, "id": setCategory };
+            const targetCategory = { "office-id": officeName, "id": setCategory };
             const filteredArray = filterByLocationCategory(data, targetCategory);
             const basins = filteredArray.map(item => item.id);
 
@@ -747,7 +766,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // Loop through each basin and fetch data for its assigned locations
             basins.forEach(basin => {
-                const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${office}&category-id=${setCategory}`;
+                const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${officeName}&category-id=${setCategory}`;
                 console.log("basinApiUrl: ", basinApiUrl);
 
                 apiPromises.push(
@@ -777,7 +796,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     // console.log(loc['location-id']);
 
                                     // Fetch metadata for each location
-                                    const locApiUrl = setBaseUrl + `locations/${loc['location-id']}?office=${office}`;
+                                    const locApiUrl = setBaseUrl + `locations/${loc['location-id']}?office=${officeName}`;
                                     // console.log("locApiUrl: ", locApiUrl);
                                     metadataPromises.push(
                                         fetch(locApiUrl)
@@ -800,7 +819,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     );
 
                                     // Fetch owner for each location
-                                    let ownerApiUrl = setBaseUrl + `location/group/${office}?office=${office}&category-id=${office}`;
+                                    let ownerApiUrl = setBaseUrl + `location/group/Datman?office=${officeName}&category-id=${officeName}`;
                                     if (ownerApiUrl) {
                                         ownerPromises.push(
                                             fetch(ownerApiUrl)
@@ -826,9 +845,36 @@ document.addEventListener('DOMContentLoaded', async function () {
                                         );
                                     }
 
+                                    // Fetch project for each location
+                                    let projectApiUrl = setBaseUrl + `location/group/Project?office=${officeName}&category-id=${officeName}`;
+                                    if (projectApiUrl) {
+                                        projectPromises.push(
+                                            fetch(projectApiUrl)
+                                                .then(response => {
+                                                    if (response.status === 404) {
+                                                        console.warn(`Temp-Water TSID data not found for location: ${loc['location-id']}`);
+                                                        return null;
+                                                    }
+                                                    if (!response.ok) {
+                                                        throw new Error(`Network response was not ok: ${response.statusText}`);
+                                                    }
+                                                    return response.json();
+                                                })
+                                                .then(projectData => {
+                                                    if (projectData) {
+                                                        console.log("projectData", projectData);
+                                                        projectMap.set(loc['location-id'], projectData);
+                                                    }
+                                                })
+                                                .catch(error => {
+                                                    console.error(`Problem with the fetch operation for stage TSID data at ${projectApiUrl}:`, error);
+                                                })
+                                        );
+                                    }
+
 
                                     // Fetch datman TSID data
-                                    const tsidDatmanApiUrl = setBaseUrl + `timeseries/group/Datman?office=${office}&category-id=${loc['location-id']}`;
+                                    const tsidDatmanApiUrl = setBaseUrl + `timeseries/group/Datman?office=${officeName}&category-id=${loc['location-id']}`;
                                     // console.log('tsidDatmanApiUrl:', tsidDatmanApiUrl);
                                     datmanTsidPromises.push(
                                         fetch(tsidDatmanApiUrl)
@@ -847,6 +893,27 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 console.error(`Problem with the fetch operation for stage TSID data at ${tsidDatmanApiUrl}:`, error);
                                             })
                                     );
+
+                                    // Fetch stage TSID data
+                                    const tsidStageApiUrl = setBaseUrl + `timeseries/group/Stage?office=${officeName}&category-id=${loc['location-id']}`;
+                                    // console.log('tsidStageApiUrl:', tsidStageApiUrl);
+                                    stageTsidPromises.push(
+                                        fetch(tsidStageApiUrl)
+                                            .then(response => {
+                                                if (response.status === 404) return null; // Skip if not found
+                                                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                                                return response.json();
+                                            })
+                                            .then(tsidStageData => {
+                                                // console.log('tsidStageData:', tsidStageData);
+                                                if (tsidStageData) {
+                                                    tsidStageMap.set(loc['location-id'], tsidStageData);
+                                                }
+                                            })
+                                            .catch(error => {
+                                                console.error(`Problem with the fetch operation for stage TSID data at ${tsidStageApiUrl}:`, error);
+                                            })
+                                    );
                                 });
                             }
                         })
@@ -861,6 +928,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .then(() => Promise.all(metadataPromises))
                 .then(() => Promise.all(ownerPromises))
                 .then(() => Promise.all(datmanTsidPromises))
+                .then(() => Promise.all(stageTsidPromises))
                 .then(() => {
                     combinedData.forEach(basinData => {
                         if (basinData['assigned-locations']) {
@@ -879,6 +947,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     loc['owner'] = ownerMapData;
                                 };
 
+                                // Add project to json
+                                const projectMapData = projectMap.get(loc['location-id']);
+                                if (projectMapData) {
+                                    loc['project'] = projectMapData;
+                                };
 
                                 // Add datman to json
                                 const tsidDatmanMapData = tsidDatmanMap.get(loc['location-id']);
@@ -889,9 +962,22 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     loc['tsid-datman'] = null;  // Append null if missing
                                 }
 
+                                // Add stage to json
+                                const tsidStageMapData = tsidStageMap.get(loc['location-id']);
+                                if (tsidStageMapData) {
+                                    reorderByAttribute(tsidStageMapData);
+                                    loc['tsid-stage'] = tsidStageMapData;
+                                } else {
+                                    loc['tsid-stage'] = null;  // Append null if missing
+                                }
+
                                 // Initialize empty arrays to hold API and last-value data for various parameters
                                 loc['datman-api-data'] = [];
                                 loc['datman-last-value'] = [];
+
+                                // Initialize empty arrays to hold API and last-value data for various parameters
+                                loc['stage-api-data'] = [];
+                                loc['stage-last-value'] = [];
                             });
                         }
                     });
@@ -910,7 +996,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             const timeSeriesDataFetchPromises = (timeSeries, type) => {
                                 return timeSeries.map((series, index) => {
                                     const tsid = series['timeseries-id'];
-                                    const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${office}`;
+                                    const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${officeName}`;
                                     console.log('timeSeriesDataApiUrl:', timeSeriesDataApiUrl);
 
                                     return fetch(timeSeriesDataApiUrl, {
@@ -1009,7 +1095,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                             // Additional API call for extents data
                             const timeSeriesDataExtentsApiCall = (type) => {
-                                const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${office}`;
+                                const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${officeName}`;
                                 console.log('extentsApiUrl:', extentsApiUrl);
 
                                 return fetch(extentsApiUrl, {
@@ -1076,66 +1162,94 @@ document.addEventListener('DOMContentLoaded', async function () {
                 })
                 .then(() => {
                     console.log('All combinedData data fetched successfully:', combinedData);
-
-                    // Check and remove all attribute ending in 0.1
+ 
+                    // Step 1: Filter out locations where 'attribute' ends with '.1'
                     combinedData.forEach((dataObj, index) => {
-                        // console.log(`Processing dataObj at index ${index}:`, dataObj[`assigned-locations`]);
-
-                        // Filter out locations where the 'attribute' ends with '.1'
-                        dataObj[`assigned-locations`] = dataObj[`assigned-locations`].filter(location => {
-                            const attribute = location[`attribute`].toString();
-                            // console.log(`Checking attribute: ${attribute}`);
-                            return !attribute.endsWith('.1');
-                        });
-
-                        // console.log(`Updated assigned-locations for index ${index}:`, dataObj[`assigned-locations`]);
-                    });
-
-                    console.log('All combinedData data filtered successfully:', combinedData);
-
-                    if (type === "status") {
-                        // Only call createTable if no valid data exists
-                        const table = createTable(combinedData);
-
-                        // Append the table to the specified container
-                        const container = document.getElementById('table_container_alarm_datman');
-                        container.appendChild(table);
-                    } else {
-                        // Check if there are valid lastDatmanValues in the data
-                        if (hasLastValue(combinedData)) {
-                            if (hasDataSpike(combinedData)) {
-                                console.log("Data spike detected.");
-                                // call createTable if data spike exists
-                                const table = createTableDataSpike(combinedData);
-
-                                // Append the table to the specified container
-                                const container = document.getElementById('table_container_alarm_datman');
-                                container.appendChild(table);
-                            } else {
-                                console.log("No data spikes detected.");
-                                console.log('Valid lastDatmanValue found. Displaying image instead.');
-
-                                // Create an img element
-                                const img = document.createElement('img');
-                                img.src = '/apps/alarms/images/passed.png'; // Set the image source
-                                img.alt = 'Process Completed'; // Optional alt text for accessibility
-                                img.style.width = '50px'; // Optional: set the image width
-                                img.style.height = '50px'; // Optional: set the image height
-
-                                // Get the container and append the image
-                                //const container = document.getElementById('table_container_alarm_datman');
-                                //container.appendChild(img);
+                        // console.log(`Processing dataObj at index ${index}:`, dataObj['assigned-locations']);
+ 
+                        // Filter out locations with 'attribute' ending in '.1'
+                        dataObj['assigned-locations'] = dataObj['assigned-locations'].filter(location => {
+                            const attribute = location['attribute'].toString();
+                            if (attribute.endsWith('.1')) {
+                                // Log the location being removed
+                                console.log(`Removing location with attribute '${attribute}' and id '${location['location-id']}' at index ${index}`);
+                                return false; // Filter out this location
                             }
-
-                        } else {
-                            // Only call createTable if no valid data exists
-                            const table = createTable(combinedData);
-
-                            // Append the table to the specified container
-                            //const container = document.getElementById('table_container_alarm_datman');
-                            //container.appendChild(table);
+                            return true; // Keep the location
+                        });
+ 
+                        // console.log(`Updated assigned-locations for index ${index}:`, dataObj['assigned-locations']);
+                    });
+ 
+                    console.log('Filtered all locations ending with .1 successfully:', combinedData);
+ 
+                    // Step 2: Filter out locations where 'location-id' doesn't match owner's 'assigned-locations'
+                    combinedData.forEach(dataGroup => {
+                        // Iterate over each assigned-location in the dataGroup
+                        let locations = dataGroup['assigned-locations'];
+ 
+                        // Loop through the locations array in reverse to safely remove items
+                        for (let i = locations.length - 1; i >= 0; i--) {
+                            let location = locations[i];
+ 
+                            // Find if the current location-id exists in owner's assigned-locations
+                            let matchingOwnerLocation = location['owner']['assigned-locations'].some(ownerLoc => {
+                                return ownerLoc['location-id'] === location['location-id'];
+                            });
+ 
+                            // If no match, remove the location
+                            if (!matchingOwnerLocation) {
+                                console.log(`Removing location with id ${location['location-id']} as it does not match owner`);
+                                locations.splice(i, 1);
+                            }
                         }
-                    }
+                    });
+ 
+                    console.log('Filtered all locations by matching location-id with owner successfully:', combinedData);
+
+                    // if (type === "status") {
+                    //     // Only call createTable if no valid data exists
+                    //     const table = createTable(combinedData);
+
+                    //     // Append the table to the specified container
+                    //     const container = document.getElementById('table_container_alarm_datman');
+                    //     container.appendChild(table);
+                    // } else {
+                    //     // Check if there are valid lastDatmanValues in the data
+                    //     if (hasLastValue(combinedData)) {
+                    //         if (hasDataSpike(combinedData)) {
+                    //             console.log("Data spike detected.");
+                    //             // call createTable if data spike exists
+                    //             const table = createTableDataSpike(combinedData);
+
+                    //             // Append the table to the specified container
+                    //             const container = document.getElementById('table_container_alarm_datman');
+                    //             container.appendChild(table);
+                    //         } else {
+                    //             console.log("No data spikes detected.");
+                    //             console.log('Valid lastDatmanValue found. Displaying image instead.');
+
+                    //             // Create an img element
+                    //             const img = document.createElement('img');
+                    //             img.src = '/apps/alarms/images/passed.png'; // Set the image source
+                    //             img.alt = 'Process Completed'; // Optional alt text for accessibility
+                    //             img.style.width = '50px'; // Optional: set the image width
+                    //             img.style.height = '50px'; // Optional: set the image height
+
+                    //             // Get the container and append the image
+                    //             //const container = document.getElementById('table_container_alarm_datman');
+                    //             //container.appendChild(img);
+                    //         }
+
+                    //     } else {
+                    //         // Only call createTable if no valid data exists
+                    //         const table = createTable(combinedData);
+
+                    //         // Append the table to the specified container
+                    //         //const container = document.getElementById('table_container_alarm_datman');
+                    //         //container.appendChild(table);
+                    //     }
+                    // }
 
                     //loadingIndicator.style.display = 'none';
                     console.log("TEST: ", combinedData);
@@ -1152,6 +1266,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         .catch(error => {
             console.error('There was a problem with the initial fetch operation:', error);
             //loadingIndicator.style.display = 'none';
+            popupMessage("error", "There was an error retrieving the data.<br>See the console log for more information.");
+            popupWindowBtn.click();
+            loadingPageData();
         });
 
     function filterByLocationCategory(array, setCategory) {
@@ -1438,46 +1555,46 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     function hasDataSpike(data) {
         // Iterate through each key in the data object
-        for (const locationIndex in data) {
-            if (data.hasOwnProperty(locationIndex)) { // Ensure the key belongs to the object
-                const item = data[locationIndex];
-                console.log(`Checking basin ${parseInt(locationIndex) + 1}:`, item); // Log the current item being checked
+        // for (const locationIndex in data) {
+        //     if (data.hasOwnProperty(locationIndex)) { // Ensure the key belongs to the object
+        //         const item = data[locationIndex];
+        //         console.log(`Checking basin ${parseInt(locationIndex) + 1}:`, item); // Log the current item being checked
 
-                const assignedLocations = item['assigned-locations'];
-                // Check if assigned-locations is an object
-                if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    console.log('No assigned-locations found in basin:', item);
-                    continue; // Skip to the next basin
-                }
+        //         const assignedLocations = item['assigned-locations'];
+        //         // Check if assigned-locations is an object
+        //         if (typeof assignedLocations !== 'object' || assignedLocations === null) {
+        //             console.log('No assigned-locations found in basin:', item);
+        //             continue; // Skip to the next basin
+        //         }
 
-                // Iterate through each location in assigned-locations
-                for (const locationName in assignedLocations) {
-                    const location = assignedLocations[locationName];
-                    console.log(`Checking location: ${locationName}`, location); // Log the current location being checked
-                    const datmanMaxValue = location['datman-max-value'][0][`value`];
-                    const datmanMinValue = location['datman-min-value'][0][`value`];
+        //         // Iterate through each location in assigned-locations
+        //         for (const locationName in assignedLocations) {
+        //             const location = assignedLocations[locationName];
+        //             console.log(`Checking location: ${locationName}`, location); // Log the current location being checked
+        //             const datmanMaxValue = location['datman-max-value'][0][`value`];
+        //             const datmanMinValue = location['datman-min-value'][0][`value`];
 
-                    // Check if datmanMaxValue or datmanMinValue exists
-                    if (datmanMaxValue || datmanMinValue) {
-                        // Check if the max value exceeds 999 or the min value is less than -999
-                        if (datmanMaxValue > 999) {
-                            console.log(`Data spike detected in location ${locationName}: max = ${datmanMaxValue}`);
-                            return true; // Return true if any spike is found
-                        }
-                        if (datmanMinValue < -999) {
-                            console.log(`Data spike detected in location ${locationName}: min = ${datmanMinValue}`);
-                            return true; // Return true if any spike is found
-                        }
-                    } else {
-                        console.log(`No valid 'datman-max-value' or 'datman-min-value' found in location ${locationName}.`);
-                    }
-                }
-            }
-        }
+        //             // Check if datmanMaxValue or datmanMinValue exists
+        //             if (datmanMaxValue || datmanMinValue) {
+        //                 // Check if the max value exceeds 999 or the min value is less than -999
+        //                 if (datmanMaxValue > 999) {
+        //                     console.log(`Data spike detected in location ${locationName}: max = ${datmanMaxValue}`);
+        //                     return true; // Return true if any spike is found
+        //                 }
+        //                 if (datmanMinValue < -999) {
+        //                     console.log(`Data spike detected in location ${locationName}: min = ${datmanMinValue}`);
+        //                     return true; // Return true if any spike is found
+        //                 }
+        //             } else {
+        //                 console.log(`No valid 'datman-max-value' or 'datman-min-value' found in location ${locationName}.`);
+        //             }
+        //         }
+        //     }
+        // }
 
-        // Return false if no data spikes were found
-        console.log('No data spikes detected in any location.');
-        return false;
+        // // Return false if no data spikes were found
+        // console.log('No data spikes detected in any location.');
+        // return false;
     }
 
     function createTable(data) {

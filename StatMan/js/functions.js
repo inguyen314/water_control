@@ -78,13 +78,17 @@ export function formatString(textField, stringText) {
 export function getList(dataList) {
     let yearsList = [],
         objectList = [];
+
+    // Create Date Element
+    let date = new Date();
         
     // Loop through the data list to get years of the period
     dataList.forEach(element => {
-        let currentYear = element[0].split('-')[0];
-        let currentYearInt = parseInt(currentYear);
-        if (!yearsList.includes(currentYearInt)) {
-            yearsList.push(currentYearInt);
+        
+        date = new Date(parseInt(element[0]));
+        let currentYear = date.getFullYear();
+        if (!yearsList.includes(currentYear)) {
+            yearsList.push(currentYear);
         }
     });
 
@@ -92,10 +96,19 @@ export function getList(dataList) {
     yearsList.forEach(year => {
         let tempList = [];
         dataList.forEach(element => {
-            if (parseInt(element[0].split("-")[0]) === year) {
+
+            date = new Date(parseInt(element[0]));
+            let currentYear = date.getFullYear();
+
+            if ( currentYear === year) {
+                // Obtener día, mes y año
+                let day = date.getDate().toString().padStart(2, '0'); // Two-digits day
+                let month = (date.getMonth() + 1).toString().padStart(2, '0'); // Two-digit month
+                let year = date.getFullYear();
+                let formattedDate = `${year}-${month}-${day}`
                 tempList.push({
-                    date: element[0].split("T")[0],
-                    stage: element[1],
+                    date: formattedDate,
+                    stage: parseFloat(element[1].toFixed(2)),
                 });
             }
         });
@@ -373,14 +386,14 @@ export function haveOneYearOfData(startDate, endDate) {
 
 }
 
-export function blurBackground () {
+export function blurBackground() {
     let blur = document.querySelector('#page-container .page-wrap');
     blur.classList.toggle('active');
     let popupWindow = document.getElementById('popup-window');
     popupWindow.classList.toggle('active');
 }
 
-export function popupMessage (msgType, message) {
+export function popupMessage(msgType, message) {
     let popupTitle = document.getElementById('popup-title');
     let popupMessage = document.getElementById('popup-message');
     if (msgType === "warning") {
@@ -391,4 +404,18 @@ export function popupMessage (msgType, message) {
         popupTitle.innerHTML = "Message";
     }
     popupMessage.innerHTML = message;
+}
+
+// Show loading animation
+export function showLoading() {
+    let blur = document.querySelector('#page-container .page-content');
+    blur.classList.toggle('blur');
+    let loading = document.getElementById('loading-image');
+    loading.classList.toggle('show');
+}
+
+// Loading data
+export function loadingPageData() {
+    let loadingDiv = document.getElementById('loading-image');
+    loadingDiv.classList.toggle('show');
 }

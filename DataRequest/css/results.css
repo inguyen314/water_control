@@ -6,35 +6,43 @@
 #content-body .results {
     position: relative;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     margin: 3px;
-    padding: 50px 0;
+    padding: 25px 0;
+    gap: 25px;
 }
 
-.results table {
-    display: none;
-}
-
-.results table.visible {
+#table-data {
     display: table;
     width: 750px;
     border: 2px solid black;
 }
 
-.results table.visible thead th {
+#table-data thead th {
     background: #000;
     color: white;
     font-size: 1em;
     padding: 10px;
 }
 
-.results table.visible tbody tr {
+#table-data tbody tr {
     text-align: center;
     height: 2em;
 }
 
-.results table.visible tbody tr:nth-child(even) {
+#table-data tbody tr:nth-child(even) {
     background: rgb(77, 107, 212);
     color: white;
+}
+
+#content-body .results .page-button {
+    cursor: pointer;
+}
+
+#content-body .results .page-button:hover {
+    cursor: pointer;
+    text-decoration: underline;
+    color: red;
 }
