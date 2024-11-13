@@ -208,8 +208,7 @@
 }
 
 .container #input-table tbody tr:nth-child(1) td:nth-child(-n+2) {
-    padding-left: 30px;
-    padding-right: 0px;
+    padding: 0px 20px;
 }
 
 .container #input-table tbody tr:nth-child(2) td:nth-child(-n+2) {
@@ -218,6 +217,12 @@
 
 .container #input-table input {
     padding-left: 5px;
+    border: 1px solid var(--background-color-2);
+    border-radius: 5px;
+}
+
+.container #input-table select {
+    margin-left: 25px;
     border: 1px solid var(--background-color-2);
     border-radius: 5px;
 }
@@ -326,6 +331,15 @@
     color: rgb(51, 51, 51);
 }
 
+#content-body .datrep-results.hidden {
+    display: none;
+}
+
+#content-body .datrep-results {
+    display: block;
+    margin: 3px;
+}
+
 /** Results Section **/
 .results {
     display: flex;
@@ -338,13 +352,62 @@
     display: none;
 }
 
-.results .gage-info{ 
+/* Datrep table Style */
+.datrep-results .gage-info-datrep { 
     position: relative;
     background-color: var(--background-color-3);
     box-shadow: var(--shadow-box);
 }
 
-.results .gage-info::before{
+.datrep-results .gage-info-datrep::before {
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 20px;
+    background-color: var(--background-color-2);
+}
+
+.datrep-results #gage-info-table-datrep {
+    padding: 35px 15px 15px 15px;
+}
+
+/* Text Format */
+.datrep-results #gage-info-table-datrep th {
+    font-size: 18px;
+}
+
+/* Content text */
+.datrep-results #gage-info-table-datrep td {
+    font-size: 16px;
+    text-transform: uppercase;
+    align-content: center;
+}
+
+/* Content text - Left column */
+.datrep-results #gage-info-table-datrep tbody tr td:nth-child(1) {
+    display: flex;
+    width: 200px;
+    height: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+/* Text below table */
+.datrep-results .gage-info-datrep .intro-text h4 {
+    padding: 15px;
+    text-transform: uppercase;
+    color: var(--font-color-2);
+}
+
+/* Gage information for Results */
+.results .gage-info { 
+    position: relative;
+    background-color: var(--background-color-3);
+    box-shadow: var(--shadow-box);
+}
+
+.results .gage-info::before {
     position: absolute;
     content: '';
     width: 100%;
@@ -443,6 +506,121 @@
 .results .daily-title h4 {
     margin: 30px 15px 15px 15px;
     color: var(--font-color-2);
+}
+
+/* DatRep Tables */
+.datrep-results .datrep-table {
+    background-color: var(--background-color-3);
+    padding: 15px;
+    box-shadow: var(--shadow-box);
+}
+
+.datrep-results .datrep-table .data-table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+/* Header Format */
+.datrep-results .datrep-table .data-table thead {
+    background: rgb(52, 58, 64);
+    margin: 0;
+}
+
+.datrep-results .datrep-table .data-table th {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--font-color-1);
+    padding: 5px 0px;
+}
+
+.datrep-results .datrep-table .data-table tbody {
+    background: rgb(248, 249, 250);
+    text-align: center;
+}
+
+.datrep-results .datrep-table .data-table tbody td {
+    padding: 5px 0px;
+}
+
+.datrep-results .datrep-table .data-table tbody tr:nth-child(odd) {
+    background: rgb(233, 236, 239);
+}
+
+.datrep-results .datrep-table h4 {
+    margin: 0px;
+    font-size: 14px;
+    font-weight: normal;
+    color: var(--font-color-2);
+}
+
+.datrep-results .statistic-title {
+    text-align: center;
+    font-size: 1em;
+    font-weight: bold;
+    padding: 1em 0em;
+}
+
+.datrep-results .statistic-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.datrep-results .statistic-table td:first-child {
+    width: 1em;
+    padding: 0 2.2em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.datrep-results .statistic-table tbody {
+    text-align: center;
+    background: rgb(248, 249, 250);
+}
+
+.datrep-results .statistic-table tbody td {
+    padding: 5px 0px;
+}
+
+.datrep-results .statistic-table tbody tr:nth-child(odd) {
+    background: rgb(233, 236, 239);
+}
+
+/* Separator for Datrep tables */
+.datrep-results .div-separator {
+    margin-top: 50px;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgb(52, 58, 64);
+}
+
+/* Footer Div for the DatRep Page */
+.datrep-results .footer-div {
+    width: 100%;
+    padding: 0px 25px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "stats disclamer";
+    margin-top: 15px;
+}
+
+.datrep-results .stats-div{
+    grid-area: stats;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.datrep-results .stats-div h2{
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.datrep-results .disclamer {
+    grid-area: disclamer;
+    font-size: 0.8em;
+    justify-content: flex-end;
 }
 
 /* Mean Table */

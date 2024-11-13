@@ -36,17 +36,33 @@ const basinName = document.getElementById('basinCombobox'),
       darkModeCheckbox = document.querySelector('.header label input'),
       popupWindowBtn = document.getElementById('popup-button'),
       isProjectLabel = document.getElementById('is-project'),
-      loadingElement = document.getElementById("loading-msg");
+      loadingElement = document.getElementById("loading-msg"),
+      checkboxDiv = document.querySelector('#content-body .container .input-checkbox'),
+      buttonsDiv = document.querySelector('#content-body .container .buttons'),
+      inputTable = document.getElementById('input-table'),
+      datRepDiv = document.querySelector('#content-body .datrep-results'),
+      datRepInfoTable = document.getElementById('gage-info-table-datrep'),
+      contentBodyDiv = document.getElementById('content-body'),
+      pageTitle = document.querySelector('#topPane .box-header-striped .titleLabel.title');
 
 
 let params = new URLSearchParams(window.location.search);
 const officeName = params.get("office") ? params.get("office").toUpperCase() : "MVS";
 const cda = params.get("cda") ? params.get("cda") : "internal";
-const type = params.get("type") ? params.get("type") : "statman";
+const type = params.get("type") ? params.get("type").toUpperCase() : "STATMAN";
 
 console.log("Office ID: ", officeName);
 console.log("CDA: ", cda);
 console.log("Type: ", type);
+
+// Variable to hold DatRep Max and Min
+let datrepAllData = [];
+let datrepMaxMinAndMean = {
+    min: 0,
+    max: 0,
+    mean: 0
+};
+let wholePeriodListGlobal = [];
 
 // Add function to popup window button
 popupWindowBtn.addEventListener('click', blurBackground);
@@ -58,6 +74,10 @@ loadingPageData();
 function initialize(data) {
 
     console.log("Initialized data: ", data);
+
+    if (type === "DATREP") {
+        datRepWindow(data);
+    }
 
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
@@ -156,6 +176,11 @@ function initialize(data) {
 
             // Create the URL to get the data
             let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
+
+            let pageSize = 100000;
+
+            stageUrl = stageUrl + `&page-size=${pageSize}`;
+
             console.log(stageUrl);
 
             let isHidden = false;
@@ -694,6 +719,777 @@ function exportTableToExcel(tableList, filename) {
 
     // Generate the Excel file and trigger a download
     XLSX.writeFile(workbook, filename);
+}
+
+function datRepWindow(data) {
+
+    pageTitle.textContent = "DatRep - Daily Gage Values";
+
+    checkboxDiv.style.display = 'none';
+    computeHTMLBtn.style.display = 'none';
+    computeCSV.style.display = 'none';
+    let inputTableDates = inputTable.childNodes[3].childNodes[3];
+    inputTableDates.innerHTML = '';
+
+    let startDateYearComboBox = document.createElement('select');
+    let endDateYearComboBox = document.createElement('select');
+
+    startDateYearComboBox.id = "datRep-start-year";
+    endDateYearComboBox.id = "datRep-end-year";
+
+    const currentYear = new Date().getFullYear();
+    let oldestYear = 1950;
+    
+    for (let i = oldestYear; i < currentYear + 1; i++) {
+        let newOption = document.createElement('option');
+        newOption.textContent = `${i}`;
+        newOption.value = i;
+        startDateYearComboBox.appendChild(newOption);
+    }
+
+    for (let i = oldestYear; i < currentYear + 1; i++) {
+        let newOption = document.createElement('option');
+        newOption.textContent = `${i}`;
+        newOption.value = i;
+        endDateYearComboBox.appendChild(newOption);
+    }
+
+    let firstYear = document.createElement('td');
+    let lastYear = document.createElement('td');
+
+    firstYear.appendChild(startDateYearComboBox);
+    lastYear.appendChild(endDateYearComboBox);
+
+    inputTableDates.appendChild(firstYear);
+    inputTableDates.appendChild(lastYear);
+
+    startDateYearComboBox.selectedIndex = 60;
+    endDateYearComboBox.selectedIndex = currentYear - oldestYear;
+
+    let getDataBtn = document.createElement('button');
+    getDataBtn.id = 'button-get-data';
+    getDataBtn.textContent = 'Get Data'
+    getDataBtn.style.marginRight = '1em';
+
+    buttonsDiv.appendChild(getDataBtn);
+
+    let pdfReportBtn = document.createElement('button');
+    pdfReportBtn.id = 'button-pdf';
+    pdfReportBtn.textContent = 'Report PDF'
+    pdfReportBtn.style.marginRight = '2em';
+
+    buttonsDiv.appendChild(pdfReportBtn);
+
+    pdfReportBtn.addEventListener('click', function () {
+        createPDFReport(data);
+    });
+
+    getDataBtn.addEventListener('click', function () {
+        getData(data);
+    });
+
+}
+
+function getData(data) {
+
+    loadingPageData();
+
+    document.querySelectorAll('.datrep-table').forEach(table => {
+        datRepDiv.removeChild(table);
+    });
+
+    const getDataButton = document.getElementById('button-get-data');
+    getDataButton.innerHTML = "Processing - Please Wait";
+
+    // Get all data to create the url
+    const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
+    const timeSeries = "/timeseries?";
+    const timeZone = "CST6CDT";
+
+    // Get Datman name ID
+    let datmanName;
+    data.forEach(element => {
+        if (element['id'] === basinName.value) {
+            element['assigned-locations'].forEach(item => {
+                if (item['location-id'] === gageName.value) {
+                    datmanName = item['tsid-datman']['assigned-time-series'][0]['timeseries-id'];
+                };
+            });
+        };
+    });
+
+    // Initialize variables
+    let beginValueYear = document.getElementById('datRep-start-year').value;
+    let endValueYear = document.getElementById('datRep-end-year').value;
+
+    let beginValue = `${beginValueYear}-01-01T00%3A00%3A00.00Z`;
+    let endValue = `${endValueYear}-12-31T00%3A00%3A00.00Z`;
+
+    // Create the URL to get the data
+    let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
+    let pageSize = 100000;
+
+    stageUrl = stageUrl + `&page-size=${pageSize}`;
+
+    console.log("Data URL: ", stageUrl);
+
+    fetchJsonFile(stageUrl, function(newData) {
+        
+        let objData = newData["values"];
+        
+        // Get list with all the years
+        let wholePeriodList = getList(objData);
+        // let totalData = getMeanMinMaxList(wholePeriodList);
+
+        //console.log('Whole Period Data List: ', wholePeriodList);
+
+        wholePeriodListGlobal = wholePeriodList;
+
+        // console.log('Total Data: ', totalData);
+
+        // Update Location Info
+        let gageInformation = null;
+        data.forEach(basin => {
+            if (basin['id'] === basinName.value) {
+                basin['assigned-locations'].forEach(gage => {
+                    if (gage['location-id'] === gageName.value) {
+                        gageInformation = gage['metadata'];
+                    };
+                });
+            };
+        });
+
+        //console.log('Metadata: ', gageInformation);
+
+        datRepInfoTable.childNodes[1].childNodes[1].childNodes[1].textContent = gageInformation['name'];
+
+        locationInformation.textContent = gageInformation ? `LAT. ${gageInformation.latitude}, LONG. ${gageInformation.longitude}, ${gageInformation.description}` : 'No gage information found.';
+        zeroGageData.textContent = `${gageInformation.elevation.toFixed(2)} ft ${gageInformation['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+
+        datRepDiv.classList.remove('hidden');
+
+        for (let i = 0; i < wholePeriodList.length; i++) {
+            let tableDiv = document.createElement('div');
+            tableDiv.classList.add('datrep-table');
+
+            let newTable = document.createElement('table');
+            newTable.classList.add('data-table');
+            newTable.id = `datrep-${i+1}`;
+
+            let thead = document.createElement('thead');
+            thead.innerHTML = `
+            <tr>
+                <th colspan="13">${parseInt(beginValueYear)+i}</th>
+            </tr>
+            <tr>
+                <th>Day</th>
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Apr</th>
+                <th>May</th>
+                <th>Jun</th>
+                <th>Jul</th>
+                <th>Aug</th>
+                <th>Sep</th>
+                <th>Oct</th>
+                <th>Nov</th>
+                <th>Dec</th>
+            </tr>
+            `;
+
+            newTable.append(thead);
+
+            let tbody = document.createElement('tbody');
+
+            let newTableData = [];
+
+            for (let x = 1; x < 32; x++) {
+                newTableData.push({
+                    day: x,
+                    stages: []
+                });
+            };
+
+            for (let j = 1; j < 13; j++) {
+                for (let k = 1; k < 32; k++) {
+
+                    let haveData = false;
+                    wholePeriodList[i]['data'].forEach(element => {
+                        let day = parseInt(element['date'].split('-')[2]);
+                        let month = parseInt(element['date'].split('-')[1]);
+
+                        if (day === k && month === j) {
+                            newTableData.forEach(obj => {
+                                if (obj['day'] === day) {
+                                    obj['stages'].push(`${element.stage.toFixed(2)}`);
+                                }
+                            });
+                            haveData = true;
+                        };
+                    });
+
+                    if (!haveData) {
+                        newTableData.forEach(obj => {
+                            if ([2, 4, 6, 9, 11].includes(j)) {
+                                if (j === 2 && [29, 30, 31].includes(k)) {
+                                    if (obj['day'] === k) {
+                                        obj['stages'].push("----");
+                                    }
+                                } else if (k === 31) {
+                                    if (obj['day'] === k) {
+                                        obj['stages'].push("----");
+                                    }
+                                } else {
+                                    if (obj['day'] === k) {
+                                        obj['stages'].push("--");
+                                    }
+                                }
+                            }
+                            
+                        });
+                    }
+
+                }
+            };
+
+            let monthsValues = [];
+            let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            monthsNames.forEach(name => {
+                monthsValues.push({
+                    month: name,
+                    stages: []
+                });
+            });
+
+            newTableData.forEach(element => {
+                element['stages'].forEach((item, index_month) => {
+
+                    if (item !== "----") {
+                        monthsValues.forEach(obj => {
+                            if (obj['month'] === monthsNames[index_month]) {
+                                obj['stages'].push(parseFloat(item));
+                            }
+                        });
+                    };
+
+                });
+            });
+
+            newTableData.forEach(object => {
+                let newRow = document.createElement('tr');
+                newRow.innerHTML = `<td>${object['day']}</td>`;
+                object['stages'].forEach(item => {
+                    newRow.innerHTML += `<td>${item}</td>`;
+                });
+
+                tbody.append(newRow);
+            });
+
+            newTable.append(tbody);
+
+            tableDiv.append(newTable);
+
+            datRepDiv.append(tableDiv);
+
+            const statisticTitle = document.createElement('h2');
+            statisticTitle.classList.add("statistic-title");
+            statisticTitle.textContent = `The following statistics are based on observations occuring in ${parseInt(beginValueYear)+i} only.`;
+
+            tableDiv.append(statisticTitle);
+
+            const statisticList = [];
+            const statisticCategories = ['Mean', 'Max', 'Min', 'Day'];
+            for (let i = 0; i < 4; i++) { 
+                statisticList.push({
+                    category: statisticCategories[i],
+                    data: []
+                });
+            };
+
+            statisticList.forEach((element, index) => {
+                if (index === 0) {
+                    monthsValues.forEach(item => {
+                        let mean = item['stages'].reduce((acc, curr) => acc + curr, 0) / item['stages'].length;
+                        element['data'].push(`${mean.toFixed(2)}`);
+                    });
+                } else if (index === 1) {
+                    monthsValues.forEach(item => {
+                        let max = Math.max(...item['stages']);
+                        element['data'].push(`${max.toFixed(2)}`);
+                    });
+                } else if (index === 2) {
+                    monthsValues.forEach(item => {
+                        let min = Math.min(...item['stages']);
+                        element['data'].push(`${min.toFixed(2)}`);
+                    });
+                } else if (index === 3) {
+                    monthsValues.forEach(item => {
+                        let count = item['stages'].length;
+                        element['data'].push(`${count}`);
+                    });
+                };
+            });
+
+            const statisticTable = document.createElement('table');
+            statisticTable.classList.add('statistic-table');
+            const statTbody = document.createElement('tbody');
+
+            statisticList.forEach(element => {
+                let newRow = document.createElement('tr');
+                newRow.innerHTML = `<td style='padding: 0px 18px'>${element['category']}</td>`;
+                element['data'].forEach(item => {
+                    if (['NaN', '-Infinity', 'Infinity'].includes(item)) {
+                        newRow.innerHTML += `<td style='width: 75px'>----</td>`;
+                    } else {
+                        newRow.innerHTML += `<td>${item}</td>`;
+                    };
+                });
+
+                statTbody.append(newRow);
+            });
+
+            statisticTable.append(statTbody);
+
+            tableDiv.append(statisticTable);
+
+            //console.log("statisticList: ", statisticList);
+
+            datrepAllData = [];
+
+            monthsValues.forEach(element => {
+                datrepAllData.push(element);
+            });
+
+            //console.log("Months Value: ", monthsValues);
+
+            let wholeYearMean = 0;
+            let wholeYearMax = -99;
+            let wholeYearMin = 99;
+
+            let count = 0;
+            let sum = 0;
+            monthsValues.forEach(element => {
+                element['stages'].forEach(item => {
+                    sum += item;
+                    if (item < wholeYearMin) {
+                        wholeYearMin = item;
+                    };
+                    if (item > wholeYearMax) {
+                        wholeYearMax = item;
+                    };
+                    count += 1;
+                });
+            });
+
+            wholeYearMean = parseFloat((sum / count).toFixed(2));
+
+            //console.log("Whole Year Mean: ", wholeYearMean);          
+            //console.log("Whole Year Max: ", wholeYearMax);
+            //console.log("Whole Year Min: ", wholeYearMin);
+
+            //console.log('Period Data: ', wholePeriodList[i]);
+
+            let periodMaxYear = "";
+            let periodMinYear = "";  // YYYY-MM-DD
+            wholePeriodList[i]['data'].forEach(element => {
+                    let tempDay = element['date'].split('-')[2];
+                    let tempMonth = element['date'].split('-')[1];
+                    let tempYear = element['date'].split('-')[0];
+                if (element['stage'] == wholeYearMax) {
+                    periodMaxYear = `${tempMonth}-${tempDay}-${tempYear}`;
+                };
+                if (element['stage'] == wholeYearMin) {
+                    periodMinYear = `${tempMonth}-${tempDay}-${tempYear}`;
+                };
+            });
+
+            const footerDiv = document.createElement('div');
+            footerDiv.classList.add('footer-div');
+
+            const statisticDiv = document.createElement('div');
+            statisticDiv.classList.add('stats-div');
+
+            let footerMean = document.createElement('h2');
+            let footerMax = document.createElement('h2');
+            let footerMin = document.createElement('h2');
+            let footerBottomLine = document.createElement('h2');
+            footerMean.textContent =`The Mean ELEV for the Year was: ${wholeYearMean}`;
+            footerMax.textContent =`The Highest ELEV for the Year was: ${wholeYearMax} which occured on: ${periodMaxYear}`;  // MM-DD-YYYY
+            footerMin.textContent =`The Lowest ELEV for the Year was: ${wholeYearMin} which occured on: ${periodMinYear}`;
+            footerBottomLine.textContent = `The Total Number of Days for the Year was: 365`;
+
+            statisticDiv.append(footerMean);
+            statisticDiv.append(footerMax);
+            statisticDiv.append(footerMin);
+            statisticDiv.append(footerBottomLine);
+
+            let disclamer = document.createElement('h2');
+            disclamer.classList.add('disclamer');
+            disclamer.innerHTML = `
+            NOTICE: All data contained herein is preliminary in nature and therefore subject to change. The
+            data is for general information purposes ONLY and SHALL NOT be used in technical
+            applications such as, but not limited to, studies or designs. All critical data should be obtained
+            from and verified by the United States Army Corps of Engineers. The United States
+            Government assumes no liability for the completeness or accuracy of the data contained herein
+            and any use of such data inconsistent with this disclaimer shall be solely at the risk of the user.
+            `;
+
+            footerDiv.append(statisticDiv);
+            footerDiv.append(disclamer);
+
+            tableDiv.append(footerDiv);
+
+            const separator = document.createElement('div');
+            separator.classList.add('div-separator');
+
+            tableDiv.append(separator);
+
+        };
+
+
+        let allDataNumList = [];
+
+        datrepAllData.forEach(element => {
+            element['stages'].forEach(stage => {
+                allDataNumList.push(stage);
+            });
+        });
+
+        console.log("allDataNumList: ", allDataNumList);
+
+        datrepMaxMinAndMean['min'] = Math.min(...allDataNumList);
+        datrepMaxMinAndMean['max'] = Math.max(...allDataNumList);
+        datrepMaxMinAndMean['mean'] = parseFloat((allDataNumList.reduce((acc, curr) => acc + curr, 0) / allDataNumList.length).toFixed(2));
+
+        //console.log("datrepMaxMinAndMean: ", datrepMaxMinAndMean);
+
+        // Get the Min, Max and Mean date
+        //console.log("WholePeriodGlobal: ", wholePeriodListGlobal);
+
+        let tempObj = {
+            min: [],
+            max: []
+        };
+
+        wholePeriodListGlobal.forEach(element => {
+            element['data'].forEach(item => {
+                if (item['stage'] === datrepMaxMinAndMean['min']) {
+                    tempObj['min'].push({
+                        date: item['date'],
+                        stage: item['stage']
+                    });
+                } else if (item['stage'] === datrepMaxMinAndMean['max']) {
+                    tempObj['max'].push({
+                        date: item['date'],
+                        stage: item['stage']
+                    });
+                };
+            });
+        });
+
+        console.log("wholePeriodListGlobal: ", wholePeriodListGlobal);
+
+        console.log("TempObj: ", tempObj);
+
+        let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        const meanElevInfo = document.getElementById('mean-elev-info');
+        const extremeElevInfo = document.getElementById('extreme-elev-info');
+        const recordAvailableInfo = document.getElementById('record-available');
+        const porStartDate = document.querySelector('#info-table .por-start');
+        const porEndDate = document.querySelector('#info-table .por-end');
+
+        //console.log(`Start Date: ${porStartDate.textContent} --- End Date: ${porEndDate.textContent}`);
+
+        let maxDateDay = tempObj['max'][0]['date'].split('-')[2];
+        let maxDateMonth = monthsNames[(parseInt(tempObj['max'][0]['date'].split('-')[1])-1)].toUpperCase();
+        let maxDateYear = tempObj['max'][0]['date'].split('-')[0];
+
+        let minDateDay = tempObj['min'][0]['date'].split('-')[2];
+        let minDateMonth = monthsNames[(parseInt(tempObj['min'][0]['date'].split('-')[1])-1)].toUpperCase();
+        let minDateYear = tempObj['min'][0]['date'].split('-')[0];
+
+        let startPORDateMonth = monthsNames[parseInt(porStartDate.textContent.split('/')[0])-1].toUpperCase();
+        let startPORDateYear = parseInt(porStartDate.textContent.split('/')[2]);
+        let endPORDateMonth = monthsNames[parseInt(porEndDate.textContent.split('/')[0])-1].toUpperCase();
+        let endPORDateYear = parseInt(porEndDate.textContent.split('/')[2]);
+
+        recordAvailableInfo.textContent = `ELEVATION, ${startPORDateMonth} ${startPORDateYear} TO ${endPORDateMonth} ${endPORDateYear}.`;
+        meanElevInfo.textContent = `PERIOD OF RECORD, ${datrepMaxMinAndMean['mean']} FT .`;
+        extremeElevInfo.textContent = `PERIOD OF RECORD, DAILY HIGH OF ${tempObj['max'][0]['stage']} FT ON ${maxDateDay} ${maxDateMonth} ${maxDateYear} & PERIOD OF RECORD, DAILY LOW OF ${tempObj['min'][0]['stage']} FT ON ${minDateDay} ${minDateMonth} ${minDateYear} .`;
+
+        loadingPageData();
+
+        getDataButton.innerHTML = "Get Data";
+
+        //contentBodyDiv
+    
+    }, function(error){
+        popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+        popupWindowBtn.click();
+        document.getElementById('button-get-data').textContent = "Get Data";
+    });
+
+}
+
+function createPDFReport(data) {
+
+    //console.log("datrepAllData: ", datrepAllData);
+
+    const firstYear = document.getElementById('datRep-start-year').value;
+    const lastYear = document.getElementById('datRep-end-year').value;
+
+    // Create Report
+    const { jsPDF } = window.jspdf;
+    import("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js");
+    import("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+
+    const doc = new jsPDF();
+
+    const table = document.getElementById('gage-info-table-datrep');
+    const tableData = [];
+    const tableHeader = [];
+
+    const headers = table.querySelectorAll("thead tr th");
+    headers.forEach(header => tableHeader.push(header.innerText.trim()));
+    headers.forEach(header => tableHeader.push(header.innerText.trim()));
+
+    if (tableHeader[0] === "Table Title") {
+        popupMessage("error", "There is no data to create the report.<br>Get the data first.");
+        popupWindowBtn.click();
+        return
+    }
+
+    tableHeader[0] = '';
+
+    let reportTitle = `${tableHeader[1]}`;
+
+    const formattedHeader = [tableHeader]; 
+
+    const filas = table.querySelectorAll("tbody tr");
+    filas.forEach(fila => {
+        const rowData = [];
+        fila.querySelectorAll("td").forEach(cell => rowData.push(cell.innerText.trim()));
+        tableData.push(rowData);
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const textWidth = doc.getTextWidth(formattedHeader[0][1]);
+    const xPosition = (pageWidth - textWidth) / 2;
+
+    // Set font size and style
+    doc.setFontSize(12); // Set font size to 12
+    doc.setFont("helvetica", "bold"); // Set font to Helvetica and make it bold
+
+    // doc.setFont("helvetica", "italic"); // Italic text
+    // doc.setFont("helvetica", "bolditalic"); // Bold and italic text
+
+    doc.text(formattedHeader[0][1], xPosition, 10);
+
+    doc.autoTable({
+        //head: formattedHeader,
+        body: tableData,
+        startY: 15,
+        theme: 'plain', 
+
+        styles: {
+            cellPadding: 2,
+            fontSize: 8,
+            textColor: 0,
+            lineColor: [255, 255, 255],
+            lineWidth: 0,
+        },
+        headStyles: {
+            fillColor: [255, 255, 255],
+            textColor: 0,
+            fontStyle: 'normal',
+            lineWidth: 0,
+            halign: 'left',
+        },
+        bodyStyles: {
+            fillColor: [255, 255, 255],
+            textColor: 0,
+            lineWidth: 0,
+        },
+        alternateRowStyles: {
+            fillColor: [255, 255, 255],
+        },
+
+        columnStyles: {
+            0: { cellWidth: 40 } 
+        }
+
+    });
+
+    
+
+    const table1Height = doc.lastAutoTable.finalY; 
+    let startYForTable2 = table1Height + 5; 
+
+    const tables = document.querySelectorAll('.datrep-table .data-table');
+
+    const extraTable = document.querySelectorAll('.statistic-table');
+
+    const footerDiv = document.querySelectorAll('.footer-div');
+
+    tables.forEach((table, index) => {
+        const tableData = [];
+        const tableHeader = [];
+
+        const headers = table.querySelectorAll("thead tr th");
+        headers.forEach(header => tableHeader.push(header.innerText.trim()));
+        const yearString = tableHeader[0];
+        const yearArray = [];
+        for (let i = 0; i < 14; i++) {
+            if (i === 6) {
+                yearArray.push(yearString);
+            } else {
+                yearArray.push('');
+            }
+        };
+        tableHeader.shift();
+        const formattedHeader = [yearArray, tableHeader];
+
+        const filas = table.querySelectorAll("tbody tr");
+        filas.forEach(fila => {
+            const rowData = [];
+            fila.querySelectorAll("td").forEach(cell => rowData.push(cell.innerText.trim()));
+            tableData.push(rowData);
+        });
+
+        if (index > 0) {
+            doc.addPage();
+            startYForTable2 = 20;
+        }
+
+        doc.autoTable({
+            head: formattedHeader,
+            body: tableData,
+            startY: startYForTable2,
+            theme: 'plain',
+            styles: {
+                cellPadding: 2,
+                fontSize: 10,
+                textColor: 0,
+                lineColor: [255, 255, 255],
+                lineWidth: 0,
+                fontSize: 8,
+            },
+            headStyles: {
+                fillColor: [52, 58, 64],
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                halign: 'center', 
+            },
+            bodyStyles: {
+                cellPadding: {
+                    top: 1,
+                    bottom: 1,
+                    left: 2,
+                    right: 2
+                },
+                fillColor: [248, 249, 250],
+                textColor: 0,
+                halign: 'center',
+            },
+            alternateRowStyles: {
+                fillColor: [233, 236, 239],
+            },
+        });
+
+  
+        const lastTableHeight = doc.lastAutoTable.finalY;
+        let startYForNewTable = lastTableHeight + 5; 
+
+        doc.setFontSize(8);
+        doc.text(" ".repeat(50) + `The following statistics are based on observations occuring in ${parseInt(firstYear) + index} only.`, 15, startYForNewTable);
+        startYForNewTable += 4;
+
+        let extraCurrentTable = extraTable[index];
+
+        const extraTableData = [];
+
+        
+        const extraFilas = extraCurrentTable.querySelectorAll("tbody tr");
+        extraFilas.forEach(fila => {
+            const rowData = [];
+            fila.querySelectorAll("td").forEach(cell => rowData.push(cell.innerText.trim()));
+            extraTableData.push(rowData);
+        });
+     
+        doc.autoTable({
+            //head: extraFormattedHeader,
+            body: extraTableData,
+            startY: startYForNewTable,
+            theme: 'plain',
+            tableWidth: 175, // Sets the table to 150 units wide
+            styles: {
+                cellPadding: 2,
+                fontSize: 10,
+                textColor: [0, 0, 0],
+                lineColor: [255, 255, 255],
+                lineWidth: 0,
+                fontSize: 8,
+            },
+            headStyles: {
+                fillColor: [255, 255, 255],
+                textColor: 0,
+                fontStyle: 'bold',
+                halign: 'center',
+            },
+            bodyStyles: {
+                cellPadding: {
+                    top: 1,
+                    bottom: 1,
+                    left: 2,
+                    right: 2
+                },
+                fillColor: [248, 249, 250],
+                textColor: 0,
+                halign: 'center',
+            },
+            alternateRowStyles: {
+                fillColor: [233, 236, 239],
+            },
+            columnStyles: {
+                0: {
+                    fontStyle: 'bold',
+                },
+            },
+        });
+
+        let footerDivInfo = footerDiv[index];
+        if (index != 0) {
+            let startYForFooter = doc.lastAutoTable.finalY + 25;
+            let holdString =`
+            ${footerDivInfo.childNodes[0].childNodes[0].textContent}
+            ${footerDivInfo.childNodes[0].childNodes[1].textContent}
+            ${footerDivInfo.childNodes[0].childNodes[2].textContent}
+            ${footerDivInfo.childNodes[0].childNodes[3].textContent}`;
+
+            doc.setFontSize(6);
+            doc.text(holdString, 10, startYForFooter);
+
+            let disclamerText = `
+            NOTICE: All data contained herein is preliminary in nature and therefore subject to 
+            change. The data is for general information purposes ONLY and SHALL NOT be used in 
+            technical applications such as, but not limited to, studies or designs. All critical data 
+            should be obtained from and verified by the United States Army Corps of Engineers. 
+            The United States Government assumes no liability for the completeness or accuracy 
+            of the data contained herein and any use of such data inconsistent with this 
+            disclaimer shall be solely at the risk of the user.
+            `;
+
+            doc.setFontSize(6);
+            doc.text(disclamerText, 100, startYForFooter - 7);
+            
+        };
+
+    });
+
+    doc.save(`${reportTitle} (${firstYear}-${lastYear}).pdf`);
 }
 
 document.addEventListener('DOMContentLoaded', async function () {

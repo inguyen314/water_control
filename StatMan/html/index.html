@@ -121,7 +121,6 @@
                                                     <input type="checkbox" name="min" id="minimum" checked>
                                                 </div>
                                                 <div class="buttons">
-                                                    <span id="loading-msg"></span>
                                                     <button class="html" id="button-html">Compute HTML</button>
                                                     <button class="csv" id="button-csv">Compute Excel</button>
                                                 </div>
@@ -152,6 +151,53 @@
                                                     <span style="--i: 20;"></span>
                                                     <h2 class="text-string">Loading Data<br><b>If this takes more than 15 seconds, reload the page.</b></h2>
                                                 </div>
+                                            </div>
+
+                                            <div class="datrep-results hidden">
+
+                                                <div class="gage-info-datrep">
+                                                    <table id="gage-info-table-datrep">
+                                                        <thead>
+                                                            <tr>
+                                                                <th colspan="2">Table Title</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>Location:</td>
+                                                                <td><p id="location-data">NONE</p></td>
+                                                            </tr>
+                                                            <!-- <tr>
+                                                                <td>Gage:</td>
+                                                                <td><p id="gage-data">NONE</p></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>General information:</td>
+                                                                <td><p id="general-info">NONE</p></td>
+                                                            </tr> -->
+                                                            <tr>
+                                                                <td>Record Available:</td>
+                                                                <td><p id="record-available">NONE</p></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Mean Elev:</td>
+                                                                <td><p id="mean-elev-info">NONE</p></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Extreme Elev:</td>
+                                                                <td><p id="extreme-elev-info">NONE</p></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>Zero Gage Datum:</td>
+                                                                <td><p id="zero-gage-data">NONE</p></td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                    <div class="intro-text">
+                                                        <h4 class="text">All Values Recorded at 8am. Stage in ft:</h4>
+                                                    </div>
+                                                </div>
+
                                             </div>
 
                                             <div class="results hidden">
@@ -307,6 +353,10 @@
                                                 </div>
                                             </div>
                                             <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script>
+                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
                                             <script type="module" src="../js/script.js"></script>
                                         </div>
 
