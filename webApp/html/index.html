@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Graph Plot</title>
     <link rel="stylesheet" type="text/css" href="../css/styles.css">
 </head>
 <body>
@@ -17,90 +17,97 @@
             <div class="inputs">
                 <div class="name">
                     <label class="label">Name</label>
-                    <!-- "Sub-Casey Fork.Elev.Inst.~1Day.0.datman-rev" -->
-                    <select name="gage" id="select-gage" class="combobox"></select>
+                    <input class="textbox" type="text" id="name-input" name="name" placeholder="Enter name" value="Sub-Casey Fork"> 
                 </div>
                 <div class="office">
                     <label class="label">Office</label>
-                    <input class="textbox" type="text" id="office-input" name="office" placeholder="Ex. MVS" value="MVS" disabled>
-                </div>
-                <div class="info-table">
-                    <table id="available-por">
-                        <thead>
-                            <tr>
-                                <th colspan="2">Available POR</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Start Time</td>
-                                <td>End Time</td>
-                            </tr>
-                            <tr>
-                                <td>MM/DD/YY</td>
-                                <td>MM/DD/YY</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <input class="textbox" type="text" id="office-input" name="office" placeholder="Ex. MVS" value="MVS">
                 </div>
                 <div class="begin">
                     <label class="label">Begin Date</label>
-                    <!-- <input class="textbox" type="text" id="begin-input" name="begin" placeholder="Ex. MM/DD/YYYY" value="01/01/2020"> -->
-                    <input class="datepicker" type="date" id="begin-input" name="begin" value="2020-01-01">
+                    <input type="date" name="begin-date" id="begin-input" value="2020-01-01">
                 </div>
                 <div class="end">
                     <label class="label">End Date</label>
-                    <!-- <input class="textbox" type="text" id="end-input" name="end" placeholder="Ex. MM/DD/YYYY" value="12/31/2020"> -->
-                    <input class="datepicker" type="date" id="end-input" name="end" value="2020-12-31">
+                    <input type="date" name="end-date" id="end-input" value="2020-12-31">
                 </div>
             </div>
-            <div class="lower-inputs">
-                <select name="name" id="select-datman" class="combobox"></select>
-                <div class="checkbox">
-                    <div id="checkbox-one">
-                        <label for="checkBoxOne">0.5ft</label>
-                        <input class="checkbox" type="checkbox" id="checkBoxNum1" name="event_0.5ft" checked>
-                    </div>
-                    <div id="checkbox-two">
-                        <label for="checkBoxOne">1.0ft</label>
-                        <input class="checkbox" type="checkbox" id="checkBoxNum2" name="event_0.5ft" checked>
-                    </div>
-                    <div id="checkbox-three">
-                        <label for="checkBoxOne">1.5ft</label>
-                        <input class="checkbox" type="checkbox" id="checkBoxNum3" name="event_0.5ft" checked>
-                    </div>
-                    <div id="checkbox-four">
-                        <label for="checkBoxOne">2.0ft</label>
-                        <input class="checkbox" type="checkbox" id="checkBoxNum4" name="event_0.5ft" checked>
-                    </div>
+            <div>
+                <div class="file-browse">
+                    <label class="label">External File</label>
+                    <input type="file" name="excel-file" id="file-picker">
+                    <button id="clear-file-picker-btn">Clear</button>
                 </div>
             </div>
             <div class="btn-container">
                 <button id="createChartBtn">Create Chart</button>
-                <button id="reportBtn">Download CSV</button>
+                <button id="reportBtn">Download Report</button>
                 <button id="settingBtn">Open Settings</button>
             </div>
         </div>
         <div class="settings hidden" id="setting-div">
-            <div class="reg-limits">
-                <label id="regulation">Regulation Limits</label>
-                <input type="text" class="textbox" id="reg-input" placeholder="Ex. 420-430" value="406-412">
+
+            <div class="data-inputs">
+                <div class="reg-limits">
+                    <label id="regulation">Regulation Limits</label>
+                    <input type="text" style="width: 100px;" class="textbox" id="reg-input" placeholder="Ex. 420-430" value="406-412">
+                </div>
+                <div class="graph-title">
+                    <label id="title">Title</label>
+                    <input type="text" style="width: 150px;" class="textbox" id="title-input" placeholder="Enter Graph Title" value="Test Graph">
+                </div>
+                <div class="event-duration">
+                    <label id="duration">Event Duration</label>
+                    <input type="text" style="width: 50px;" class="textbox" id="duration-input" placeholder="Event Duration in Days" value="30">
+                </div>
             </div>
-            <div class="graph-title">
-                <label id="title">Title</label>
-                <input type="text" class="textbox" id="title-input" placeholder="Enter Graph Title" value="Test Graph">
+            <div class="resize">
+                <div>
+                    <div>
+                        <label>Tittle Size</label>
+                        <input type="text" id="title-size" placeholder="Enter Title Font Size" value="20">
+                    </div>
+                    <div>
+                        <label>X Axis Size</label>
+                        <input type="text" id="x-axis-size" placeholder="Enter X Axis Size" value="12">
+                    </div>
+                </div>
+                <div>
+                    <div>
+                        <label>Legend Size</label>
+                        <input type="text" id="legend-size" placeholder="Enter Legend Size" value="14">
+                    </div>
+                    <div>
+                        <label>Y Axis Size</label>
+                        <input type="text" id="y-axis-size" placeholder="Enter Y Axis Size" value="14">
+                    </div>
+                </div>
+            </div>
+            <div class="extra-info">
+                <div class="limits">
+                    <label>Graph Y Axis Limits</label>
+                    <input type="text" class="textbox" id="graph-limits" placeholder="Ex. 420-430 ; interval=1" value="405.5-412.5 ; interval=1">
+                </div>
+                <div class="color-div">
+                    <label for="colorPicker">Grid Color:</label>
+                    <input type="color" id="colorPicker" name="colorPicker" value="#B5B5B5">
+                </div>
+                <div class="y-axis-textbox">
+                    <label>Y Axis Name</label>
+                    <input type="text" id="y-axis-label" placeholder="Ex. Stage[ft] or Elevation[ft]", value="Elevation[ft]">
+                </div>
+                <div class="series-textbox">
+                    <label>Series Name</label>
+                    <input type="text" id="series-name-txbox" placeholder="Ex. Stage[ft]", value="Series">
+                </div>
             </div>
         </div>
+
         <div class="chart-cont" id="chartContainer"></div>
     </div>
     
-    <script type="module" src="../js/index.js"></script>
-    <script type="module" src="../js/functions.js"></script>
-    <script src="../js/highcharts.js"></script>
-    <script src="../js/exporting.js"></script>
-    <!-- For the API -->
-    <!-- <script src="https://code.highcharts.com/highcharts.js"></script> -->
-    <!-- <script src="https://code.highcharts.com/modules/exporting.js"></script> -->
-    <!-- <script src="https://code.highcharts.com/modules/export-data.js"></script> -->
+    <script src="../js/index.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </body>
 </html>

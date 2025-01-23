@@ -46,3 +46,102 @@
     text-decoration: underline;
     color: red;
 }
+
+#loading-div {
+    display: none;
+}
+
+#loading-div.show {
+    position: relative;
+    margin: 0;
+    display: flex;
+    width: 100%;
+    height: 400px;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+#loading-div.show .loader h2{
+    position: absolute;
+    width: 400px;
+    height: 100px;
+    top: 120%;
+    left: 50%;
+    font-size: 1.2em;
+    color: red;
+    text-align: center;
+    transform: translateX(-50%);
+}
+
+#loading-div.show .loader h2 b{
+    font-style: italic;
+    font-size: 0.9em;
+    color: black;
+}
+
+#content-body .results .table-results{
+    display: none;
+}
+
+#content-body .results .table-results.show{
+    display: flex;
+    justify-content: center;
+    padding-top: 25px;
+    width: 100%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#data-table{
+    width: 50%;
+    border: 1px solid #000;
+}
+
+#data-table thead{
+    background: rgb(16, 43, 248);
+    color: #fff;
+}
+
+#data-table tbody tr:nth-child(odd){
+    background: rgb(255, 255, 255);
+    color: #000;
+    text-align: center;
+}
+
+#data-table tbody tr:nth-child(even){
+    background: rgb(197, 197, 197);
+    color: #000;
+    text-align: center;
+}
+
+table th, table td {
+    width: 150px; /* Set all columns to 150px wide */
+}
+
+/* METADATA DIV */
+.results .metadata-div{
+    display: none;
+}
+
+.results .metadata-div.show{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    padding: 2em;
+}
+
+.results .metadata-div p{
+    margin: 0.5em;
+}
+
+.results .metadata-title{
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2em;
+}
+
+.results .metadata-disclamer{
+    text-wrap: wrap;
+}

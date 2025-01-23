@@ -17,6 +17,9 @@ import {
 } from './functions.js'
 
 
+// Console Log Messages
+const consoleLogType = [1,2]; // 1:INFO ; 2:TEST ; 3:INITIAL FETCH ; 'ANY':CUSTOM
+
 // Const Elements
 const basinName = document.getElementById('basinCombobox'),
       gageName = document.getElementById('gageCombobox'),
@@ -32,7 +35,9 @@ const basinName = document.getElementById('basinCombobox'),
       maxCheckbox = document.getElementById('maximum'),
       minCheckbox = document.getElementById('minimum'),
       locationInformation = document.getElementById('location-data'),
+      locationInformationResults = document.getElementById('result-location-data'),
       zeroGageData = document.getElementById('zero-gage-data'),
+      zeroGageDataResults = document.getElementById('result-zero-gage-data'),
       darkModeCheckbox = document.querySelector('.header label input'),
       popupWindowBtn = document.getElementById('popup-button'),
       isProjectLabel = document.getElementById('is-project'),
@@ -43,7 +48,11 @@ const basinName = document.getElementById('basinCombobox'),
       datRepDiv = document.querySelector('#content-body .datrep-results'),
       datRepInfoTable = document.getElementById('gage-info-table-datrep'),
       contentBodyDiv = document.getElementById('content-body'),
-      pageTitle = document.querySelector('#topPane .box-header-striped .titleLabel.title');
+      pageTitle = document.querySelector('#topPane .box-header-striped .titleLabel.title'),
+      porStartDate = document.querySelector('#info-table .por-start'),
+      porEndDate = document.querySelector('#info-table .por-end'),
+      mean29_88label = document.getElementById('mean-29-88-label'),
+      extreme29_88label = document.getElementById('extreme-29-88-label');
 
 
 let params = new URLSearchParams(window.location.search);
@@ -51,9 +60,9 @@ const officeName = params.get("office") ? params.get("office").toUpperCase() : "
 const cda = params.get("cda") ? params.get("cda") : "internal";
 const type = params.get("type") ? params.get("type").toUpperCase() : "STATMAN";
 
-console.log("Office ID: ", officeName);
-console.log("CDA: ", cda);
-console.log("Type: ", type);
+consoleLog(1, "Office ID: ", officeName)
+consoleLog(1, "CDA: ", cda)
+consoleLog(1, "Type: ", type)
 
 // Variable to hold DatRep Max and Min
 let datrepAllData = [];
@@ -63,6 +72,7 @@ let datrepMaxMinAndMean = {
     mean: 0
 };
 let wholePeriodListGlobal = [];
+let WholePeriodOfRecord = [];
 
 // Add function to popup window button
 popupWindowBtn.addEventListener('click', blurBackground);
@@ -73,11 +83,7 @@ loadingPageData();
 // Initilize page
 function initialize(data) {
 
-    console.log("Initialized data: ", data);
-
-    if (type === "DATREP") {
-        datRepWindow(data);
-    }
+    consoleLog(1, "Initialized data: ", data);
 
     // Add dark mode functionality
     darkModeCheckbox.addEventListener('click', function() {
@@ -106,6 +112,7 @@ function initialize(data) {
 
     // Change the gage values each time the basin value is changed
     basinName.addEventListener('change', function() {
+
         gageName.options.length = 0;
         namesObject.forEach(element => {
             if (element['basin'] === basinName.value) {
@@ -120,6 +127,12 @@ function initialize(data) {
 
         // Determine if it's project
         isGageProject(data);
+
+        updateAvailablePORTable(data);
+
+        if (type !== "STATMAN"){
+            updateDropDownList();
+        };
     });
 
     updateAvailablePORTable(data);
@@ -132,15 +145,24 @@ function initialize(data) {
         // Determine if it's project
         isGageProject(data);
 
+        if (type !== "STATMAN"){
+            updateDropDownList();
+        };
+
     });
 
     // Determine if it's project
     isGageProject(data);
+    console.log("Data for isProject: ", data);
 
     // Get all data to create the url
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
     const timeSeries = "/timeseries?";
     const timeZone = "CST6CDT";
+
+    if (type === "DATREP") {
+        datRepWindow(data);
+    }
 
     computeCSV.addEventListener('click' , alertMessageForCSVBtn);
 
@@ -157,6 +179,7 @@ function initialize(data) {
         if (haveOneYearOfData(beginDate.value, endDate.value) && beginDate.value < endDate.value) {
 
             computeHTMLBtn.textContent = "Processing - One Moment";
+            loadingPageData();
 
             // Get Datman name ID
             let datmanName;
@@ -209,11 +232,37 @@ function initialize(data) {
                     };
                 });
 
-                console.log('Metadata: ', gageInformation);
+                consoleLog(2, 'The Metadata: ', gageInformation);
 
-                locationInformation.textContent = gageInformation ? `LAT. ${gageInformation.latitude}, LONG. ${gageInformation.longitude}, ${gageInformation.description}` : 'No gage information found.';
-                zeroGageData.textContent = `${gageInformation.elevation.toFixed(2)} ft ${gageInformation['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
-            
+                locationInformationResults.innerHTML = `LAT. ${gageInformation.latitude}, LONG. ${gageInformation.longitude}, ${gageInformation.description}`;
+
+                if (isProjectLabel.textContent === "Datum: NAVD88"){
+                    zeroGageDataResults.textContent = `${gageInformation.elevation.toFixed(2)} ft ${gageInformation['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+                } else {
+                    const levelIdEffectiveDate = "2024-01-01T08:00:00"; 
+                    let setBaseUrl = cda === "internal"
+                            ? `https://wm.${officeName.toLowerCase()}.ds.usace.army.mil:8243/${officeName.toLowerCase()}-data/`
+                            : `https://cwms-data.usace.army.mil/cwms-data/`;
+    
+                    const levelIdNgvd29 = `${gageName.value.split('.')[0]}.Height.Inst.0.NGVD29`;
+                    const ngvd29ApiUrl = `${setBaseUrl}levels/${levelIdNgvd29}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
+                    
+                    fetch(ngvd29ApiUrl)
+                        .then(response => {
+                            if (!response.ok){
+                                throw new Error("Network was not ok. " + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Set map to null if the data is null or undefined
+                            // console.log("Data: ", data);
+                            zeroGageDataResults.textContent = `${(gageInformation.elevation - data['constant-value']).toFixed(2)} ft NGVD29   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+                        })
+                        .catch(error => console.error(`Error fetching ngvd29 level for ${gageName.value.split('.')[0]}:`, error));
+    
+                }
+
             }, function(){
                 popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
                 popupWindowBtn.click();
@@ -235,7 +284,7 @@ function initialize(data) {
 // Main function
 function main(data) {
 
-    console.log('Main Data: ', data);
+    consoleLog(2, 'Main Data: ', data);
 
     // Add function to the CSV button
     computeCSV.removeEventListener('click', alertMessageForCSVBtn)
@@ -264,9 +313,9 @@ function main(data) {
     let wholePeriodList = getList(objData);
     let totalData = getMeanMinMaxList(wholePeriodList);
 
-    console.log('Whole Period List: ', wholePeriodList);
+    consoleLog(2, 'Whole Period List: ', wholePeriodList);
 
-    console.log('Total Data: ', totalData);
+    consoleLog(2, 'Total Data: ', totalData);
 
     // Separete data between mean, max and min
     let meanData = totalData[0],
@@ -342,10 +391,10 @@ function main(data) {
     });
 
     // Get mean, max and min
-    let aveMean = allMeanData.reduce((x, y) => x + y)/allMeanData.length;
+    let noCeroData = allMeanData.filter(x => x !== 0);
+    let aveMean = noCeroData.reduce((x, y) => x + y)/noCeroData.length;
     let aveMax = Math.max(...allMeanData);
-    let filteredMinData = allMeanData.filter(x => x !== 0);
-    let aveMin = Math.min(...filteredMinData);
+    let aveMin = Math.min(...noCeroData);
 
     // Get date for min and max
     let maxMeanDate = null;
@@ -380,9 +429,9 @@ function main(data) {
 
     // Get mean, max and min
     let removeUndefined = allMinData.filter(x => x);
-    let minMean = removeUndefined.reduce((x, y) => x + y)/removeUndefined.length;
-    let minMax = Math.max(...removeUndefined);
     let minFilteredMinData = removeUndefined.filter(x => x !== 0);
+    let minMean = minFilteredMinData.reduce((x, y) => x + y)/minFilteredMinData.length;
+    let minMax = Math.max(...removeUndefined);
     let minMin = Math.min(...minFilteredMinData);
 
     // Get date for min and max
@@ -418,9 +467,9 @@ function main(data) {
 
     // Get mean, max and min
     let removeUndefinedMax = allMaxData.filter(x => x);
-    let maxMean = removeUndefinedMax.reduce((x, y) => x + y)/removeUndefinedMax.length;
-    let maxMax = Math.max(...removeUndefinedMax);
     let maxFilteredMinData = removeUndefinedMax.filter(x => x !== 0);
+    let maxMean = maxFilteredMinData.reduce((x, y) => x + y)/maxFilteredMinData.length;
+    let maxMax = Math.max(...removeUndefinedMax);
     let maxMin = Math.min(...maxFilteredMinData);
 
     // Get date for min and max
@@ -449,6 +498,7 @@ function main(data) {
 
     // Change button text
     computeHTMLBtn.textContent = "Compute HTML";
+    loadingPageData();
 
     let aveTableSring = 'Day,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec\n';
     for (let i = 3; i < averageTable.childNodes.length; i++) {
@@ -469,7 +519,7 @@ function main(data) {
 
         //exportToCSV(dataStringForCSV);
         let tablesList = [averageTable, maxTable, minTable];
-        console.log("Tables: ", tablesList);
+        consoleLog(2, "Tables: ", tablesList);
 
         let newMaxTable = document.createElement('table');
         let newMaxThead = document.createElement('thead');
@@ -495,9 +545,9 @@ function main(data) {
             rowDataList.push(cellValues);
         }
 
-        console.log("Tbody: ", tbody);
+        consoleLog(2, "Tbody: ", tbody);
 
-        console.log("Row Data List: ", rowDataList);
+        consoleLog(2, "Row Data List: ", rowDataList);
 
         newMaxTable.appendChild(newMaxThead);
 
@@ -544,7 +594,7 @@ function isGageProject(data) {
             element['assigned-locations'].forEach(item => {
                 if (item['location-id'] === gageName.value) {
                     let projectsList = item['project']['assigned-locations'] ? item['project']['assigned-locations'] : null;
-                    console.log('Project List: ', projectsList);
+                    consoleLog(2, 'Project List: ', projectsList);
                     if (projectsList) {
                         projectsList.forEach(gage => {
                             if (gage['location-id'] === gageName.value) {
@@ -559,16 +609,20 @@ function isGageProject(data) {
 
     // Change Datum type on the HTML
     if (isProject) {
-        isProjectLabel.innerHTML = 'Datum: Elevation';
+        isProjectLabel.innerHTML = 'Datum: NGVD29';
+        // mean29_88label.innerHTML = 'Mean Elev:';
+        // extreme29_88label.innerHTML = 'Extreme Elev:';
     } else {
-        isProjectLabel.innerHTML = 'Datum: Stage';
+        isProjectLabel.innerHTML = 'Datum: NAVD88';
+        // mean29_88label.innerHTML = 'Mean Stage:';
+        // extreme29_88label.innerHTML = 'Extreme Stage:';
     }
 }
 
 // Disable and enable every input
 function inputsDisableAndEnable() {
 
-    let inputsList = [basinName, gageName, beginDate, endDate, computeHTMLBtn, computeCSV, aveCheckbox, maxCheckbox, minCheckbox, darkModeCheckbox];
+    let inputsList = [basinName, gageName, beginDate, endDate, computeHTMLBtn, computeCSV, aveCheckbox, maxCheckbox, minCheckbox];
 
     inputsList.forEach(element => {
         // Set disable if it's enabled and enables if it's disabled
@@ -579,24 +633,68 @@ function inputsDisableAndEnable() {
 // Update Available POR Function
 function updateAvailablePORTable(data) {
 
+    console.log(data);
+
     data.forEach(element => {
         if (element['id'] === basinName.value) {
             element['assigned-locations'].forEach(item => {
                 if (item['location-id'] === gageName.value) {
-                    console.log("Item: ", item)
+                    consoleLog(2, "Item: ", item)
                     let earliestDate = item['extents-data']['datman'][0]['earliestTime'];
                     let latestDate = item['extents-data']['datman'][0]['latestTime'];
                     let startPORDate = document.querySelector('#info-table .por-start');
                     let endPORDate = document.querySelector('#info-table .por-end');
                     let startDateList = earliestDate.split('T')[0].split('-');
                     let endDateList = latestDate.split('T')[0].split('-');
-                    startPORDate.innerText = `${startDateList[1]}/${startDateList[2]}/${startDateList[0]}`;
-                    endPORDate.innerHTML = `${endDateList[1]}/${endDateList[2]}/${endDateList[0]}`;
+                    let newInputBeginYear = startDateList[0];
+                    let newInputBeginMonth = startDateList[1];
+                    let newInputBeginDay = startDateList[2];
+                    let newInputEndYear = endDateList[0];
+                    let newInputEndMonth = endDateList[1];
+                    let newInputEndDay = endDateList[2];
+
+                    startPORDate.innerText = `${newInputBeginMonth}/${newInputBeginDay}/${newInputBeginYear}`;
+                    endPORDate.innerHTML = `${newInputEndMonth}/${newInputEndDay}/${newInputEndYear}`;
+
+                    beginDate.value = `${newInputBeginYear}-${newInputBeginMonth}-${newInputBeginDay}`; // YYYY-MMM-DD
+                    endDate.value = `${newInputEndYear}-${newInputEndMonth}-${newInputEndDay}`; // YYYY-MMM-DD
+
                 }
             });
         };
     });
     
+}
+
+// Update Dromdown list
+function updateDropDownList() {
+    // Update Dropdown Lists
+    let startDateDropDownList = document.getElementById('datRep-start-year');
+    let endDateDropDownList = document.getElementById('datRep-end-year');
+    startDateDropDownList.innerHTML = '';
+    endDateDropDownList.innerHTML = '';
+
+    let newStartYear = new Date(porStartDate.textContent).getFullYear();
+    let newEndYear = new Date(porEndDate.textContent).getFullYear();
+
+    for (let i = newStartYear; i < newEndYear + 1; i++) {
+        let newOption = document.createElement('option');
+        newOption.value = i;
+        newOption.textContent = `${i}`;
+
+        startDateDropDownList.append(newOption);
+    };
+
+    for (let i = newStartYear; i < newEndYear + 1; i++) {
+        let newOption = document.createElement('option');
+        newOption.value = i;
+        newOption.textContent = `${i}`;
+
+        endDateDropDownList.append(newOption);
+    };
+
+    startDateDropDownList.selectedIndex = newEndYear - newStartYear - 4 < 0 ? 0 : newEndYear - newStartYear - 4;
+    endDateDropDownList.selectedIndex = newEndYear - newStartYear;
 }
 
 // Export CSV file
@@ -723,11 +821,6 @@ function exportTableToExcel(tableList, filename) {
 
 function datRepWindow(data) {
 
-    pageTitle.textContent = "DatRep - Daily Gage Values";
-
-    checkboxDiv.style.display = 'none';
-    computeHTMLBtn.style.display = 'none';
-    computeCSV.style.display = 'none';
     let inputTableDates = inputTable.childNodes[3].childNodes[3];
     inputTableDates.innerHTML = '';
 
@@ -738,7 +831,7 @@ function datRepWindow(data) {
     endDateYearComboBox.id = "datRep-end-year";
 
     const currentYear = new Date().getFullYear();
-    let oldestYear = 1950;
+    let oldestYear = new Date(porStartDate.textContent).getFullYear();
     
     for (let i = oldestYear; i < currentYear + 1; i++) {
         let newOption = document.createElement('option');
@@ -763,7 +856,7 @@ function datRepWindow(data) {
     inputTableDates.appendChild(firstYear);
     inputTableDates.appendChild(lastYear);
 
-    startDateYearComboBox.selectedIndex = 60;
+    startDateYearComboBox.selectedIndex = currentYear - oldestYear - 4 < 0 ? 0 : currentYear - oldestYear - 4;
     endDateYearComboBox.selectedIndex = currentYear - oldestYear;
 
     let getDataBtn = document.createElement('button');
@@ -794,12 +887,21 @@ function getData(data) {
 
     loadingPageData();
 
+    datRepDiv.classList.add('hidden');
+
+    inputsDisableAndEnable();
+
     document.querySelectorAll('.datrep-table').forEach(table => {
         datRepDiv.removeChild(table);
     });
 
     const getDataButton = document.getElementById('button-get-data');
+    const getPDFReport = document.getElementById('button-pdf');
+
     getDataButton.innerHTML = "Processing - Please Wait";
+
+    getDataButton.disabled = true;
+    getPDFReport.disabled = true;
 
     // Get all data to create the url
     const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -822,415 +924,552 @@ function getData(data) {
     let beginValueYear = document.getElementById('datRep-start-year').value;
     let endValueYear = document.getElementById('datRep-end-year').value;
 
-    let beginValue = `${beginValueYear}-01-01T00%3A00%3A00.00Z`;
-    let endValue = `${endValueYear}-12-31T00%3A00%3A00.00Z`;
+    // Date format: 2023-12-31T00%3A00%3A00.00Z
+    const startDate_1 = new Date(porStartDate.textContent);
+    const startDate_2 = new Date(`${beginValueYear}-01-01`); // YYYY-MM-DD
+    let beginValue;
+
+    if (startDate_1 > startDate_2){
+        beginValue = `${porStartDate.innerHTML.split('/')[2]}-${porStartDate.innerHTML.split('/')[0]}-${porStartDate.innerHTML.split('/')[1]}T00%3A00%3A00.00Z`;
+    } else {
+        beginValue = `${beginValueYear}-01-01T00%3A00%3A00.00Z`;
+    }
+
+    consoleLog(1, "Begin Date: ", beginValue);
+
+    // Date format: 2023-12-31T00%3A00%3A00.00Z
+    const endDate_1 = new Date(porEndDate.textContent);
+    //console.log("End Date Raw: ", endDate_1);
+    const endDate_2 = new Date(`${endValueYear}-12-31`); // YYYY-MM-DD
+    let endValue;
+
+    if (endDate_1 < endDate_2){
+        endValue = `${porEndDate.innerHTML.split('/')[2]}-${porEndDate.innerHTML.split('/')[0]}-${porEndDate.innerHTML.split('/')[1]}T23%3A59%3A59.99Z`;
+    } else {
+        endValue = `${endValueYear}-12-31T23%3A59%3A59.99Z`;
+    }
+
+    consoleLog(1, "End Date: ", endValue);
 
     // Create the URL to get the data
     let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
-    let pageSize = 100000;
+    let pageSize = 500000;
 
     stageUrl = stageUrl + `&page-size=${pageSize}`;
 
-    console.log("Data URL: ", stageUrl);
+    consoleLog(1, "Data URL: ", stageUrl);
 
-    fetchJsonFile(stageUrl, function(newData) {
-        
-        let objData = newData["values"];
-        
-        // Get list with all the years
-        let wholePeriodList = getList(objData);
-        // let totalData = getMeanMinMaxList(wholePeriodList);
+    let wholePeriodStartDate = `${porStartDate.innerHTML.split('/')[2]}-${porStartDate.innerHTML.split('/')[0]}-${porStartDate.innerHTML.split('/')[1]}T00%3A00%3A00.00Z`;
+    let wholePeriodEndDate = `${porEndDate.innerHTML.split('/')[2]}-${porEndDate.innerHTML.split('/')[0]}-${porEndDate.innerHTML.split('/')[1]}T00%3A00%3A00.00Z`;
+    let wholePeriodURL = createUrl(domain,timeSeries,datmanName,officeName,wholePeriodStartDate,wholePeriodEndDate,timeZone)
 
-        //console.log('Whole Period Data List: ', wholePeriodList);
+    wholePeriodURL = wholePeriodURL + `&page-size=${pageSize}`;
+    consoleLog(1, "Line: ", new Error().stack.split('\n')[1].split(':')[2].trim() + '\n', "Whole Period Record URL: ", wholePeriodURL);
 
-        wholePeriodListGlobal = wholePeriodList;
+    fetchJsonFile(wholePeriodURL, function(newData) { 
 
-        // console.log('Total Data: ', totalData);
+        //console.log("New Data: ", newData) 
+        let wholePeriodMax = 0;
+        let wholePeriodMin = 999;
 
-        // Update Location Info
-        let gageInformation = null;
-        data.forEach(basin => {
-            if (basin['id'] === basinName.value) {
-                basin['assigned-locations'].forEach(gage => {
-                    if (gage['location-id'] === gageName.value) {
-                        gageInformation = gage['metadata'];
-                    };
-                });
+        let wholePeriodMaxDate = 0;
+        let wholePeriodMinDate = 0;
+
+        let stageSum = 0;
+        newData['values'].forEach(element => {
+            stageSum += element[1]
+            if (element[1] > wholePeriodMax){
+                wholePeriodMax = element[1];
+                wholePeriodMaxDate = element[0];
+            } else if (element[1] < wholePeriodMin){
+                wholePeriodMin = element[1];
+                wholePeriodMinDate = element[0];
             };
         });
 
-        //console.log('Metadata: ', gageInformation);
+        let wholePeriodMean = stageSum / newData['values'].length;
 
-        datRepInfoTable.childNodes[1].childNodes[1].childNodes[1].textContent = gageInformation['name'];
+        const dateMax = new Date(wholePeriodMaxDate);
+        const dateMin = new Date(wholePeriodMinDate);
 
-        locationInformation.textContent = gageInformation ? `LAT. ${gageInformation.latitude}, LONG. ${gageInformation.longitude}, ${gageInformation.description}` : 'No gage information found.';
-        zeroGageData.textContent = `${gageInformation.elevation.toFixed(2)} ft ${gageInformation['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+        let wholePeriodMaxformattedDate = dateMax.toLocaleDateString('en-GB', { 
+            day: '2-digit', 
+            month: 'short', 
+            year: 'numeric' 
+          });
+        let wholePeriodMinformattedDate = dateMin.toLocaleDateString('en-GB', { 
+            day: '2-digit', 
+            month: 'short', 
+            year: 'numeric' 
+          });
 
-        datRepDiv.classList.remove('hidden');
+        fetchJsonFile(stageUrl, function(newData) {
 
-        for (let i = 0; i < wholePeriodList.length; i++) {
-            let tableDiv = document.createElement('div');
-            tableDiv.classList.add('datrep-table');
-
-            let newTable = document.createElement('table');
-            newTable.classList.add('data-table');
-            newTable.id = `datrep-${i+1}`;
-
-            let thead = document.createElement('thead');
-            thead.innerHTML = `
-            <tr>
-                <th colspan="13">${parseInt(beginValueYear)+i}</th>
-            </tr>
-            <tr>
-                <th>Day</th>
-                <th>Jan</th>
-                <th>Feb</th>
-                <th>Mar</th>
-                <th>Apr</th>
-                <th>May</th>
-                <th>Jun</th>
-                <th>Jul</th>
-                <th>Aug</th>
-                <th>Sep</th>
-                <th>Oct</th>
-                <th>Nov</th>
-                <th>Dec</th>
-            </tr>
-            `;
-
-            newTable.append(thead);
-
-            let tbody = document.createElement('tbody');
-
-            let newTableData = [];
-
-            for (let x = 1; x < 32; x++) {
-                newTableData.push({
-                    day: x,
-                    stages: []
-                });
-            };
-
-            for (let j = 1; j < 13; j++) {
-                for (let k = 1; k < 32; k++) {
-
-                    let haveData = false;
-                    wholePeriodList[i]['data'].forEach(element => {
-                        let day = parseInt(element['date'].split('-')[2]);
-                        let month = parseInt(element['date'].split('-')[1]);
-
-                        if (day === k && month === j) {
-                            newTableData.forEach(obj => {
-                                if (obj['day'] === day) {
-                                    obj['stages'].push(`${element.stage.toFixed(2)}`);
-                                }
-                            });
-                            haveData = true;
+        
+            let objData = newData["values"];
+            
+            // Get list with all the years
+            let wholePeriodList = getList(objData);
+            // let totalData = getMeanMinMaxList(wholePeriodList);
+    
+            //console.log('Whole Period Data List: ', wholePeriodList);
+    
+            wholePeriodListGlobal = wholePeriodList;
+    
+            // console.log('Total Data: ', totalData);
+    
+            // Update Location Info
+            let gageInformation = null;
+            data.forEach(basin => {
+                if (basin['id'] === basinName.value) {
+                    basin['assigned-locations'].forEach(gage => {
+                        if (gage['location-id'] === gageName.value) {
+                            gageInformation = gage['metadata'];
                         };
                     });
+                };
+            });
+    
+            //console.log('Metadata: ', gageInformation);
+    
+            datRepInfoTable.childNodes[1].childNodes[1].childNodes[1].textContent = gageInformation['name'];
+    
+            locationInformation.textContent = gageInformation ? `LAT. ${gageInformation.latitude}, LONG. ${gageInformation.longitude}, ${gageInformation.description}` : 'No gage information found.';
+            
+            if (isProjectLabel.textContent == "Datum: NAVD88"){
+                zeroGageData.textContent = `${gageInformation.elevation.toFixed(2)} ft ${gageInformation['vertical-datum']}   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+            } else {
+                const levelIdEffectiveDate = "2024-01-01T08:00:00"; 
+                let setBaseUrl = cda === "internal"
+                        ? `https://wm.${officeName.toLowerCase()}.ds.usace.army.mil:8243/${officeName.toLowerCase()}-data/`
+                        : `https://cwms-data.usace.army.mil/cwms-data/`;
 
-                    if (!haveData) {
-                        newTableData.forEach(obj => {
-                            if ([2, 4, 6, 9, 11].includes(j)) {
-                                if (j === 2 && [29, 30, 31].includes(k)) {
-                                    if (obj['day'] === k) {
-                                        obj['stages'].push("----");
+                const levelIdNgvd29 = `${gageName.value.split('.')[0]}.Height.Inst.0.NGVD29`;
+                const ngvd29ApiUrl = `${setBaseUrl}levels/${levelIdNgvd29}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
+                
+                fetch(ngvd29ApiUrl)
+                    .then(response => {
+                        if (!response.ok){
+                            throw new Error("Network was not ok. " + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Set map to null if the data is null or undefined
+                        // console.log("Data: ", data);
+                        zeroGageData.textContent = `${(data['constant-value'] - gageInformation.elevation).toFixed(2)} ft NGVD29   NOTE: ADD DATUM TO STAGE TO OBTAIN ELEVATION.`;
+                    })
+                    .catch(error => console.error(`Error fetching ngvd29 level for ${gageName.value.split('.')[0]}:`, error));
+
+            }
+
+            datRepDiv.classList.remove('hidden');
+    
+            
+    
+            for (let i = 0; i < wholePeriodList.length; i++) {
+                let tableDiv = document.createElement('div');
+                tableDiv.classList.add('datrep-table');
+    
+                let newTable = document.createElement('table');
+                newTable.classList.add('data-table');
+                newTable.id = `datrep-${i+1}`;
+    
+                let thead = document.createElement('thead');
+                thead.innerHTML = `
+                <tr>
+                    <th colspan="13">${parseInt(beginValueYear)+i}</th>
+                </tr>
+                <tr>
+                    <th>Day</th>
+                    <th>Jan</th>
+                    <th>Feb</th>
+                    <th>Mar</th>
+                    <th>Apr</th>
+                    <th>May</th>
+                    <th>Jun</th>
+                    <th>Jul</th>
+                    <th>Aug</th>
+                    <th>Sep</th>
+                    <th>Oct</th>
+                    <th>Nov</th>
+                    <th>Dec</th>
+                </tr>
+                `;
+    
+                newTable.append(thead);
+    
+                let tbody = document.createElement('tbody');
+    
+                let newTableData = [];
+    
+                for (let x = 1; x < 32; x++) {
+                    newTableData.push({
+                        day: x,
+                        stages: []
+                    });
+                };
+    
+                for (let j = 1; j < 13; j++) {
+                    for (let k = 1; k < 32; k++) {
+    
+                        let haveData = false;
+                        wholePeriodList[i]['data'].forEach(element => {
+                            let day = parseInt(element['date'].split('-')[2]);
+                            let month = parseInt(element['date'].split('-')[1]);
+    
+                            if (day === k && month === j) {
+                                newTableData.forEach(obj => {
+                                    if (obj['day'] === day) {
+                                        obj['stages'].push(`${element.stage.toFixed(2)}`);
                                     }
-                                } else if (k === 31) {
-                                    if (obj['day'] === k) {
-                                        obj['stages'].push("----");
+                                });
+                                haveData = true;
+                            };
+                        });
+    
+                        if (!haveData) {
+                            newTableData.forEach(obj => {
+                                if ([2, 4, 6, 9, 11].includes(j)) {
+                                    if (j === 2 && [29, 30, 31].includes(k)) {
+                                        if (obj['day'] === k) {
+                                            obj['stages'].push("----");
+                                        }
+                                    } else if (k === 31) {
+                                        if (obj['day'] === k) {
+                                            obj['stages'].push("----");
+                                        }
+                                    } else {
+                                        if (obj['day'] === k) {
+                                            obj['stages'].push("--");
+                                        }
                                     }
                                 } else {
                                     if (obj['day'] === k) {
                                         obj['stages'].push("--");
                                     }
                                 }
-                            }
-                            
-                        });
-                    }
-
-                }
-            };
-
-            let monthsValues = [];
-            let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-            monthsNames.forEach(name => {
-                monthsValues.push({
-                    month: name,
-                    stages: []
-                });
-            });
-
-            newTableData.forEach(element => {
-                element['stages'].forEach((item, index_month) => {
-
-                    if (item !== "----") {
-                        monthsValues.forEach(obj => {
-                            if (obj['month'] === monthsNames[index_month]) {
-                                obj['stages'].push(parseFloat(item));
-                            }
-                        });
-                    };
-
-                });
-            });
-
-            newTableData.forEach(object => {
-                let newRow = document.createElement('tr');
-                newRow.innerHTML = `<td>${object['day']}</td>`;
-                object['stages'].forEach(item => {
-                    newRow.innerHTML += `<td>${item}</td>`;
-                });
-
-                tbody.append(newRow);
-            });
-
-            newTable.append(tbody);
-
-            tableDiv.append(newTable);
-
-            datRepDiv.append(tableDiv);
-
-            const statisticTitle = document.createElement('h2');
-            statisticTitle.classList.add("statistic-title");
-            statisticTitle.textContent = `The following statistics are based on observations occuring in ${parseInt(beginValueYear)+i} only.`;
-
-            tableDiv.append(statisticTitle);
-
-            const statisticList = [];
-            const statisticCategories = ['Mean', 'Max', 'Min', 'Day'];
-            for (let i = 0; i < 4; i++) { 
-                statisticList.push({
-                    category: statisticCategories[i],
-                    data: []
-                });
-            };
-
-            statisticList.forEach((element, index) => {
-                if (index === 0) {
-                    monthsValues.forEach(item => {
-                        let mean = item['stages'].reduce((acc, curr) => acc + curr, 0) / item['stages'].length;
-                        element['data'].push(`${mean.toFixed(2)}`);
-                    });
-                } else if (index === 1) {
-                    monthsValues.forEach(item => {
-                        let max = Math.max(...item['stages']);
-                        element['data'].push(`${max.toFixed(2)}`);
-                    });
-                } else if (index === 2) {
-                    monthsValues.forEach(item => {
-                        let min = Math.min(...item['stages']);
-                        element['data'].push(`${min.toFixed(2)}`);
-                    });
-                } else if (index === 3) {
-                    monthsValues.forEach(item => {
-                        let count = item['stages'].length;
-                        element['data'].push(`${count}`);
-                    });
-                };
-            });
-
-            const statisticTable = document.createElement('table');
-            statisticTable.classList.add('statistic-table');
-            const statTbody = document.createElement('tbody');
-
-            statisticList.forEach(element => {
-                let newRow = document.createElement('tr');
-                newRow.innerHTML = `<td style='padding: 0px 18px'>${element['category']}</td>`;
-                element['data'].forEach(item => {
-                    if (['NaN', '-Infinity', 'Infinity'].includes(item)) {
-                        newRow.innerHTML += `<td style='width: 75px'>----</td>`;
-                    } else {
-                        newRow.innerHTML += `<td>${item}</td>`;
-                    };
-                });
-
-                statTbody.append(newRow);
-            });
-
-            statisticTable.append(statTbody);
-
-            tableDiv.append(statisticTable);
-
-            //console.log("statisticList: ", statisticList);
-
-            datrepAllData = [];
-
-            monthsValues.forEach(element => {
-                datrepAllData.push(element);
-            });
-
-            //console.log("Months Value: ", monthsValues);
-
-            let wholeYearMean = 0;
-            let wholeYearMax = -99;
-            let wholeYearMin = 99;
-
-            let count = 0;
-            let sum = 0;
-            monthsValues.forEach(element => {
-                element['stages'].forEach(item => {
-                    sum += item;
-                    if (item < wholeYearMin) {
-                        wholeYearMin = item;
-                    };
-                    if (item > wholeYearMax) {
-                        wholeYearMax = item;
-                    };
-                    count += 1;
-                });
-            });
-
-            wholeYearMean = parseFloat((sum / count).toFixed(2));
-
-            //console.log("Whole Year Mean: ", wholeYearMean);          
-            //console.log("Whole Year Max: ", wholeYearMax);
-            //console.log("Whole Year Min: ", wholeYearMin);
-
-            //console.log('Period Data: ', wholePeriodList[i]);
-
-            let periodMaxYear = "";
-            let periodMinYear = "";  // YYYY-MM-DD
-            wholePeriodList[i]['data'].forEach(element => {
-                    let tempDay = element['date'].split('-')[2];
-                    let tempMonth = element['date'].split('-')[1];
-                    let tempYear = element['date'].split('-')[0];
-                if (element['stage'] == wholeYearMax) {
-                    periodMaxYear = `${tempMonth}-${tempDay}-${tempYear}`;
-                };
-                if (element['stage'] == wholeYearMin) {
-                    periodMinYear = `${tempMonth}-${tempDay}-${tempYear}`;
-                };
-            });
-
-            const footerDiv = document.createElement('div');
-            footerDiv.classList.add('footer-div');
-
-            const statisticDiv = document.createElement('div');
-            statisticDiv.classList.add('stats-div');
-
-            let footerMean = document.createElement('h2');
-            let footerMax = document.createElement('h2');
-            let footerMin = document.createElement('h2');
-            let footerBottomLine = document.createElement('h2');
-            footerMean.textContent =`The Mean ELEV for the Year was: ${wholeYearMean}`;
-            footerMax.textContent =`The Highest ELEV for the Year was: ${wholeYearMax} which occured on: ${periodMaxYear}`;  // MM-DD-YYYY
-            footerMin.textContent =`The Lowest ELEV for the Year was: ${wholeYearMin} which occured on: ${periodMinYear}`;
-            footerBottomLine.textContent = `The Total Number of Days for the Year was: 365`;
-
-            statisticDiv.append(footerMean);
-            statisticDiv.append(footerMax);
-            statisticDiv.append(footerMin);
-            statisticDiv.append(footerBottomLine);
-
-            let disclamer = document.createElement('h2');
-            disclamer.classList.add('disclamer');
-            disclamer.innerHTML = `
-            NOTICE: All data contained herein is preliminary in nature and therefore subject to change. The
-            data is for general information purposes ONLY and SHALL NOT be used in technical
-            applications such as, but not limited to, studies or designs. All critical data should be obtained
-            from and verified by the United States Army Corps of Engineers. The United States
-            Government assumes no liability for the completeness or accuracy of the data contained herein
-            and any use of such data inconsistent with this disclaimer shall be solely at the risk of the user.
-            `;
-
-            footerDiv.append(statisticDiv);
-            footerDiv.append(disclamer);
-
-            tableDiv.append(footerDiv);
-
-            const separator = document.createElement('div');
-            separator.classList.add('div-separator');
-
-            tableDiv.append(separator);
-
-        };
-
-
-        let allDataNumList = [];
-
-        datrepAllData.forEach(element => {
-            element['stages'].forEach(stage => {
-                allDataNumList.push(stage);
-            });
-        });
-
-        console.log("allDataNumList: ", allDataNumList);
-
-        datrepMaxMinAndMean['min'] = Math.min(...allDataNumList);
-        datrepMaxMinAndMean['max'] = Math.max(...allDataNumList);
-        datrepMaxMinAndMean['mean'] = parseFloat((allDataNumList.reduce((acc, curr) => acc + curr, 0) / allDataNumList.length).toFixed(2));
-
-        //console.log("datrepMaxMinAndMean: ", datrepMaxMinAndMean);
-
-        // Get the Min, Max and Mean date
-        //console.log("WholePeriodGlobal: ", wholePeriodListGlobal);
-
-        let tempObj = {
-            min: [],
-            max: []
-        };
-
-        wholePeriodListGlobal.forEach(element => {
-            element['data'].forEach(item => {
-                if (item['stage'] === datrepMaxMinAndMean['min']) {
-                    tempObj['min'].push({
-                        date: item['date'],
-                        stage: item['stage']
-                    });
-                } else if (item['stage'] === datrepMaxMinAndMean['max']) {
-                    tempObj['max'].push({
-                        date: item['date'],
-                        stage: item['stage']
-                    });
-                };
-            });
-        });
-
-        console.log("wholePeriodListGlobal: ", wholePeriodListGlobal);
-
-        console.log("TempObj: ", tempObj);
-
-        let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-        const meanElevInfo = document.getElementById('mean-elev-info');
-        const extremeElevInfo = document.getElementById('extreme-elev-info');
-        const recordAvailableInfo = document.getElementById('record-available');
-        const porStartDate = document.querySelector('#info-table .por-start');
-        const porEndDate = document.querySelector('#info-table .por-end');
-
-        //console.log(`Start Date: ${porStartDate.textContent} --- End Date: ${porEndDate.textContent}`);
-
-        let maxDateDay = tempObj['max'][0]['date'].split('-')[2];
-        let maxDateMonth = monthsNames[(parseInt(tempObj['max'][0]['date'].split('-')[1])-1)].toUpperCase();
-        let maxDateYear = tempObj['max'][0]['date'].split('-')[0];
-
-        let minDateDay = tempObj['min'][0]['date'].split('-')[2];
-        let minDateMonth = monthsNames[(parseInt(tempObj['min'][0]['date'].split('-')[1])-1)].toUpperCase();
-        let minDateYear = tempObj['min'][0]['date'].split('-')[0];
-
-        let startPORDateMonth = monthsNames[parseInt(porStartDate.textContent.split('/')[0])-1].toUpperCase();
-        let startPORDateYear = parseInt(porStartDate.textContent.split('/')[2]);
-        let endPORDateMonth = monthsNames[parseInt(porEndDate.textContent.split('/')[0])-1].toUpperCase();
-        let endPORDateYear = parseInt(porEndDate.textContent.split('/')[2]);
-
-        recordAvailableInfo.textContent = `ELEVATION, ${startPORDateMonth} ${startPORDateYear} TO ${endPORDateMonth} ${endPORDateYear}.`;
-        meanElevInfo.textContent = `PERIOD OF RECORD, ${datrepMaxMinAndMean['mean']} FT .`;
-        extremeElevInfo.textContent = `PERIOD OF RECORD, DAILY HIGH OF ${tempObj['max'][0]['stage']} FT ON ${maxDateDay} ${maxDateMonth} ${maxDateYear} & PERIOD OF RECORD, DAILY LOW OF ${tempObj['min'][0]['stage']} FT ON ${minDateDay} ${minDateMonth} ${minDateYear} .`;
-
-        loadingPageData();
-
-        getDataButton.innerHTML = "Get Data";
-
-        //contentBodyDiv
+                                
+                            });
+                        }
     
-    }, function(error){
-        popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
-        popupWindowBtn.click();
-        document.getElementById('button-get-data').textContent = "Get Data";
+                    }
+                };
+
+                consoleLog(2, "New Table Data: ", newTableData);
+    
+                let monthsValues = [];
+                let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+                monthsNames.forEach(name => {
+                    monthsValues.push({
+                        month: name,
+                        stages: []
+                    });
+                });
+    
+                newTableData.forEach(element => {
+                    element['stages'].forEach((item, index_month) => {
+    
+                        if (item !== "----") {
+                            monthsValues.forEach(obj => {
+                                if (obj['month'] === monthsNames[index_month]) {
+                                    obj['stages'].push(parseFloat(item));
+                                }
+                            });
+                        };
+    
+                    });
+                });
+    
+                newTableData.forEach(object => {
+                    let newRow = document.createElement('tr');
+                    newRow.innerHTML = `<td>${object['day']}</td>`;
+                    object['stages'].forEach(item => {
+                        newRow.innerHTML += `<td>${item}</td>`;
+                    });
+    
+                    tbody.append(newRow);
+                });
+    
+                newTable.append(tbody);
+    
+                tableDiv.append(newTable);
+    
+                datRepDiv.append(tableDiv);
+    
+                const statisticTitle = document.createElement('h2');
+                statisticTitle.classList.add("statistic-title");
+                statisticTitle.textContent = `The following statistics are based on observations occuring in ${parseInt(beginValueYear)+i} only.`;
+    
+                tableDiv.append(statisticTitle);
+    
+                const statisticList = [];
+                const statisticCategories = ['Mean', 'Max', 'Min', 'Day'];
+                for (let i = 0; i < 4; i++) { 
+                    statisticList.push({
+                        category: statisticCategories[i],
+                        data: []
+                    });
+                };
+
+                consoleLog(2, "Months Values: ", monthsValues);
+    
+                statisticList.forEach((element, index) => {
+                    if (index === 0) {
+                        monthsValues.forEach(item => {
+                            let tempSum = 0;
+                            item['stages'].forEach(stage => {
+                                if (stage) {
+                                    tempSum += stage;
+                                }
+                            });
+                            let mean = tempSum / item['stages'].length;
+                            // let mean = item['stages'].reduce((acc, curr) => acc + curr, 0) / item['stages'].length;
+                            element['data'].push(`${mean.toFixed(2)}`);
+                        });
+                    } else if (index === 1) {
+                        monthsValues.forEach(item => {
+                            // let max = Math.max(...item['stages']);
+                            let max = Math.max(...item['stages'].filter(stage => !isNaN(stage)));
+                            element['data'].push(`${max.toFixed(2)}`);
+                        });
+                    } else if (index === 2) {
+                        monthsValues.forEach(item => {
+                            // let min = Math.min(...item['stages']);
+                            let min = Math.min(...item['stages'].filter(stage => !isNaN(stage)));
+                            element['data'].push(`${min.toFixed(2)}`);
+                        });
+                    } else if (index === 3) {
+                        monthsValues.forEach(item => {
+                            let count = item['stages'].filter(stage => !isNaN(stage)).length;
+                            element['data'].push(`${count}`);
+                        });
+                    };
+                });
+
+                consoleLog(2, "statisticList: ", statisticList);
+    
+                const statisticTable = document.createElement('table');
+                statisticTable.classList.add('statistic-table');
+                const statTbody = document.createElement('tbody');
+    
+                statisticList.forEach(element => {
+                    let newRow = document.createElement('tr');
+                    newRow.innerHTML = `<td style='padding: 0px 18px'>${element['category']}</td>`;
+                    element['data'].forEach(item => {
+                        if (['NaN', '-Infinity', 'Infinity', '0', '0.00'].includes(item)) {
+                            newRow.innerHTML += `<td style='width: 75px'>----</td>`;
+                        } else {
+                            newRow.innerHTML += `<td>${item}</td>`;
+                        };
+                    });
+    
+                    statTbody.append(newRow);
+                });
+    
+                statisticTable.append(statTbody);
+    
+                tableDiv.append(statisticTable);
+    
+                //console.log("statisticList: ", statisticList);
+    
+                datrepAllData = [];
+    
+                monthsValues.forEach(element => {
+                    datrepAllData.push(element);
+                });
+    
+                //console.log("Months Value: ", monthsValues);
+    
+                let wholeYearMean = 0;
+                let wholeYearMax = -999;
+                let wholeYearMin = 999;
+    
+                let count = 0;
+                let sum = 0;
+                let totalCount = 0;
+                monthsValues.forEach(element => {
+
+                    totalCount += element['stages'].length;
+
+                    let filteredStages = element['stages'].filter(stage => !isNaN(stage));
+                    filteredStages.forEach(item => {
+                        sum += item;
+                        if (item < wholeYearMin) {
+                            wholeYearMin = item;
+                        };
+                        if (item > wholeYearMax) {
+                            wholeYearMax = item;
+                        };
+                        count += 1;
+                    });
+                });
+    
+                wholeYearMean = parseFloat((sum / count).toFixed(2));
+    
+                //console.log("Whole Year Mean: ", wholeYearMean);          
+                //console.log("Whole Year Max: ", wholeYearMax);
+                //console.log("Whole Year Min: ", wholeYearMin);
+    
+                //console.log('Period Data: ', wholePeriodList[i]);
+    
+                let periodMaxYear = "";
+                let periodMinYear = "";  // YYYY-MM-DD
+                wholePeriodList[i]['data'].forEach(element => {
+                        let tempDay = element['date'].split('-')[2];
+                        let tempMonth = element['date'].split('-')[1];
+                        let tempYear = element['date'].split('-')[0];
+                    if (element['stage'] == wholeYearMax) {
+                        periodMaxYear = `${tempMonth}-${tempDay}-${tempYear}`;
+                    };
+                    if (element['stage'] == wholeYearMin) {
+                        periodMinYear = `${tempMonth}-${tempDay}-${tempYear}`;
+                    };
+                });
+    
+                const footerDiv = document.createElement('div');
+                footerDiv.classList.add('footer-div');
+    
+                const statisticDiv = document.createElement('div');
+                statisticDiv.classList.add('stats-div');
+
+                const totalNumbersOfDays = (() => {
+                    return statisticList[3].data.reduce((acc, curr) => parseInt(acc) + parseInt(curr), 0);
+                })();
+    
+                let footerMean = document.createElement('h2');
+                let footerMax = document.createElement('h2');
+                let footerMin = document.createElement('h2');
+                let footerBottomLine = document.createElement('h2');
+
+                if (isProjectLabel.textContent == "Datum: NAVD88"){
+                    footerMean.textContent =`The Mean STAGE for the Year was: ${wholeYearMean.toFixed(2)}`;
+                    footerMax.textContent =`The Highest STAGE for the Year was: ${wholeYearMax.toFixed(2)} which occured on: ${periodMaxYear}`;  // MM-DD-YYYY
+                    footerMin.textContent =`The Lowest STAGE for the Year was: ${wholeYearMin.toFixed(2)} which occured on: ${periodMinYear}`;
+                    footerBottomLine.textContent = `The Total Number of Days for the Year was: ${totalCount}`;
+                } else {
+                    footerMean.textContent =`The Mean ELEV for the Year was: ${wholeYearMean.toFixed(2)}`;
+                    footerMax.textContent =`The Highest ELEV for the Year was: ${wholeYearMax.toFixed(2)} which occured on: ${periodMaxYear}`;  // MM-DD-YYYY
+                    footerMin.textContent =`The Lowest ELEV for the Year was: ${wholeYearMin.toFixed(2)} which occured on: ${periodMinYear}`;
+                    footerBottomLine.textContent = `The Total Number of Days for the Year was: ${totalCount}`;
+                }
+    
+                statisticDiv.append(footerMean);
+                statisticDiv.append(footerMax);
+                statisticDiv.append(footerMin);
+                statisticDiv.append(footerBottomLine);
+    
+                let disclamer = document.createElement('h2');
+                disclamer.classList.add('disclamer');
+                disclamer.innerHTML = `
+                NOTICE: All data contained herein is preliminary in nature and therefore subject to change. The
+                data is for general information purposes ONLY and SHALL NOT be used in technical
+                applications such as, but not limited to, studies or designs. All critical data should be obtained
+                from and verified by the United States Army Corps of Engineers. The United States
+                Government assumes no liability for the completeness or accuracy of the data contained herein
+                and any use of such data inconsistent with this disclaimer shall be solely at the risk of the user.
+                `;
+    
+                footerDiv.append(statisticDiv);
+                footerDiv.append(disclamer);
+    
+                tableDiv.append(footerDiv);
+    
+                const separator = document.createElement('div');
+                separator.classList.add('div-separator');
+    
+                tableDiv.append(separator);
+    
+            };
+    
+    
+            let allDataNumList = [];
+    
+            datrepAllData.forEach(element => {
+                element['stages'].forEach(stage => {
+                    allDataNumList.push(stage);
+                });
+            });
+    
+            //console.log("allDataNumList: ", allDataNumList);
+    
+            datrepMaxMinAndMean['min'] = Math.min(...allDataNumList);
+            datrepMaxMinAndMean['max'] = Math.max(...allDataNumList);
+            datrepMaxMinAndMean['mean'] = parseFloat((allDataNumList.reduce((acc, curr) => acc + curr, 0) / allDataNumList.length).toFixed(2));
+    
+            consoleLog(2, "datrepMaxMinAndMean: ", datrepMaxMinAndMean);
+    
+            // Get the Min, Max and Mean date
+            //console.log("WholePeriodGlobal: ", wholePeriodListGlobal);
+    
+            let tempObj = {
+                min: [],
+                max: []
+            };
+    
+            wholePeriodListGlobal.forEach(element => {
+                element['data'].forEach(item => {
+                    if (item['stage'] === datrepMaxMinAndMean['min']) {
+                        tempObj['min'].push({
+                            date: item['date'],
+                            stage: item['stage']
+                        });
+                    } else if (item['stage'] === datrepMaxMinAndMean['max']) {
+                        tempObj['max'].push({
+                            date: item['date'],
+                            stage: item['stage']
+                        });
+                    };
+                });
+            });
+    
+            //console.log("wholePeriodListGlobal: ", wholePeriodListGlobal);
+    
+            //console.log("TempObj: ", tempObj);
+    
+            let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+            const meanElevInfo = document.getElementById('mean-elev-info');
+            const extremeElevInfo = document.getElementById('extreme-elev-info');
+            const recordAvailableInfo = document.getElementById('record-available');
+            const porStartDate = document.querySelector('#info-table .por-start');
+            const porEndDate = document.querySelector('#info-table .por-end');
+    
+            let startPORDateMonth = monthsNames[parseInt(porStartDate.textContent.split('/')[0])-1].toUpperCase();
+            let startPORDateYear = parseInt(porStartDate.textContent.split('/')[2]);
+            let endPORDateMonth = monthsNames[parseInt(porEndDate.textContent.split('/')[0])-1].toUpperCase();
+            let endPORDateYear = parseInt(porEndDate.textContent.split('/')[2]);
+            
+            // if (isProjectLabel.textContent == "Datum: NAVD88"){
+            //     recordAvailableInfo.textContent = `STAGE, ${startPORDateMonth} ${startPORDateYear} TO ${endPORDateMonth} ${endPORDateYear}.`;
+            // } else {
+            //     recordAvailableInfo.textContent = `ELEVATION, ${startPORDateMonth} ${startPORDateYear} TO ${endPORDateMonth} ${endPORDateYear}.`;
+            // }
+
+            recordAvailableInfo.textContent = `STAGE, ${startPORDateMonth} ${startPORDateYear} TO ${endPORDateMonth} ${endPORDateYear}.`;
+            
+            meanElevInfo.textContent = `PERIOD OF RECORD, ${wholePeriodMean.toFixed(2)} FT .`;
+            extremeElevInfo.textContent = `PERIOD OF RECORD, DAILY HIGH OF ${wholePeriodMax.toFixed(2)} FT ON ${wholePeriodMaxformattedDate} & PERIOD OF RECORD, DAILY LOW OF ${wholePeriodMin.toFixed(2)} FT ON ${wholePeriodMinformattedDate} .`;
+
+            loadingPageData();
+    
+            getDataButton.innerHTML = "Get Data";
+
+            inputsDisableAndEnable();
+            getDataButton.disabled = false;
+            getPDFReport.disabled = false;
+    
+            //contentBodyDiv
+        
+        }, function(error){
+            popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+            popupWindowBtn.click();
+            document.getElementById('button-get-data').textContent = "Get Data";
+        });
+
     });
+
 
 }
 
@@ -1492,6 +1731,18 @@ function createPDFReport(data) {
     doc.save(`${reportTitle} (${firstYear}-${lastYear}).pdf`);
 }
 
+function consoleLog(type, ...message) {
+    if (consoleLogType.includes(type) && type === 1) {
+        console.log("INFO\n", ...message);
+    } else if (consoleLogType.includes(type) && type === 2){
+        console.log("TEST\n", ...message);
+    } else if (consoleLogType.includes(type) && type === 3) {
+        console.log("INITIAL FETCH\n", ...message);
+    } else if (![1, 2, 3].includes(type)) {
+        console.log(`${type}\n`, ...message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
 
     inputsDisableAndEnable();
@@ -1501,6 +1752,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     //let office = "MVS";
     //let type = "no idea";
 
+    if (type === "DATREP") {
+        pageTitle.textContent = "DatRep - Daily Gage Values";
+        checkboxDiv.style.display = 'none';
+        computeHTMLBtn.style.display = 'none';
+        computeCSV.style.display = 'none';
+    }
+
     // Get the current date and time, and compute a "look-back" time for historical data
     const currentDateTime = new Date();
     const lookBackHours = subtractDaysFromDate(new Date(), 90);
@@ -1508,15 +1766,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     let setBaseUrl = null;
     if (cda === "internal") {
         setBaseUrl = `https://coe-${officeName.toLowerCase()}uwa04${officeName.toLowerCase()}.${officeName.toLowerCase()}.usace.army.mil:8243/${officeName.toLowerCase()}-data/`;
-        console.log("setBaseUrl: ", setBaseUrl);
+        consoleLog(1, "setBaseUrl: ", setBaseUrl);
     } else if (cda === "public") {
         setBaseUrl = `https://cwms-data.usace.army.mil/cwms-data/`;
-        console.log("setBaseUrl: ", setBaseUrl);
+        consoleLog(1, "setBaseUrl: ", setBaseUrl);
     }
 
     // Define the URL to fetch location groups based on category
     const categoryApiUrl = setBaseUrl + `location/group?office=${officeName}&include-assigned=false&location-category-like=${setCategory}`;
-    console.log("categoryApiUrl: ", categoryApiUrl);
+    consoleLog(1, "categoryApiUrl: ", categoryApiUrl);
 
     // Initialize maps to store metadata and time-series ID (TSID) data for various parameters
     const metadataMap = new Map();
@@ -1563,7 +1821,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             // Loop through each basin and fetch data for its assigned locations
             basins.forEach(basin => {
                 const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${officeName}&category-id=${setCategory}`;
-                console.log("basinApiUrl: ", basinApiUrl);
+                consoleLog(1, "basinApiUrl: ", basinApiUrl);
 
                 apiPromises.push(
                     fetch(basinApiUrl)
@@ -1631,7 +1889,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 })
                                                 .then(ownerData => {
                                                     if (ownerData) {
-                                                        console.log("ownerData", ownerData);
+                                                        consoleLog(3, "ownerData", ownerData);
                                                         ownerMap.set(loc['location-id'], ownerData);
                                                     }
                                                 })
@@ -1658,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 })
                                                 .then(projectData => {
                                                     if (projectData) {
-                                                        console.log("projectData", projectData);
+                                                        consoleLog(3, "projectData", projectData);
                                                         projectMap.set(loc['location-id'], projectData);
                                                     }
                                                 })
@@ -1778,7 +2036,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         }
                     });
 
-                    console.log('combinedData:', combinedData);
+                    consoleLog(3, 'combinedData:', combinedData);
 
                     const timeSeriesDataPromises = [];
 
@@ -1793,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 return timeSeries.map((series, index) => {
                                     const tsid = series['timeseries-id'];
                                     const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${officeName}`;
-                                    console.log('timeSeriesDataApiUrl:', timeSeriesDataApiUrl);
+                                    consoleLog(1, 'timeSeriesDataApiUrl:', timeSeriesDataApiUrl);
 
                                     return fetch(timeSeriesDataApiUrl, {
                                         method: 'GET',
@@ -1892,7 +2150,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             // Additional API call for extents data
                             const timeSeriesDataExtentsApiCall = (type) => {
                                 const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${officeName}`;
-                                console.log('extentsApiUrl:', extentsApiUrl);
+                                consoleLog(1, 'extentsApiUrl:', extentsApiUrl);
 
                                 return fetch(extentsApiUrl, {
                                     method: 'GET',
@@ -1957,7 +2215,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 })
                 .then(() => {
-                    console.log('All combinedData data fetched successfully:', combinedData);
+                    consoleLog(1, 'All combinedData data fetched successfully:', combinedData);
  
                     // Step 1: Filter out locations where 'attribute' ends with '.1'
                     combinedData.forEach((dataObj, index) => {
@@ -1968,7 +2226,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             const attribute = location['attribute'].toString();
                             if (attribute.endsWith('.1')) {
                                 // Log the location being removed
-                                console.log(`Removing location with attribute '${attribute}' and id '${location['location-id']}' at index ${index}`);
+                                consoleLog(3, `Removing location with attribute '${attribute}' and id '${location['location-id']}' at index ${index}`);
                                 return false; // Filter out this location
                             }
                             return true; // Keep the location
@@ -1977,7 +2235,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         // console.log(`Updated assigned-locations for index ${index}:`, dataObj['assigned-locations']);
                     });
  
-                    console.log('Filtered all locations ending with .1 successfully:', combinedData);
+                    consoleLog(1, 'Filtered all locations ending with .1 successfully:', combinedData);
  
                     // Step 2: Filter out locations where 'location-id' doesn't match owner's 'assigned-locations'
                     combinedData.forEach(dataGroup => {
@@ -1995,13 +2253,13 @@ document.addEventListener('DOMContentLoaded', async function () {
  
                             // If no match, remove the location
                             if (!matchingOwnerLocation) {
-                                console.log(`Removing location with id ${location['location-id']} as it does not match owner`);
+                                consoleLog(3, `Removing location with id ${location['location-id']} as it does not match owner`);
                                 locations.splice(i, 1);
                             }
                         }
                     });
  
-                    console.log('Filtered all locations by matching location-id with owner successfully:', combinedData);
+                    consoleLog(1, 'Filtered all locations by matching location-id with owner successfully:', combinedData);
 
                     // if (type === "status") {
                     //     // Only call createTable if no valid data exists
@@ -2048,7 +2306,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     // }
 
                     //loadingIndicator.style.display = 'none';
-                    console.log("TEST: ", combinedData);
+                    consoleLog(2, "TEST: ", combinedData);
                     initialize(combinedData);
 
 // =======================================================================================================================================
@@ -2221,7 +2479,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const assignedLocations = item['assigned-locations'];
                 // Check if assigned-locations is an object
                 if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    console.log('No assigned-locations found in basin:', item);
+                    consoleLog(3, 'No assigned-locations found in basin:', item);
                     allLocationsValid = false; // Mark as invalid since no assigned locations are found
                     continue; // Skip to the next basin
                 }
@@ -2250,7 +2508,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                             // Step 1: If the entry is null, set hasValidValue to false
                             if (entry === null) {
-                                // console.log(`Entry at index ${i} is null and not valid.`);
+                                //console.log(`Entry at index ${i} is null and not valid.`);
                                 hasValidValue = false;
                                 continue; // Skip to the next iteration, this is not valid
                             }
@@ -2260,7 +2518,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 // console.log(`Valid entry found at index ${i}:`, entry);
                                 hasValidValue = true; // Set to true only if we have a valid entry
                             } else {
-                                console.log(`Entry at index ${i} has an invalid value:`, entry.value);
+                                consoleLog(3, `Entry at index ${i} has an invalid value:`, entry.value);
                                 hasValidValue = false; // Invalid value, so set it to false
                             }
                         }
@@ -2272,7 +2530,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             // console.log("No valid entries found in the array.");
                         }
                     } else {
-                        console.log(`datmanTsidArray is either empty or not an array for location ${locationName}.`);
+                        consoleLog(3, `datmanTsidArray is either empty or not an array for location ${locationName}.`);
                     }
 
                     // If no valid values found in the current location, mark as invalid
@@ -2285,7 +2543,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Return true only if all locations are valid
         if (allLocationsValid) {
-            console.log('All locations have valid entries.');
+            consoleLog(3, 'All locations have valid entries.');
             return true;
         } else {
             // console.log('Some locations are missing valid entries.');
@@ -2303,7 +2561,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const assignedLocations = item['assigned-locations'];
                 // Check if assigned-locations is an object
                 if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    console.log('No assigned-locations found in basin:', item);
+                    consoleLog(3, 'No assigned-locations found in basin:', item);
                     continue; // Skip to the next basin
                 }
 
@@ -2338,14 +2596,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                             return true; // Return true if any spike is found
                         }
                     } else {
-                        console.log(`No valid 'datman-api-data' found in location ${locationName}.`);
+                        consoleLog(3, `No valid 'datman-api-data' found in location ${locationName}.`);
                     }
                 }
             }
         }
 
         // Return false if no data spikes were found
-        console.log('No data spikes detected in any location.');
+        consoleLog(3, 'No data spikes detected in any location.');
         return false;
     }
 
@@ -2634,5 +2892,3 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 });
-
-

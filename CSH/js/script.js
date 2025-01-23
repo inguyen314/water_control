@@ -1,95 +1,469 @@
 import {
     fetchJsonFile,
-    fetchJsonFileV01,
-    convertUTCtoCentralTime
-} from '../../js/requestData.js';
-import {
-    blurBackground,
     getNames,
-    popupMessage,
     addBasinNames,
+    createUrl,
+    formatString,
+    getList,
+    getMeanMinMaxList,
+    extractDataForTable,
+    createTable,
+    clearTable,
     haveOneYearOfData,
+    blurBackground,
+    popupMessage,
     showLoading,
-    formatDate
-} from './functions.js';
+    loadingPageData
+} from './functions.js'
 
-let domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
-let generalInfoURL = domain + "/catalog/TIMESERIES?office=MVS&like=";
-let gageJsonUrl = "../../../../php_data_api/public/json/gage_control.json";
-//let  = domain + "/timeseries?" + name=Mt%20Vernon-Big%20Muddy.Stage.Inst.15Minutes.0.lrgsShef-rev&office=MVS&begin=2024-01-01T00%3A00%3A00.00Z&end=2024-12-31T23%3A59%3A59.59Z&timezone=CST6CDT
-
-// Change Value to Stage29[ft] --> Need to find out if the gage is a project **IMPORTANT**
 
 // Const Elements
 const basinName = document.getElementById('basinCombobox'),
       gageName = document.getElementById('gageCombobox'),
       beginDate = document.getElementById('begin-input'),
       endDate = document.getElementById('end-input'),
-      PORBeginDate = document.querySelector('#info-table .por-start'),
-      POREndDate = document.querySelector('#info-table .por-end'),
+      computeHTMLBtn = document.getElementById('button-html'),
+      computeCSV = document.getElementById('button-csv'),
+      resultsDiv = document.querySelector('.results'),
+      averageTable = document.getElementById('mean-table'),
+      maxTable = document.getElementById('max-table'),
+      minTable = document.getElementById('min-table'),
+      aveCheckbox = document.getElementById('average'),
+      maxCheckbox = document.getElementById('maximum'),
+      minCheckbox = document.getElementById('minimum'),
+      locationInformation = document.getElementById('location-data'),
+      locationInformationResults = document.getElementById('result-location-data'),
+      zeroGageData = document.getElementById('zero-gage-data'),
+      zeroGageDataResults = document.getElementById('result-zero-gage-data'),
       darkModeCheckbox = document.querySelector('.header label input'),
       popupWindowBtn = document.getElementById('popup-button'),
-      getDataBtn = document.getElementById('button-data'),
-      getExcelBtn = document.getElementById('button-csv'),
-      getJSONBtn = document.getElementById('button-json'),
-      basinExcelBtn = document.getElementById('button-basin-excel'),
-      basinJSONBtn = document.getElementById('button-basin-json'),
-      dailyCheckbox = document.getElementById('daily'),
-      hourlyCheckbox = document.getElementById('hourly'),
-      loadingDiv = document.getElementById('loading-div'),
-      dataTable = document.getElementById('data-table'),
-      metadataDiv = document.querySelector('.results .metadata-div'),
-      metadataTitle = document.querySelector('.results .metadata-div .metadata-title'),
-      metadataDatum88 = document.querySelector('.results .metadata-div .metadata-datum-88'),
-      // metadataDatum29 = document.querySelector('.results .metadata-div .metadata-datum-29'),
-      metadataRecordedTime = document.querySelector('.results .metadata-div .metadata-recorded-time'),
-      metadataPeriodOfRecord = document.querySelector('.results .metadata-div .metadata-period-of-record'),
-      metadataMissingDates = document.querySelector('.results .metadata-div .metadata-missing-dates'),
-      metadataHighlightValues = document.querySelector('.results .metadata-div .metadata-highlight-values'),
-      tableResultsDiv = document.querySelector('.results .table-results'),
-      tableStageTitleText = document.getElementById('table-stage-title'),
-      tableTBody = document.getElementById('table-tbody'),
-      isProjectText = document.getElementById('is-project');
+      isProjectLabel = document.getElementById('is-project'),
+      loadingElement = document.getElementById("loading-msg"),
+      checkboxDiv = document.querySelector('#content-body .container .input-checkbox'),
+      buttonsDiv = document.querySelector('#content-body .container .buttons'),
+      inputTable = document.getElementById('input-table'),
+      datRepDiv = document.querySelector('#content-body .datrep-results'),
+      datRepInfoTable = document.getElementById('gage-info-table-datrep'),
+      contentBodyDiv = document.getElementById('content-body'),
+      pageTitle = document.querySelector('#topPane .box-header-striped .titleLabel.title'),
+      porStartDate = document.querySelector('#info-table .por-start'),
+      porEndDate = document.querySelector('#info-table .por-end'),
+      mean29_88label = document.getElementById('mean-29-88-label'),
+      extreme29_88label = document.getElementById('extreme-29-88-label');
 
 
-let fetchedData = [];
-let globalData = [];
-let globalFormattedData = [];
-let pageURL = "";
-let gageMetadata = [];
-const disclamerText = "NOTICE: All data contained herein is preliminary in nature and therefore subject to change. The data is for general information purposes ONLY and SHALL NOT be used in technical applications such as, but not limited to, studies or designs. All critical data should be obtained from and verified by the United States Army Corps of Engineers. The United States Government assumes no liability for the completeness or accuracy of the data contained herein and any use of such data inconsistent with this disclaimer shall be solely at the risk of the user.";
+let params = new URLSearchParams(window.location.search);
+const officeName = params.get("office") ? params.get("office").toUpperCase() : "MVS";
+const cda = params.get("cda") ? params.get("cda") : "internal";
+const conlog = params.get("conlog") ? params.get("conlog") : "false";
 
-let previousGage;
+const consoleLog = conlog === "true" ? true : false;
 
-let userData = loadUserData();
+// Variable to hold DatRep Max and Min
+let datrepAllData = [];
+let datrepMaxMinAndMean = {
+    min: 0,
+    max: 0,
+    mean: 0
+};
+let wholePeriodListGlobal = [];
 
-if (userData == null || userData.length < 1) {
+// Add function to popup window button
+popupWindowBtn.addEventListener('click', blurBackground);
 
-    userData = {
-        darkMode: darkModeCheckbox.checked,
-    };
+loadingPageData();
 
-} else {
+/**============= Main functions when data is retrieved ================**/
+// Initilize page
+function initialize(data) {
+
+    consoleLog ? console.log("Initialize Data: ", data) : null;
+
+    // Add dark mode functionality
+    darkModeCheckbox.addEventListener('click', function() {
+        document.getElementById('content-body').classList.toggle('dark');
+        document.getElementById('page-container').classList.toggle('dark');
+    });
+
+    // Extract the names of the basins with the list of gages
+    let namesObject = getNames(data);
+
+    // Add the basins names to the basin combobox
+    addBasinNames(basinName, namesObject);
+
+    // Add data to the gage combobox at the beggining of the code
+    gageName.options.length = 0;
+    namesObject.forEach(element => {
+        if (element['basin'] === basinName.value) {
+            element['datman'].forEach(item => {
+                let option = document.createElement('option');
+                option.value = item;
+                option.textContent = item.split('.')[0];
+                gageName.appendChild(option);
+            });
+        }
+    });
+
+    // Change the gage values each time the basin value is changed
+    basinName.addEventListener('change', function() {
+
+        gageName.options.length = 0;
+        namesObject.forEach(element => {
+            if (element['basin'] === basinName.value) {
+                element['datman'].forEach(item => {
+                    let option = document.createElement('option');
+                    option.value = item;
+                    option.textContent = item.split('.')[0];
+                    gageName.appendChild(option);
+                });
+            }
+        });
+
+        // Determine if it's project
+        isGageProject(data);
+
+        updateAvailablePORTable(data);
+    });
+
+    updateAvailablePORTable(data);
+
+    // Update 'Avaliable POR' table everytime the gage name is changed
+    gageName.addEventListener('change', function(){
+
+        updateAvailablePORTable(data);
+
+        // Determine if it's project
+        isGageProject(data);
+
+    });
+
+    // Determine if it's project
+    isGageProject(data);
+
+    // Get all data to create the url
+    const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
+    const timeSeries = "/timeseries?";
+    const timeZone = "CST6CDT";
+
+    inputsDisableAndEnable();
+
+    //loadingElement.hidden = true;
+
+    loadingPageData();
+
+    // HTML button clicked
+    computeHTMLBtn.addEventListener('click', function() {
+
+        // Verify if the selected period is more than one year.
+        if (haveOneYearOfData(beginDate.value, endDate.value) && beginDate.value < endDate.value) {
+
+            computeHTMLBtn.textContent = "Processing - One Moment";
+            loadingPageData();
+
+            // Get Datman name ID
+            let datmanName;
+            data.forEach(element => {
+                if (element['id'] === basinName.value) {
+                    element['assigned-locations'].forEach(item => {
+                        if (item['location-id'] === gageName.value) {
+                            datmanName = item['tsid-datman']['assigned-time-series'][0]['timeseries-id'];
+                        };
+                    });
+                };
+            });
+
+            // Initialize variables
+            let beginValue = formatString("start date", beginDate.value);
+            let endValue = formatString('end date', endDate.value);
+
+            // Create the URL to get the data
+            let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
+
+            let pageSize = 100000;
+
+            stageUrl = stageUrl + `&page-size=${pageSize}`;
+
+            console.log(stageUrl);
+
+            fetchJsonFile(stageUrl, function(newData) { 
+
+                main(newData);
+                // Update Location Info
+                let gageInformation = null;
+                data.forEach(basin => {
+                    if (basin['id'] === basinName.value) {
+                        basin['assigned-locations'].forEach(gage => {
+                            if (gage['location-id'] === gageName.value) {
+                                gageInformation = gage['metadata'];
+                            };
+                        });
+                    };
+                });
+
+            }, function(){
+                popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
+                popupWindowBtn.click();
+            });
+
+        } else {
+
+            popupMessage("error", "There was an error with the time window selected. Make sure the time window is <strong>ONE</strong> year or more, and the ending date is greater than the starting date");
+            popupWindowBtn.click();
+        }
+
+        
+    });   
     
-    applyDarkMode();
-    darkModeCheckbox.checked = userData.darkMode;
+    
+    
+}
+
+// Main function
+function main(data) {
+
+    // Fetch data for general information
+    //let formattedName = gageName.value.split('.')[0].split(' ').join('%20');    
+
+    /* Update some other data */
+    // Selected POR Statistic
+    let porStartDate = beginDate.value; // 'yyyy/mm/dd'
+    let porEndDate = endDate.value; // 'yyyy/mm/dd'
+
+    let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    let porNewStartDate = `${monthsNames[parseInt(porStartDate.split('-')[1]) - 1]} ${porStartDate.split('-')[0]}`;
+    let porNewEndDate = `${monthsNames[parseInt(porEndDate.split('-')[1]) - 1]} ${porEndDate.split('-')[0]}`;
+    
+    let objData = data["values"];
+    
+    // Get list with all the years
+    let wholePeriodList = getList(objData);
+    let totalData = getMeanMinMaxList(wholePeriodList);
+
+    // Separete data between mean, max and min
+    let meanData = totalData[0],
+        minData = totalData[1],
+        maxData = totalData[2];
+
+    // Extract the data which is going to be shown in the table
+    let meanDataTable = extractDataForTable(meanData);
+    let minDataTable = extractDataForTable(minData);
+    let maxDataTable = extractDataForTable(maxData);
+
+    // Get all the data for the total stats
+    let totalPORData = [];
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            totalPORData.push(item.stage);
+        });
+    });
+
+    // Get mean, max and min
+    let removeUndefinedTotal = totalPORData.filter(x => x);
+    let totalMean = removeUndefinedTotal.reduce((x, y) => x + y)/removeUndefinedTotal.length;
+    let totalMax = Math.max(...removeUndefinedTotal);
+    let totalFilteredMinData = removeUndefinedTotal.filter(x => x !== 0);
+    let totalMin = Math.min(...totalFilteredMinData);
+
+    // Get date for min and max
+    let maxTotalDate = null;
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            if (item.stage === totalMax) {
+                maxTotalDate = item.date;
+            }
+        });
+    });
+
+    let minTotalDate = null;
+    wholePeriodList.forEach(element => {
+        element.data.forEach(item => {
+            if (item.stage === totalMin) {
+                minTotalDate = item.date;
+            }
+        });
+    });
+
+    // Get all the data for the mean stats
+    let allMeanData = [];
+    meanDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMeanData.push(element[i]);
+        };
+    });
+
+    // Get mean, max and min
+    let noCeroData = allMeanData.filter(x => x !== 0);
+    let aveMean = noCeroData.reduce((x, y) => x + y)/noCeroData.length;
+    let aveMax = Math.max(...allMeanData);
+    let aveMin = Math.min(...noCeroData);
+
+    // Get date for min and max
+    let maxMeanDate = null;
+    meanData.forEach(element => {
+        if (element.stage === aveMax) {
+            maxMeanDate = element.date;
+        }
+    });
+
+    let minMeanDate = null;
+    meanData.forEach(element => {
+        if (element.stage === aveMin) {
+            minMeanDate = element.date;
+        }
+    });
+
+    // Get all the data for the min stats
+    let allMinData = [];
+    minDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMinData.push(element[i][0]);
+        };
+    });
+
+    // Get mean, max and min
+    let removeUndefined = allMinData.filter(x => x);
+    let minFilteredMinData = removeUndefined.filter(x => x !== 0);
+    let minMean = minFilteredMinData.reduce((x, y) => x + y)/minFilteredMinData.length;
+    let minMax = Math.max(...removeUndefined);
+    let minMin = Math.min(...minFilteredMinData);
+
+    // Get date for min and max
+    let maxMinDate = null;
+    minData.forEach(element => {
+        if (element.stage[0] === minMax) {
+            maxMinDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    let minMinDate = null;
+    minData.forEach(element => {
+        if (element.stage[0] === minMin) {
+            minMinDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    // Get all the data for the max stats
+    let allMaxData = [];
+    maxDataTable.forEach(element => {
+        for (let i = 0; i < element.length; i++){
+            allMaxData.push(element[i][0]);
+        };
+    });
+
+    // Get mean, max and min
+    let removeUndefinedMax = allMaxData.filter(x => x);
+    let maxFilteredMinData = removeUndefinedMax.filter(x => x !== 0);
+    let maxMean = maxFilteredMinData.reduce((x, y) => x + y)/maxFilteredMinData.length;
+    let maxMax = Math.max(...removeUndefinedMax);
+    let maxMin = Math.min(...maxFilteredMinData);
+
+    // Get date for min and max
+    let maxMaxDate = null;
+    maxData.forEach(element => {
+        if (element.stage[0] === maxMax) {
+            maxMaxDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    let minMaxDate = null;
+    maxData.forEach(element => {
+        if (element.stage[0] === maxMin) {
+            minMaxDate = `${element.stage[1]}-${element.date}`;
+        }
+    });
+
+    // Change button text
+    computeHTMLBtn.textContent = "Compute HTML";
+    loadingPageData();
 
 }
 
+// Is Project Function
+function isGageProject(data) {
+    // Determine if it's project
+    let isProject = false;
+    data.forEach(element => {
+        if (element['id'] === basinName.value) {
+            element['assigned-locations'].forEach(item => {
+                if (item['location-id'] === gageName.value) {
+                    let projectsList = item['project']['assigned-locations'] ? item['project']['assigned-locations'] : null;
+                    if (projectsList) {
+                        projectsList.forEach(gage => {
+                            if (gage['location-id'] === gageName.value) {
+                                isProject = true;
+                            };
+                        });
+                    };
+                };
+            });
+        };
+    });
+
+    // Change Datum type on the HTML
+    if (isProject) {
+        isProjectLabel.innerHTML = 'Datum: NGVD29';
+        // mean29_88label.innerHTML = 'Mean Elev:';
+        // extreme29_88label.innerHTML = 'Extreme Elev:';
+    } else {
+        isProjectLabel.innerHTML = 'Datum: NAVD88';
+        // mean29_88label.innerHTML = 'Mean Stage:';
+        // extreme29_88label.innerHTML = 'Extreme Stage:';
+    }
+}
+
+// Disable and enable every input
+function inputsDisableAndEnable() {
+
+    let inputsList = [basinName, gageName, beginDate, endDate, computeHTMLBtn, aveCheckbox, maxCheckbox, minCheckbox];
+
+    inputsList.forEach(element => {
+        // Set disable if it's enabled and enables if it's disabled
+        element.disabled = element.disabled ? false : true;
+    });
+}
+
+// Update Available POR Function
+function updateAvailablePORTable(data) {
+
+    data.forEach(element => {
+        if (element['id'] === basinName.value) {
+            element['assigned-locations'].forEach(item => {
+                if (item['location-id'] === gageName.value) {
+                    let earliestDate = item['extents-data']['datman'][0]['earliestTime'];
+                    let latestDate = item['extents-data']['datman'][0]['latestTime'];
+                    let startPORDate = document.querySelector('#info-table .por-start');
+                    let endPORDate = document.querySelector('#info-table .por-end');
+                    let startDateList = earliestDate.split('T')[0].split('-');
+                    let endDateList = latestDate.split('T')[0].split('-');
+                    let newInputBeginYear = startDateList[0];
+                    let newInputBeginMonth = startDateList[1];
+                    let newInputBeginDay = startDateList[2];
+                    let newInputEndYear = endDateList[0];
+                    let newInputEndMonth = endDateList[1];
+                    let newInputEndDay = endDateList[2];
+
+                    startPORDate.innerText = `${newInputBeginMonth}/${newInputBeginDay}/${newInputBeginYear}`;
+                    endPORDate.innerHTML = `${newInputEndMonth}/${newInputEndDay}/${newInputEndYear}`;
+
+                    beginDate.value = `${newInputBeginYear}-${newInputBeginMonth}-${newInputBeginDay}`; // YYYY-MMM-DD
+                    endDate.value = `${newInputEndYear}-${newInputEndMonth}-${newInputEndDay}`; // YYYY-MMM-DD
+
+                }
+            });
+        };
+    });
+    
+}
+
 document.addEventListener('DOMContentLoaded', async function () {
-    // Display the loading indicator for water quality alarm
-    //const loadingIndicator = document.getElementById('loading_alarm_datman');
-    //loadingIndicator.style.display = 'block'; // Show the loading indicator
 
-    // Disable all elements until the page is fully loaded
-    disableButtons();
+    inputsDisableAndEnable();
 
-    // Set the category and base URL for API calls
-    let setCategory = "Datman"; // 'Stage' for hourly
+    let setCategory = "Basins"; 
 
-    let cda = "internal";
-    let office = "MVS";
-    let type = "no idea";
+    //let office = "MVS";
+    //let type = "no idea";
 
     // Get the current date and time, and compute a "look-back" time for historical data
     const currentDateTime = new Date();
@@ -97,16 +471,13 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let setBaseUrl = null;
     if (cda === "internal") {
-        setBaseUrl = `https://coe-${office.toLowerCase()}uwa04${office.toLowerCase()}.${office.toLowerCase()}.usace.army.mil:8243/${office.toLowerCase()}-data/`;
-        console.log("setBaseUrl: ", setBaseUrl);
+        setBaseUrl = `https://coe-${officeName.toLowerCase()}uwa04${officeName.toLowerCase()}.${officeName.toLowerCase()}.usace.army.mil:8243/${officeName.toLowerCase()}-data/`;
     } else if (cda === "public") {
         setBaseUrl = `https://cwms-data.usace.army.mil/cwms-data/`;
-        console.log("setBaseUrl: ", setBaseUrl);
     }
 
     // Define the URL to fetch location groups based on category
-    const categoryApiUrl = setBaseUrl + `location/group?office=${office}&include-assigned=false&location-category-like=${setCategory}`;
-    console.log("categoryApiUrl: ", categoryApiUrl);
+    const categoryApiUrl = setBaseUrl + `location/group?office=${officeName}&include-assigned=false&location-category-like=${setCategory}`;
 
     // Initialize maps to store metadata and time-series ID (TSID) data for various parameters
     const metadataMap = new Map();
@@ -137,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             // Filter and map the returned data to basins belonging to the target category
-            const targetCategory = { "office-id": office, "id": setCategory };
+            const targetCategory = { "office-id": officeName, "id": setCategory };
             const filteredArray = filterByLocationCategory(data, targetCategory);
             const basins = filteredArray.map(item => item.id);
 
@@ -152,8 +523,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // Loop through each basin and fetch data for its assigned locations
             basins.forEach(basin => {
-                const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${office}&category-id=${setCategory}`;
-                console.log("basinApiUrl: ", basinApiUrl);
+                const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${officeName}&category-id=${setCategory}`;
 
                 apiPromises.push(
                     fetch(basinApiUrl)
@@ -182,7 +552,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     // console.log(loc['location-id']);
 
                                     // Fetch metadata for each location
-                                    const locApiUrl = setBaseUrl + `locations/${loc['location-id']}?office=${office}`;
+                                    const locApiUrl = setBaseUrl + `locations/${loc['location-id']}?office=${officeName}`;
                                     // console.log("locApiUrl: ", locApiUrl);
                                     metadataPromises.push(
                                         fetch(locApiUrl)
@@ -205,7 +575,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     );
 
                                     // Fetch owner for each location
-                                    let ownerApiUrl = setBaseUrl + `location/group/${office}?office=${office}&category-id=${office}`;
+                                    let ownerApiUrl = setBaseUrl + `location/group/Datman?office=${officeName}&category-id=${officeName}`;
                                     if (ownerApiUrl) {
                                         ownerPromises.push(
                                             fetch(ownerApiUrl)
@@ -221,7 +591,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 })
                                                 .then(ownerData => {
                                                     if (ownerData) {
-                                                        console.log("ownerData", ownerData);
                                                         ownerMap.set(loc['location-id'], ownerData);
                                                     }
                                                 })
@@ -231,9 +600,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                                         );
                                     }
 
-
                                     // Fetch project for each location
-                                    let projectApiUrl = setBaseUrl + `location/group/Project?office=${office}&category-id=${office}`;
+                                    let projectApiUrl = setBaseUrl + `location/group/Project?office=${officeName}&category-id=${officeName}`;
                                     if (projectApiUrl) {
                                         projectPromises.push(
                                             fetch(projectApiUrl)
@@ -248,7 +616,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                     return response.json();
                                                 })
                                                 .then(projectData => {
-                                                    console.log("Promise Data: ", projectData);
                                                     if (projectData) {
                                                         projectMap.set(loc['location-id'], projectData);
                                                     }
@@ -257,11 +624,11 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                     console.error(`Problem with the fetch operation for stage TSID data at ${projectApiUrl}:`, error);
                                                 })
                                         );
-                                    };
+                                    }
 
 
                                     // Fetch datman TSID data
-                                    const tsidDatmanApiUrl = setBaseUrl + `timeseries/group/Datman?office=${office}&category-id=${loc['location-id']}`;
+                                    const tsidDatmanApiUrl = setBaseUrl + `timeseries/group/Datman?office=${officeName}&category-id=${loc['location-id']}`;
                                     // console.log('tsidDatmanApiUrl:', tsidDatmanApiUrl);
                                     datmanTsidPromises.push(
                                         fetch(tsidDatmanApiUrl)
@@ -282,8 +649,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     );
 
                                     // Fetch stage TSID data
-                                    const tsidStageApiUrl = setBaseUrl + `timeseries/group/Datman-Stage?office=${office}&category-id=${loc['location-id']}`;
-                                    // console.log('tsidDatmanApiUrl:', tsidDatmanApiUrl);
+                                    const tsidStageApiUrl = setBaseUrl + `timeseries/group/Stage?office=${officeName}&category-id=${loc['location-id']}`;
+                                    // console.log('tsidStageApiUrl:', tsidStageApiUrl);
                                     stageTsidPromises.push(
                                         fetch(tsidStageApiUrl)
                                             .then(response => {
@@ -292,7 +659,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 return response.json();
                                             })
                                             .then(tsidStageData => {
-                                                // console.log('tsidDatmanData:', tsidDatmanData);
+                                                // console.log('tsidStageData:', tsidStageData);
                                                 if (tsidStageData) {
                                                     tsidStageMap.set(loc['location-id'], tsidStageData);
                                                 }
@@ -316,7 +683,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .then(() => Promise.all(ownerPromises))
                 .then(() => Promise.all(datmanTsidPromises))
                 .then(() => Promise.all(stageTsidPromises))
-                .then(() => Promise.all(projectPromises))
                 .then(() => {
                     combinedData.forEach(basinData => {
                         if (basinData['assigned-locations']) {
@@ -359,15 +725,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     loc['tsid-stage'] = null;  // Append null if missing
                                 }
 
-
                                 // Initialize empty arrays to hold API and last-value data for various parameters
                                 loc['datman-api-data'] = [];
                                 loc['datman-last-value'] = [];
+
+                                // Initialize empty arrays to hold API and last-value data for various parameters
+                                loc['stage-api-data'] = [];
+                                loc['stage-last-value'] = [];
                             });
                         }
                     });
-
-                    console.log('combinedData:', combinedData);
 
                     const timeSeriesDataPromises = [];
 
@@ -376,14 +743,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                         for (const locData of dataArray['assigned-locations'] || []) {
                             // Handle temperature, depth, and DO time series
                             const datmanTimeSeries = locData['tsid-datman']?.['assigned-time-series'] || [];
-                            const stageTimeSeries = locData['tsid-stage']?.['assigned-time-series'] || [];
 
                             // Function to create fetch promises for time series data
                             const timeSeriesDataFetchPromises = (timeSeries, type) => {
                                 return timeSeries.map((series, index) => {
                                     const tsid = series['timeseries-id'];
-                                    const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${office}`;
-                                    console.log('timeSeriesDataApiUrl:', timeSeriesDataApiUrl);
+                                    const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${officeName}`;
+                                   
 
                                     return fetch(timeSeriesDataApiUrl, {
                                         method: 'GET',
@@ -481,8 +847,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                             // Additional API call for extents data
                             const timeSeriesDataExtentsApiCall = (type) => {
-                                const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${office}`;
-                                console.log('extentsApiUrl:', extentsApiUrl);
+                                const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${officeName}`;
 
                                 return fetch(extentsApiUrl, {
                                     method: 'GET',
@@ -497,8 +862,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                                         // Collect TSIDs from temp, depth, and DO time series
                                         const datmanTids = datmanTimeSeries.map(series => series['timeseries-id']);
-                                        const stageTids = stageTimeSeries.map(series => series['timeseries-id']);
-                                        const allTids = [...datmanTids, ...stageTids]; // Combine both arrays
+                                        const allTids = [...datmanTids]; // Combine both arrays
 
                                         // Iterate over all TSIDs and create extents data entries
                                         allTids.forEach((tsid, index) => {
@@ -548,75 +912,50 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 })
                 .then(() => {
-                    console.log('All combinedData data fetched successfully:', combinedData);
-
-                    // Check and remove all attribute ending in 0.1
+ 
+                    // Step 1: Filter out locations where 'attribute' ends with '.1'
                     combinedData.forEach((dataObj, index) => {
-                        // console.log(`Processing dataObj at index ${index}:`, dataObj[`assigned-locations`]);
-
-                        // Filter out locations where the 'attribute' ends with '.1'
-                        dataObj[`assigned-locations`] = dataObj[`assigned-locations`].filter(location => {
-                            const attribute = location[`attribute`].toString();
-                            // console.log(`Checking attribute: ${attribute}`);
-                            return !attribute.endsWith('.1');
+                        // console.log(`Processing dataObj at index ${index}:`, dataObj['assigned-locations']);
+ 
+                        // Filter out locations with 'attribute' ending in '.1'
+                        dataObj['assigned-locations'] = dataObj['assigned-locations'].filter(location => {
+                            const attribute = location['attribute'].toString();
+                            if (attribute.endsWith('.1')) {
+                                // Log the location being removed
+                                return false; // Filter out this location
+                            }
+                            return true; // Keep the location
                         });
-
-                        // console.log(`Updated assigned-locations for index ${index}:`, dataObj[`assigned-locations`]);
+ 
+                        // console.log(`Updated assigned-locations for index ${index}:`, dataObj['assigned-locations']);
+                    });
+ 
+ 
+                    // Step 2: Filter out locations where 'location-id' doesn't match owner's 'assigned-locations'
+                    combinedData.forEach(dataGroup => {
+                        // Iterate over each assigned-location in the dataGroup
+                        let locations = dataGroup['assigned-locations'];
+ 
+                        // Loop through the locations array in reverse to safely remove items
+                        for (let i = locations.length - 1; i >= 0; i--) {
+                            let location = locations[i];
+ 
+                            // Find if the current location-id exists in owner's assigned-locations
+                            let matchingOwnerLocation = location['owner']['assigned-locations'].some(ownerLoc => {
+                                return ownerLoc['location-id'] === location['location-id'];
+                            });
+ 
+                            // If no match, remove the location
+                            if (!matchingOwnerLocation) {
+                                locations.splice(i, 1);
+                            }
+                        }
                     });
 
-                    console.log('All combinedData data filtered successfully:', combinedData);
-
-                    if (type === "status") {
-                        // Only call createTable if no valid data exists
-                        const table = createTable(combinedData);
-
-                        // Append the table to the specified container
-                        const container = document.getElementById('table_container_alarm_datman');
-                        container.appendChild(table);
-                    } else {
-                        // Check if there are valid lastDatmanValues in the data
-                        if (hasLastValue(combinedData)) {
-                            // if (hasDataSpike(combinedData)) {
-                            //     console.log("Data spike detected.");
-                            //     // call createTable if data spike exists
-                            //     const table = createTableDataSpike(combinedData);
-
-                            //     // Append the table to the specified container
-                            //     const container = document.getElementById('table_container_alarm_datman');
-                            //     container.appendChild(table);
-                            // } else {
-                            //     console.log("No data spikes detected.");
-                            //     console.log('Valid lastDatmanValue found. Displaying image instead.');
-
-                            //     // Create an img element
-                            //     const img = document.createElement('img');
-                            //     img.src = '/apps/alarms/images/passed.png'; // Set the image source
-                            //     img.alt = 'Process Completed'; // Optional alt text for accessibility
-                            //     img.style.width = '50px'; // Optional: set the image width
-                            //     img.style.height = '50px'; // Optional: set the image height
-
-                            //     // Get the container and append the image
-                            //     //const container = document.getElementById('table_container_alarm_datman');
-                            //     //container.appendChild(img);
-                            // }
-
-                        } else {
-                            // Only call createTable if no valid data exists
-                            const table = createTable(combinedData);
-
-                            // Append the table to the specified container
-                            //const container = document.getElementById('table_container_alarm_datman');
-                            //container.appendChild(table);
-                        }
-                    }
-
                     //loadingIndicator.style.display = 'none';
-                    console.log("TEST: ", combinedData);
                     initialize(combinedData);
 
-                    loadingDiv.classList.remove('show');
-                    disableButtons();
-
+// =======================================================================================================================================
                 })
                 .catch(error => {
                     console.error('There was a problem with one or more fetch operations:', error);
@@ -627,6 +966,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         .catch(error => {
             console.error('There was a problem with the initial fetch operation:', error);
             //loadingIndicator.style.display = 'none';
+            popupMessage("error", "There was an error retrieving the data.<br>See the console log for more information.");
+            popupWindowBtn.click();
+            loadingPageData();
         });
 
     function filterByLocationCategory(array, setCategory) {
@@ -783,7 +1125,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const assignedLocations = item['assigned-locations'];
                 // Check if assigned-locations is an object
                 if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    console.log('No assigned-locations found in basin:', item);
+                    consoleLog(3, 'No assigned-locations found in basin:', item);
                     allLocationsValid = false; // Mark as invalid since no assigned locations are found
                     continue; // Skip to the next basin
                 }
@@ -812,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                             // Step 1: If the entry is null, set hasValidValue to false
                             if (entry === null) {
-                                // console.log(`Entry at index ${i} is null and not valid.`);
+                                //console.log(`Entry at index ${i} is null and not valid.`);
                                 hasValidValue = false;
                                 continue; // Skip to the next iteration, this is not valid
                             }
@@ -822,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 // console.log(`Valid entry found at index ${i}:`, entry);
                                 hasValidValue = true; // Set to true only if we have a valid entry
                             } else {
-                                console.log(`Entry at index ${i} has an invalid value:`, entry.value);
+                                consoleLog(3, `Entry at index ${i} has an invalid value:`, entry.value);
                                 hasValidValue = false; // Invalid value, so set it to false
                             }
                         }
@@ -834,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             // console.log("No valid entries found in the array.");
                         }
                     } else {
-                        console.log(`datmanTsidArray is either empty or not an array for location ${locationName}.`);
+                        consoleLog(3, `datmanTsidArray is either empty or not an array for location ${locationName}.`);
                     }
 
                     // If no valid values found in the current location, mark as invalid
@@ -847,7 +1189,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Return true only if all locations are valid
         if (allLocationsValid) {
-            console.log('All locations have valid entries.');
+            consoleLog(3, 'All locations have valid entries.');
             return true;
         } else {
             // console.log('Some locations are missing valid entries.');
@@ -865,7 +1207,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const assignedLocations = item['assigned-locations'];
                 // Check if assigned-locations is an object
                 if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    console.log('No assigned-locations found in basin:', item);
+                    consoleLog(3, 'No assigned-locations found in basin:', item);
                     continue; // Skip to the next basin
                 }
 
@@ -900,59 +1242,59 @@ document.addEventListener('DOMContentLoaded', async function () {
                             return true; // Return true if any spike is found
                         }
                     } else {
-                        console.log(`No valid 'datman-api-data' found in location ${locationName}.`);
+                        consoleLog(3, `No valid 'datman-api-data' found in location ${locationName}.`);
                     }
                 }
             }
         }
 
         // Return false if no data spikes were found
-        console.log('No data spikes detected in any location.');
+        consoleLog(3, 'No data spikes detected in any location.');
         return false;
     }
 
     function hasDataSpike(data) {
         // Iterate through each key in the data object
-        for (const locationIndex in data) {
-            if (data.hasOwnProperty(locationIndex)) { // Ensure the key belongs to the object
-                const item = data[locationIndex];
-                console.log(`Checking basin ${parseInt(locationIndex) + 1}:`, item); // Log the current item being checked
+        // for (const locationIndex in data) {
+        //     if (data.hasOwnProperty(locationIndex)) { // Ensure the key belongs to the object
+        //         const item = data[locationIndex];
+        //         console.log(`Checking basin ${parseInt(locationIndex) + 1}:`, item); // Log the current item being checked
 
-                const assignedLocations = item['assigned-locations'];
-                // Check if assigned-locations is an object
-                if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    console.log('No assigned-locations found in basin:', item);
-                    continue; // Skip to the next basin
-                }
+        //         const assignedLocations = item['assigned-locations'];
+        //         // Check if assigned-locations is an object
+        //         if (typeof assignedLocations !== 'object' || assignedLocations === null) {
+        //             console.log('No assigned-locations found in basin:', item);
+        //             continue; // Skip to the next basin
+        //         }
 
-                // Iterate through each location in assigned-locations
-                for (const locationName in assignedLocations) {
-                    const location = assignedLocations[locationName];
-                    console.log(`Checking location: ${locationName}`, location); // Log the current location being checked
-                    const datmanMaxValue = location['datman-max-value'][0][`value`];
-                    const datmanMinValue = location['datman-min-value'][0][`value`];
+        //         // Iterate through each location in assigned-locations
+        //         for (const locationName in assignedLocations) {
+        //             const location = assignedLocations[locationName];
+        //             console.log(`Checking location: ${locationName}`, location); // Log the current location being checked
+        //             const datmanMaxValue = location['datman-max-value'][0][`value`];
+        //             const datmanMinValue = location['datman-min-value'][0][`value`];
 
-                    // Check if datmanMaxValue or datmanMinValue exists
-                    if (datmanMaxValue || datmanMinValue) {
-                        // Check if the max value exceeds 999 or the min value is less than -999
-                        if (datmanMaxValue > 999) {
-                            console.log(`Data spike detected in location ${locationName}: max = ${datmanMaxValue}`);
-                            return true; // Return true if any spike is found
-                        }
-                        if (datmanMinValue < -999) {
-                            console.log(`Data spike detected in location ${locationName}: min = ${datmanMinValue}`);
-                            return true; // Return true if any spike is found
-                        }
-                    } else {
-                        console.log(`No valid 'datman-max-value' or 'datman-min-value' found in location ${locationName}.`);
-                    }
-                }
-            }
-        }
+        //             // Check if datmanMaxValue or datmanMinValue exists
+        //             if (datmanMaxValue || datmanMinValue) {
+        //                 // Check if the max value exceeds 999 or the min value is less than -999
+        //                 if (datmanMaxValue > 999) {
+        //                     console.log(`Data spike detected in location ${locationName}: max = ${datmanMaxValue}`);
+        //                     return true; // Return true if any spike is found
+        //                 }
+        //                 if (datmanMinValue < -999) {
+        //                     console.log(`Data spike detected in location ${locationName}: min = ${datmanMinValue}`);
+        //                     return true; // Return true if any spike is found
+        //                 }
+        //             } else {
+        //                 console.log(`No valid 'datman-max-value' or 'datman-min-value' found in location ${locationName}.`);
+        //             }
+        //         }
+        //     }
+        // }
 
-        // Return false if no data spikes were found
-        console.log('No data spikes detected in any location.');
-        return false;
+        // // Return false if no data spikes were found
+        // console.log('No data spikes detected in any location.');
+        // return false;
     }
 
     function createTable(data) {
@@ -1196,964 +1538,3 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 });
-
-
-/*======================= Functions For Script =======================*/
-function initialize(data) {
-
-    fetchedData = data;
-
-    dailyCheckbox.addEventListener('click', function() {
-        if (!dailyCheckbox.checked) {
-            dailyCheckbox.click();
-        }
-    });
-
-    hourlyCheckbox.addEventListener('click', function() {
-        if (!hourlyCheckbox.checked) {
-            hourlyCheckbox.click();
-        }
-    });
-
-    // Excel initial function (Alert)
-    getExcelBtn.addEventListener('click', excelNoDataMessage);
-
-    // Json initial function (Alert)
-    getJSONBtn.addEventListener('click', jsonNoDataMessage)
-
-    // Email initial function (Alert)
-    basinExcelBtn.addEventListener('click', getAllBasinGagesExcel);
-
-    // Add dark mode functionality
-    darkModeCheckbox.addEventListener('click', toggleDarkModeBtn);
-
-    // Add function to popup window button
-    popupWindowBtn.addEventListener('click', blurBackground);
-
-    // Extract the names of the basins with the list of gages
-    let namesObject = getNames(data);
-
-    // Checkbox Functions
-    dailyCheckbox.addEventListener('click', function() {
-        if (hourlyCheckbox.checked) {
-            hourlyCheckbox.checked = false;
-        }
-        addGageNames(namesObject);
-
-        gageName.value = previousGage;
-    });
-
-    hourlyCheckbox.addEventListener('click', function() {
-        if (dailyCheckbox.checked) {
-            dailyCheckbox.checked = false;
-        }
-        addGageNames(namesObject);
-
-        gageName.value = previousGage;
-
-    });
-
-    // Add the basins names to the basin combobox
-    addBasinNames(basinName, namesObject);
-
-    // Add data to the gage combobox at the beggining of the code
-    addGageNames(namesObject);
-
-    // Change the gage values each time the basin value is changed
-    basinName.addEventListener('change', function() {
-
-        tableResultsDiv.classList.remove('show');
-        metadataDiv.classList.remove('show');
-
-        addGageNames(namesObject);
-        updateAvailablePORTable(data);
-
-        getJSONBtn.removeEventListener('click', exportTableToJSON);
-        getJSONBtn.removeEventListener('click', jsonNoDataMessage);
-        getJSONBtn.addEventListener('click', jsonNoDataMessage);
-
-        getExcelBtn.removeEventListener('click', exportTableToExcel);
-        getExcelBtn.removeEventListener('click', excelNoDataMessage);
-        getExcelBtn.addEventListener('click', excelNoDataMessage);
-
-        isNGVD29(gageName.value);
-    });
-
-    // Update 'Avaliable POR' table everytime the gage name is changed
-    gageName.addEventListener('change', function(){
-
-        tableResultsDiv.classList.remove('show');
-        metadataDiv.classList.remove('show');
-
-        updateAvailablePORTable(data);
-
-        getJSONBtn.removeEventListener('click', exportTableToJSON);
-        getJSONBtn.removeEventListener('click', jsonNoDataMessage);
-        getJSONBtn.addEventListener('click', jsonNoDataMessage);
-
-        getExcelBtn.removeEventListener('click', exportTableToExcel);
-        getExcelBtn.removeEventListener('click', excelNoDataMessage);
-        getExcelBtn.addEventListener('click', excelNoDataMessage);
-
-        isNGVD29(gageName.value);
-
-        previousGage = gageName.value;
-    });
-
-    isNGVD29(gageName.value);
-
-    updateAvailablePORTable(data);
-
-    previousGage = gageName.value;
-
-    dailyCheckbox.addEventListener('change', function() {
-        updateAvailablePORTable(data);
-    });
-
-    hourlyCheckbox.addEventListener('change', function() {
-        updateAvailablePORTable(data);
-    });
-
-    basinName.addEventListener('change', function() {
-        updateAvailablePORTable(data);
-    });
-
-    console.log("Data: ", data);
-
-    getDataBtn.addEventListener('click', function() {
-
-        disableButtons();
-        tableResultsDiv.classList.remove('show');
-        loadingDiv.classList.add('show');
-
-        // Excel initial function (Alert)
-        getExcelBtn.removeEventListener('click', excelNoDataMessage);
-    
-        // Json initial function (Alert)
-        getJSONBtn.removeEventListener('click', jsonNoDataMessage)
-    
-        // Hide result div before getting the data if the result div is showing
-        //resultsDiv.classList.add('hidden');
-    
-        // Show loading animation
-        //showLoading();
-
-        let datmanName;
-        let stageName;
-        let urlName;
-
-        data.forEach(element => {
-            if (element['id'] === basinName.value) {
-                element['assigned-locations'].forEach(item => {
-                    if (item['location-id'] === gageName.value) {
-                        datmanName = item['extents-data']['datman'][0]['name'];
-                        stageName = item['tsid-stage']['assigned-time-series'][0]['timeseries-id'];
-                    }
-                });
-            };
-        });
-
-        if (hourlyCheckbox.checked) {
-            urlName = stageName;
-        } else {
-            urlName = datmanName;
-        };
-
-        // Handle Daylight Saving
-        let newBeginDate = new Date(beginDate.value.split('-')[0], beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
-        let julyDate = new Date(beginDate.value.split('-')[0], 6, 1);
-        let offsetBegin = newBeginDate.getTimezoneOffset();
-        let offsetJuly = julyDate.getTimezoneOffset();
-
-        let beginHours = "T05%3A00%3A00.00Z&end=";
-        let endHours = "T23%3A59%3A59.59Z";
-
-        if (offsetBegin != offsetJuly){
-            beginHours = "T06%3A00%3A00.00Z&end=";
-        }
-
-        // Get data for the period of record
-        let dataAmount = 1000000;
-        pageURL = domain + "/timeseries?" + "name=" + urlName + "&office=MVS&begin=" + beginDate.value + beginHours + endDate.value + endHours + "&page-size=" + dataAmount;
-        console.log("TimeSerieURL: ", pageURL);
-
-        fetchJsonFile(pageURL, function(fetchedData){
-
-            let dataValues = fetchedData['values']
-
-            let formattedData = [];
-
-            dataValues.forEach(element => {
-                formattedData.push({
-                    date: reformatDate(element[0]),
-                    value: element[1],
-                    qualityCode: element[2],
-                });
-            });
-
-            globalData = [];
-            
-            formattedData.forEach(element => {
-                globalData.push(element);
-            });
-
-            console.log("Formatted Data: ", formattedData);
-
-            if (dailyCheckbox.checked){
-                formattedData.forEach(element => {
-                    element.date += " 08:00";
-                });
-            };
-
-            // Find Missing Dates
-            let datesList = [];
-            formattedData.forEach(element => {
-                let date = `${element['date'].split(' ')[0]}`;
-                let month = date.split('-')[0];
-                let day = date.split('-')[1];
-                let year = date.split('-')[2];
-                datesList.push(`${month}-${day}-${year}`);
-            });
-
-            let missingDatesList = findMissingDates(datesList);
-
-            let actualMissingDates = [];
-
-            missingDatesList.forEach(date => {
-                let missingReformattedDate = `${date.split('-')[1]}-${date.split('-')[2]}-${date.split('-')[0]}`;
-                if (!datesList.includes(missingReformattedDate)){
-                    actualMissingDates.push(missingReformattedDate);
-                }
-            })
-
-            // insertMissingDates(formattedData, actualMissingDates);
-
-            metadataTitle.textContent = gageName.value;
-
-            if (isProjectText.textContent !== "Datum: NGVD29"){
-                metadataDatum88.innerHTML = `${gageMetadata.elevation.toFixed(2)}ft NAVD 88, add datum to stage to obtain elevation`;
-            } else {
-                const levelIdEffectiveDate = "2024-01-01T08:00:00"; 
-                const officeName = "mvs";
-                const cda = "internal";
-
-                let setBaseUrl = cda === "internal"
-                        ? `https://wm.${officeName.toLowerCase()}.ds.usace.army.mil:8243/${officeName.toLowerCase()}-data/`
-                        : `https://cwms-data.usace.army.mil/cwms-data/`;
-
-                const levelIdNgvd29 = `${gageName.value}.Height.Inst.0.NGVD29`;
-                const ngvd29ApiUrl = `${setBaseUrl}levels/${levelIdNgvd29}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
-                
-                fetch(ngvd29ApiUrl)
-                    .then(response => {
-                        if (!response.ok){
-                            throw new Error("Network was not ok. " + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Set map to null if the data is null or undefined
-                        // console.log("Data: ", data);
-                        metadataDatum88.innerHTML = `${(gageMetadata.elevation - data['constant-value']).toFixed(2)} ft NAVD88, add datum to stage to obtain elevation.`;
-                    })
-                    .catch(error => console.error(`Error fetching ngvd29 level for ${gageName.value.split('.')[0]}:`, error));
-            }
-
-            
-
-            if (isProjectText.textContent === "Datum: NGVD29" && dailyCheckbox.checked){
-                metadataRecordedTime.textContent = "All values were recorded at 08:00 am NGVD29 stage in ft";
-            } else if (isProjectText.textContent !== "Datum: NGVD29" && dailyCheckbox.checked){
-                metadataRecordedTime.textContent = "All values were recorded at 08:00 am NAVD88 stage in ft";
-            } else {
-                metadataRecordedTime.textContent = "";
-            }
-
-            let metadataBeginDate = `${PORBeginDate.textContent.split('/')[0]}-${PORBeginDate.textContent.split('/')[1]}-${PORBeginDate.textContent.split('/')[2]}`;
-            let metadataEndDate = `${POREndDate.textContent.split('/')[0]}-${POREndDate.textContent.split('/')[1]}-${POREndDate.textContent.split('/')[2]}`;
-            metadataPeriodOfRecord.textContent = `Period of Record: ${metadataBeginDate} to ${metadataEndDate}`;
-
-            if (actualMissingDates.length > 0){
-                let dssMessage = "If this data is going to be used to create a DSS file, please choose <strong>'IR-DAY'</strong> on the time interval."
-                metadataMissingDates.innerHTML = `Missing Dates: <strong>${actualMissingDates.length}</strong>` + "<br>" + dssMessage;
-            } else {
-                metadataMissingDates.innerHTML = "Missing Dates: NA";
-            };
-
-            if (hourlyCheckbox.checked){
-                data.forEach(element => {
-                    if (element['id'] === basinName.value){
-                        element['assigned-locations'].forEach(gage => {
-                            if (gage['location-id'] === gageName.value){
-                                let datmanEndDate = gage['extents-data']['datman'][0]['lastUpdate'].split('T')[0].split('-');
-                                let hourlyEndDate = gage['extents-data']['datman'][1]['lastUpdate'].split('T')[0].split('-');
-
-                                metadataHighlightValues.innerHTML = `Data QA/QC Up Until: <strong>${datmanEndDate[1]}-${datmanEndDate[2]}-${datmanEndDate[0]}</strong>`;
-                            }
-                        });
-                    }
-                });
-            } else {
-                metadataHighlightValues.innerHTML = '';
-            }
-
-            tableTBody.innerHTML = '';
-
-            globalFormattedData = [];
-
-            formattedData.forEach(element => {
-                globalFormattedData.push(element);
-            });
-
-            // 500 Rows Max
-            createFirstRows(tableTBody, globalFormattedData);
-
-            //console.log('Table Rows: ', dataTable.children[1].children.length);
-
-            // Remove event listener for the scroll event
-            window.removeEventListener('scroll', scrollFunction);
-
-            // Add event listener for the scroll event
-            window.addEventListener('scroll', scrollFunction);
-
-            //console.log("Formatted Data: ", formattedData);
-
-            tableResultsDiv.classList.add('show');
-            metadataDiv.classList.add('show');
-
-            getExcelBtn.removeEventListener('click', exportTableToExcel);
-            getExcelBtn.addEventListener('click', exportTableToExcel);
-
-            getJSONBtn.removeEventListener('click', exportTableToJSON);
-            getJSONBtn.addEventListener('click', exportTableToJSON);
-
-            emailBtn.removeEventListener('click', emailNoDataMessage);
-            emailBtn.removeEventListener('click', openOutlookMail);
-            emailBtn.addEventListener('click', openOutlookMail);
-
-            disableButtons();
-            tableResultsDiv.classList.add('show');
-            loadingDiv.classList.remove('show');
-
-        }, function(){});    
-    });
-
-}
-
-function scrollFunction(){
-    const rect = dataTable.getBoundingClientRect();
-    const bottomViewport = rect.bottom;  // The bottom position relative to the viewport
-
-    if (bottomViewport < 5000){
-        appendToTable(dataTable.children[1], globalFormattedData);
-    } else if(bottomViewport > 5000) {
-        deleteFromTable(dataTable.children[1]);
-    }
-}
-
-function disableButtons() {
-    let elementList = [basinName, gageName, beginDate, endDate, getDataBtn, getExcelBtn, getJSONBtn, basinExcelBtn, basinJSONBtn, dailyCheckbox, hourlyCheckbox, darkModeCheckbox];
-    elementList.forEach(element => {
-        if (!element.disabled) {
-            element.disabled = true;
-        } else {
-            element.disabled = false;
-        }
-    });
-}
-
-function reformatDate(dateNumber) {
-    let newDate = new Date(dateNumber);
-
-    // Get day, month and year and ensure the days and months are 2 digits
-    let month = newDate.getMonth() + 1 > 9 ? newDate.getMonth() + 1: `0${newDate.getMonth() + 1}`;
-    let day = newDate.getDate() > 9 ? newDate.getDate(): `0${newDate.getDate()}`;
-    let year = newDate.getFullYear();
-
-    // Get hours and minutes and ensure they're 2 digits
-    let hours = newDate.getHours() > 9 ? newDate.getHours() : `0${newDate.getHours()}`;
-    let minutes = newDate.getMinutes() > 9 ? newDate.getMinutes() : `0${newDate.getMinutes()}`;
-
-    if (dailyCheckbox.checked) {
-        return `${month}-${day}-${year}`;
-    } else {
-        return `${month}-${day}-${year} ${hours}:${minutes}`;
-    }
-}
-
-function findMissingDates(dates) {
-    // Convert strings to Date objects using parseLocalDate and sort them
-    const dateObjects = dates.map(date => new Date(date)).sort((a, b) => a - b);
-    // console.log("Date Objects", dateObjects);
-
-    const missingDates = [];
-    for (let i = 0; i < dateObjects.length - 1; i++) {
-        let currentDate = dateObjects[i];
-        let nextDate = dateObjects[i + 1];
-
-        // Add missing dates between the current and next date
-        while (currentDate.getTime() + 86400000 < nextDate.getTime()) { // 86400000ms = 1 day
-            currentDate = new Date(currentDate.getTime() + 86400000);
-            missingDates.push(currentDate.toISOString().split('T')[0]);
-        }
-    }
-    return missingDates;
-}
-
-function parseLocalDate(dateStr) {
-    const [month, day, year] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day); // Month is 0-indexed
-}
-
-function createFirstRows(tableBody, tableData) {
-
-    if (tableData.length > 500) {
-        // There is more than 500 values
-        for(let i = 0; i < 500; i++){
-            let newRow = document.createElement('tr');
-
-            let tableValue = tableData[i].value === null ? "--" : tableData[i].value.toFixed(2);
-
-            newRow.innerHTML = `<td>${tableData[i].date}</td>
-            <td>${tableValue}</td>
-            <td>${tableData[i].qualityCode}</td>`;
-            tableBody.append(newRow);
-        }
-
-    } else {
-        // There is less than 500 values
-        for(let i = 0; i < tableData.length; i++){
-            let newRow = document.createElement('tr');
-
-            let tableValue = tableData[i].value === null ? "--" : tableData[i].value.toFixed(2);
-
-            newRow.innerHTML = `<td>${tableData[i].date}</td>
-            <td>${tableValue}</td>
-            <td>${tableData[i].qualityCode}</td>`;
-            tableBody.append(newRow);
-        }
-
-    }
-}
-
-function appendToTable(tableBody, tableData) {
-    // Get the amount of data already on the table
-    let currentRows = dataTable.children[1].children.length;
-
-    // Check if the remaining data is greater than 10
-    if (currentRows < tableData.length){
-
-        if (tableData.length - currentRows > 10){
-
-            // If greater than 10 then add 10 more values
-            for(let i = 0; i < 10; i++){
-                let newRow = document.createElement('tr');
-
-                let tableValue = tableData[currentRows + i].value === null ? "--" : tableData[i].value.toFixed(2);
-
-                newRow.innerHTML = `<td>${tableData[currentRows + i].date}</td>
-                <td>${tableValue}</td>
-                <td>${tableData[currentRows + i].qualityCode}</td>`;
-                tableBody.append(newRow);
-            }
-    
-        } else {
-
-            // Add one by one if the remining data is less than 10
-            let newRow = document.createElement('tr');
-
-            let tableValue = tableData[currentRows + i].value === null ? "--" : tableData[i].value.toFixed(2);
-
-            newRow.innerHTML = `<td>${tableData[currentRows].date}</td>
-            <td>${tableValue}</td>
-            <td>${tableData[currentRows].qualityCode}</td>`;
-            tableBody.append(newRow);
-        }
-
-    } else {
-        console.log("Reached the end of the data.");
-    }
-}
-
-function deleteFromTable(tableBody){
-    let currentRows = dataTable.children[1].children.length;
-
-    if (currentRows > 500){
-        for(let i = 0; i < 10; i++){
-            tableBody.deleteRow(currentRows - (i + 1));
-        }
-    }
-    
-}
-
-// Update Available POR Function
-function updateAvailablePORTable(input_data) {
-
-    console.log("Input Data: ", input_data);
-
-    input_data.forEach(element => {
-        if (element['id'] === basinName.value) {
-            element['assigned-locations'].forEach(item => {
-                if (item['location-id'] === gageName.value) {
-                    console.log("Item: ", item)
-                    let earliestDate = dailyCheckbox.checked ? item['extents-data']['datman'][0]['earliestTime'] : item['extents-data']['datman'][1]['earliestTime'];
-                    let latestDate = dailyCheckbox.checked ? item['extents-data']['datman'][0]['latestTime'] : item['extents-data']['datman'][1]['latestTime'];
-                    let startPORDate = document.querySelector('#info-table .por-start');
-                    let endPORDate = document.querySelector('#info-table .por-end');
-                    let startDateList = earliestDate.split('T')[0].split('-');
-                    let endDateList = latestDate.split('T')[0].split('-');
-                    let newInputBeginYear = startDateList[0];
-                    let newInputBeginMonth = startDateList[1];
-                    let newInputBeginDay = startDateList[2];
-                    let newInputEndYear = endDateList[0];
-                    let newInputEndMonth = endDateList[1];
-                    let newInputEndDay = endDateList[2];
-
-                    startPORDate.innerText = `${newInputBeginMonth}/${newInputBeginDay}/${newInputBeginYear}`;
-                    endPORDate.innerHTML = `${newInputEndMonth}/${newInputEndDay}/${newInputEndYear}`;
-                    gageMetadata = item.metadata;
-
-                    beginDate.value = `${newInputBeginYear}-${newInputBeginMonth}-${newInputBeginDay}`; // YYYY-MMM-DD
-                    endDate.value = `${newInputEndYear}-${newInputEndMonth}-${newInputEndDay}`; // YYYY-MMM-DD
-                }
-            });
-        };
-    });
-
-    if (gageMetadata['vertical-datum'] !== "NAVD88"){
-        document.getElementById("is-project").textContent = "Datum: NGVD29";
-    };
-}
-
-function isNGVD29(inputGageName){
-    let projectData = fetchedData[0]['assigned-locations'][0]['project']['assigned-locations']
-    let isProject = false;
-
-    projectData.forEach(element => {
-        if(element['location-id'] === inputGageName){
-            isProject = true;
-        }
-    });
-
-    if(isProject){
-        isProjectText.textContent = "Datum: NGVD29";
-        tableStageTitleText.textContent = "Stage NGVD29[ft]"
-    } else {
-        isProjectText.textContent = "Datum: NAVD88";
-        tableStageTitleText.textContent = "Stage[ft]"
-    }
-}
-
-// Function to add gages names in combobox
-function addGageNames(data) {
-    gageName.options.length = 0;
-    data.forEach(element => {
-        if (element['basin'] === basinName.value) {
-
-            if (dailyCheckbox.checked) {
-                element['datman'].forEach(item => {
-                    let option = document.createElement('option');
-                    option.value = item;
-                    option.textContent = item.split('.')[0];
-                    gageName.appendChild(option);
-                });
-            } else if (hourlyCheckbox.checked) {
-                // element['rev'].forEach(item => {  <=  Original Line
-                element['datman'].forEach(item => {//<=  Temp Line
-                    let option = document.createElement('option');
-                    option.value = item;
-                    option.textContent = item.split('.')[0];
-                    gageName.appendChild(option);
-                });
-            }
-            
-        }
-    });
-}
-
-function toggleDarkModeBtn() {
-    userData.darkMode = darkModeCheckbox.checked;
-    saveUserData(userData);
-    applyDarkMode();
-}
-
-function applyDarkMode() {
-    if (userData.darkMode == true) {
-        document.getElementById('content-body').classList.add('dark');
-        document.getElementById('page-container').classList.add('dark');
-    } else {
-        document.getElementById('content-body').classList.remove('dark');
-        document.getElementById('page-container').classList.remove('dark');
-    }
-}
-
-function excelNoDataMessage() {
-    popupMessage('error', 'There is no data to create the excel file. Get the data first and try again.');
-    popupWindowBtn.click();
-}
-
-function jsonNoDataMessage() {
-    popupMessage('error', 'There is no data to create the json file. Get the data first and try again.');
-    popupWindowBtn.click();
-}
-
-function emailNoDataMessage() {
-    popupMessage('info', 'Available Soon.');
-    //popupMessage('error', 'There is no data to create an email. Get the data first and try again.');
-    popupWindowBtn.click();
-}
-
-function exportTableToExcel() {
-    exportTableToExcelV2();
-}
-
-async function exportTableToExcelV2() {
-
-    let filename = gageName.value;
-
-    if (dailyCheckbox.checked){
-        filename += "-Daily";
-    } else {
-        filename += "-Hourly";
-    }
-
-    let emailBeginDate = `${beginDate.value.split('-')[1]}-${beginDate.value.split('-')[2]}-${beginDate.value.split('-')[0]}`;
-    let emailEndDate = `${endDate.value.split('-')[1]}-${endDate.value.split('-')[2]}-${endDate.value.split('-')[0]}`;
-
-    filename += `_${emailBeginDate}_to_${emailEndDate}`;
-
-    if (dailyCheckbox.checked){
-        globalData.forEach(element => {
-            if(element.date.split(' ').length < 2){
-                if (dailyCheckbox.checked){
-                    globalData.forEach(element => {
-                        element.date += " 8:00"
-                    });
-                };
-            }
-        });
-    };
-
-    let excelDisclamer = "NOTICE: All data contained herein is preliminary in nature and therefore subject to change. The data is for general information purposes ONLY and SHALL NOT be used in technical applications such as, but not limited to, studies or designs. All critical data should be obtained from and verified by the United States Army Corpsof Engineers. The United States Government assumes no liability for the completeness or accuracy of the data contained herein and any use of such data inconsistent with this disclaimer shall be solely at the risk of the user.";
-
-    // Create a new workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(`${gageName.value}`);
-
-    // Add info
-    const infoRows = [
-        [`${gageName.value}`],
-        [new Date().toString().split(' GMT')[0]],
-        [`${excelDisclamer}`],
-        ["Datum:"],
-        [`${metadataDatum88.textContent}`]
-    ];
-
-    if (metadataRecordedTime.textContent !== "") {
-        infoRows.push([`${metadataRecordedTime.textContent}`]);
-    }
-
-    infoRows.push([`${metadataPeriodOfRecord.textContent}`]);
-
-    if (metadataMissingDates.textContent !== "Missing Dates: NA"){
-        let missingDateText = metadataMissingDates.innerHTML.toString().split('<strong>').join('').split('</strong>').join('');
-        let missingDateNumber = missingDateText.split('<br>')[0];
-        let missingDateMessage = missingDateText.split('<br>')[1];
-
-        infoRows.push([`${missingDateNumber}`]);
-        infoRows.push([`${missingDateMessage}`]);
-    };
-
-    if (hourlyCheckbox.checked){
-        let dataQAQCText = metadataHighlightValues.innerHTML.toString().split('<strong>').join('').split('</strong>').join('');
-
-        infoRows.push([`${dataQAQCText}`]);
-    }
-
-    infoRows.push(["If you need additional data, please email dll-cemvs-water-managers@usace.army.mil"]);
-    infoRows.push(["Date & Time (CST)", isProjectText.textContent === "Datum: NGVD29" ? "Stage NGVD29[ft]" : "Stage[ft]", "Quality Code"]);
-
-    infoRows.forEach((row, rowIndex) => {
-        worksheet.addRow(row);
-
-        // Apply formatting (merging for the first three columns)
-        if (rowIndex < infoRows.length - 1) {
-            worksheet.mergeCells(`A${rowIndex + 1}:C${rowIndex + 1}`);
-        }
-    });
-
-    worksheet.columns = [
-        { width: 30 },
-        { width: 30 },
-        { width: 30 }
-    ];
-
-    // Add the table data below the info rows
-    globalData.forEach(dataRow => {
-        worksheet.addRow([dataRow.date, dataRow.value, dataRow.qualityCode])
-    });
-
-    worksheet.getRow(infoRows.length).font = {
-        bold: true, 
-        size: 14,
-        color: {argb: "E0E1DD"}
-    };
-
-    worksheet.getRow(infoRows.length).alignment = {
-        horizontal: "center", 
-        vertical: "middle"
-    };
-
-    worksheet.getRow(infoRows.length).height = 25;
-
-    worksheet.getCell(`A${infoRows.length}`).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: {argb: "0D1B2A"}
-    };
-
-    worksheet.getCell(`B${infoRows.length}`).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: {argb: "0D1B2A"}
-    };
-
-    worksheet.getCell(`C${infoRows.length}`).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: {argb: "0D1B2A"}
-    };
-
-    worksheet.getCell("A1").font = {
-        size: 20,
-        bold: true
-    };
-
-    worksheet.getCell("A1").alignment = {
-        horizontal: "right", 
-        vertical: "middle"
-    };
-
-    worksheet.getCell("A2").font = {size: 14};
-
-    worksheet.getCell("A2").alignment = {
-        horizontal: "right", 
-        vertical: "middle"
-    };
-
-    worksheet.getCell("A2").height = 30;
-
-    worksheet.getCell("A3").alignment = {
-        wrapText: true,
-        vertical: "middle"
-    };
-
-    for (let i = 0; i < infoRows.length; i++){
-        if (i === 2) {
-            worksheet.getRow(i + 1).height = 110;
-        } else if (i > 2) {
-            worksheet.getRow(i + 1).height = 20;
-            worksheet.getRow(i + 1).alignment = {vertical: "middle"};
-        }
-    }
-
-    worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber > infoRows.length - 1){
-            row.alignment = {horizontal: "center"}
-        }
-    });
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `${filename}.xlsx`);
-}
-
-function exportTableToJSON() {
-
-    let filename = gageName.value
-
-    if (dailyCheckbox.checked){
-        filename += "-Daily";
-    } else {
-        filename += "-Hourly";
-    }
-
-    // Mt Vernon-Big Muddy-Daily_01-01-2018_to_12-31-2020.json
-    let emailBeginDate = `${beginDate.value.split('-')[1]}-${beginDate.value.split('-')[2]}-${beginDate.value.split('-')[0]}`;
-    let emailEndDate = `${endDate.value.split('-')[1]}-${endDate.value.split('-')[2]}-${endDate.value.split('-')[0]}`;
-
-    filename += `_${emailBeginDate}_to_${emailEndDate}`;
-
-    if (dailyCheckbox.checked){
-        globalData.forEach(element => {
-            if(element.date.split(' ').length < 2){
-                if (dailyCheckbox.checked){
-                    globalData.forEach(element => {
-                        element.date += " 8:00"
-                    });
-                };
-            }
-        });
-    };
-
-    let jsonMetadata = {
-        name: gageName.value,
-        datum: metadataDatum88.textContent,
-        recordTime: metadataRecordedTime.textContent !== "" ? metadataRecordedTime.textContent : null,
-        periodOfRecord: metadataPeriodOfRecord.textContent,
-        missingDates: metadataMissingDates.innerHTML === "Missing Dates: NA" ? null : metadataMissingDates.innerHTML.toString().split('<strong>').join('').split('</strong>').join('').split('<br>')[0],
-        disclamer: disclamerText
-    };
-
-    let jsonObject = {
-        metadata: jsonMetadata,
-        values: globalData
-    }
-
-    // Convert data to JSON
-    let json = JSON.stringify(jsonObject, null, 2);
-
-    // Create a blob from the JSON
-    let blob = new Blob([json], { type: 'application/json' });
-
-    // Create a link to download the JSON file
-    let link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.download = `${filename}.json`;
-    link.click();
-}
-
-function getAllBasinGagesExcel(){
-
-    let gagesList = [];
-
-    fetchedData.forEach(element => {
-        if (element['id'] === basinName.value) {
-
-            console.log("Current Basin: ", element);
-
-            element['assigned-locations'].forEach(item => {
-                gagesList.push({
-                    name: item['location-id'],
-                    datman: item['extents-data']['datman'][0]['name'],
-                    stage: item['extents-data']['datman'][1]['name']
-                });
-            });
-        };
-    });
-
-    // Handle Daylight Saving
-    let newBeginDate = new Date(beginDate.value.split('-')[0], beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
-    let julyDate = new Date(beginDate.value.split('-')[0], 6, 1);
-    let offsetBegin = newBeginDate.getTimezoneOffset();
-    let offsetJuly = julyDate.getTimezoneOffset();
-
-    let beginHours = "T05%3A00%3A00.00Z";
-    let endHours = "T23%3A59%3A59.59Z";
-
-    if (offsetBegin != offsetJuly){
-        beginHours = "T06%3A00%3A00.00Z";
-    }
-
-    gagesList.forEach(gage => {
-
-        console.log("Current Gage: ", gage);
-
-        let urlName;
-
-        if (hourlyCheckbox.checked) {
-            urlName = gage.stage;
-        } else {
-            urlName = gage.datman;
-        };
-
-        // Get data for the period of record
-        let dataAmount = 1000000;
-        pageURL = domain + "/timeseries?" + "name=" + urlName + "&office=MVS&begin=" + beginDate.value + beginHours + "&end=" + endDate.value + endHours + "&page-size=" + dataAmount;
-        console.log("TimeSerieURL: ", pageURL);
-
-        fetchJsonFile(pageURL, function(gageData){
-
-            console.log("Gage Data: ", gageData);
-
-        }, function(){})
-
-    });
-
-}
-
-function openOutlookMail() {
-
-    // Download Excel File
-    let filename = gageName.value;
-
-    // Convert the JavaScript object into a worksheet
-    const ws = XLSX.utils.json_to_sheet(globalData);
-
-    // Create a new workbook and append the worksheet
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-    // Generate the Excel file as a Blob
-    const excelBlob = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const file = new Blob([excelBlob], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-
-    let emailDates = {
-        begin: `'${beginDate.value.split('-')[1]}-${beginDate.value.split('-')[2]}-${beginDate.value.split('-')[0]}'`,
-        end: `'${endDate.value.split('-')[1]}-${endDate.value.split('-')[2]}-${endDate.value.split('-')[0]}'`,
-    };
-
-    const email = '';  // Replace with the recipient's email
-    const subject = `Data Request for ${gageName.value}`; // Replace with the email subject
-    const body = `Hi [Recipient],
-
-Please find below the information for the following gage:
-
-- Gage Name: ${gageName.value}
-- Time Window: From ${emailDates.begin} to ${emailDates.end}
-- Latitude: ${gageMetadata.latitude}
-- Longitude: ${gageMetadata.longitude}
-- Gage Elevation: ${gageMetadata.elevation}
-- Vertical Datum: ${gageMetadata['vertical-datum']}
-
-**NOTE FOR USER** 
-- Please make sure to replace all the fields in square brackets ([]) with the appropriate information before sending this email.
-- Ensure that you attach the files you downloaded from the page. This message is for your reference only and can be deleted before sending.
-
-${disclamerText}
-
-Thank you,
-[Your Name]
-[Your Position/Department]
-[Your Organization]
-[Your Contact Information]`; // Replace with the email body
-
-    // Create the mailto link
-    const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-    // Open the default email client (could be Outlook if it's set as default)
-    window.location.href = mailtoLink;
-}
-
-// Example of storing user input as JSON
-function saveUserData(userData) {
-    const jsonData = JSON.stringify(userData);  // Convert to JSON string
-    localStorage.setItem('userDataDataRequest', jsonData); // Store in localStorage
-    console.log('Data saved: ', userData);
-  }
-  
-// Example of retrieving user data from localStorage
-function loadUserData() {
-    const savedData = localStorage.getItem('userDataDataRequest');
-
-    if (savedData) {
-        const userData = JSON.parse(savedData);  // Convert from JSON string to object
-        console.log("User Data: ", userData);
-
-        return userData;
-
-    } else {
-        console.log("No saved user data found.");
-
-        return null;
-    }
-}

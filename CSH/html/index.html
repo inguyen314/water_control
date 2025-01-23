@@ -13,12 +13,10 @@
         <script type="text/javascript" src="../../js/main.js"></script>
         <!-- Add sidebar.css IF NOT LOAD SIDEBAR TEMPLATE -->
         <link rel="stylesheet" href="../../css/sidebar.css"/>
-        <!-- Add content window style -->
-        <link rel="stylesheet" href="../css/content.css">
-        <link rel="stylesheet" href="../css/header.css">
-        <link rel="stylesheet" href="../css/container.css">
-        <link rel="stylesheet" href="../css/results.css">
+        <!-- Add content window style IF NOT LOAD SIDEBAR TEMPLATE -->
+        <link rel="stylesheet" href="../css/styles.css">
         <link rel="stylesheet" href="../css/popup.css">
+        <link rel="stylesheet" href="../css/responsive.css">
         <link rel="stylesheet" href="../../css/loadingCircle.css">
     </head>
     <body>
@@ -38,16 +36,18 @@
                             <!-- Page Content Here -->
                             <div class="box-usace">
                                 <h2 class="box-header-striped">
-                                    <span class="titleLabel title">Data Request</span>
+                                    <span class="titleLabel title">CSH - Comparative Stage Hydrograph</span>
                                     <span class="rss"></span>
                                 </h2>
                                 <div class="box-content" style="margin:auto">
                                     <div class="content">
 
-                                        <!-- Main Window Content -->
+
                                         <div id="content-body">
-                                            
+
+                                
                                             <div class="header">
+                                                <h1 id="main-title">CSH - Comparative Stage Hydrograph</h1>
                                                 <label>
                                                     <input type="checkbox">
                                                     <span></span>
@@ -55,7 +55,6 @@
                                                     <h4>Dark Mode</h4>
                                                 </label>
                                             </div>
-
                                             <div class="container">
                                                 <div class="input-container">
                                                     <div class="inputs">
@@ -69,7 +68,7 @@
                                                                 <select name="gage" id="gageCombobox"></select>
                                                             </div>
                                                             <div class="data-type">
-                                                                <label id="is-project">Datum: NAVD88</label>
+                                                                <label id="is-project">Datum: Stage</label>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -114,91 +113,54 @@
                                                 </div>
                                                 <div class="input-checkbox">
                                                     <label>Compute:</label>
-                                                    <label>Daily</label>
-                                                    <input type="checkbox" name="day" id="daily" checked>
-                                                    <label>Hourly</label>
-                                                    <input type="checkbox" name="hour" id="hourly">
+                                                    <label>Ave</label>
+                                                    <input type="checkbox" name="ave" id="average" checked>
+                                                    <label>Max</label>
+                                                    <input type="checkbox" name="max" id="maximum" checked>
+                                                    <label>Min</label>
+                                                    <input type="checkbox" name="min" id="minimum" checked>
                                                 </div>
                                                 <div class="buttons">
-                                                    <button class="html" id="button-data">Get Data</button>
-                                                    <button class="csv" id="button-csv">Get Excel</button>
-                                                    <button class="csv" id="button-json">Get JSON</button>
-                                                    <button class="csv" id="button-basin-excel">Get Basin Excel</button>
-                                                    <button class="csv" id="button-basin-json">Get Basin JSON</button>
+                                                    <button class="html" id="button-html">Compute HTML</button>
+                                                    <button class="csv" id="button-csv">Compute Excel</button>
                                                 </div>
                                             </div>
 
-                                            <div class="results">
-
-                                                <div id="loading-div" class="show">
-                                                    <div class="loader">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105.52 80.94"><defs><style>.cls-1{fill:#DE1E2E;}.cls-2{fill:#fff;}</style></defs><title>usace-logo</title><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><rect class="cls-1" width="105.52" height="80.94" rx="10.67" ry="10.67"/><path class="cls-2" d="M95.07,74.83H11A4.9,4.9,0,0,1,6.1,69.94V11A4.9,4.9,0,0,1,11,6.1H95.07A4.9,4.9,0,0,1,100,11v59A4.89,4.89,0,0,1,95.07,74.83ZM11,8.1A2.9,2.9,0,0,0,8.1,11v59A2.9,2.9,0,0,0,11,72.83H95.07A2.9,2.9,0,0,0,98,69.94V11A2.9,2.9,0,0,0,95.07,8.1Z"/><path class="cls-2" d="M84.5,52V26.42l4.12-4.12V16.42H83.69v4.33L80,20.68V16.42c0-.05-4.53,0-4.53,0v4.33H71.81V16.42c0-.06-4.87,0-4.87,0V22.3L71,26.42s.06,12.83.06,12.7-10.92,0-10.94,0,0-5.07,0-5.07l2.77-2.77V24.06c0-.14-4.12.06-4.39,0-.09,0,0,4.25,0,4.25H55.06V24.12H50.6a40.46,40.46,0,0,0,.07,4.12H46.82V24.12H42.49c-.13,0,0,7,0,7l3.11,3.11.07,4.86h-11V26.42l3.92-3.92V16.42H33.71v4.33l-3.78-.07V16.42H25.68s0,4.34,0,4.33-3.45-.07-3.78-.07V16.42s-4.93-.06-4.93,0v6.22l3.78,3.71V52.83s-3.92,3.85-3.92,4,.07,6.42.07,6.42H89V56.48ZM29.19,56.41h-3V45.74h3Zm.07-17.29h-3V28.45h3ZM41.08,53.23h-3V45.67h3ZM60.8,60.66H45.74V50.06s2.89-7.51,7.16-7.57l.13,0,.14-.15.17.17c4.65.38,7.46,7.53,7.46,7.53Zm7.29-7.36h-3V45.74h3Zm11.75,3.11h-3V45.74h3ZM80,37.9H77V27.23h3Z"/></g></g></svg>
-                                                        <span style="--i: 1;"></span>
-                                                        <span style="--i: 2;"></span>
-                                                        <span style="--i: 3;"></span>
-                                                        <span style="--i: 4;"></span>
-                                                        <span style="--i: 5;"></span>
-                                                        <span style="--i: 6;"></span>
-                                                        <span style="--i: 7;"></span>
-                                                        <span style="--i: 8;"></span>
-                                                        <span style="--i: 9;"></span>
-                                                        <span style="--i: 10;"></span>
-                                                        <span style="--i: 11;"></span>
-                                                        <span style="--i: 12;"></span>
-                                                        <span style="--i: 13;"></span>
-                                                        <span style="--i: 14;"></span>
-                                                        <span style="--i: 15;"></span>
-                                                        <span style="--i: 16;"></span>
-                                                        <span style="--i: 17;"></span>
-                                                        <span style="--i: 18;"></span>
-                                                        <span style="--i: 19;"></span>
-                                                        <span style="--i: 20;"></span>
-                                                        <h2 class="text-string">Loading Data<br><b>This may take some time, please wait...</b></h2>
-                                                    </div>
+                                            <div id="loading-image">
+                                                <div class="loader">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 105.52 80.94"><defs><style>.cls-1{fill:#DE1E2E;}.cls-2{fill:#fff;}</style></defs><title>usace-logo</title><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><rect class="cls-1" width="105.52" height="80.94" rx="10.67" ry="10.67"/><path class="cls-2" d="M95.07,74.83H11A4.9,4.9,0,0,1,6.1,69.94V11A4.9,4.9,0,0,1,11,6.1H95.07A4.9,4.9,0,0,1,100,11v59A4.89,4.89,0,0,1,95.07,74.83ZM11,8.1A2.9,2.9,0,0,0,8.1,11v59A2.9,2.9,0,0,0,11,72.83H95.07A2.9,2.9,0,0,0,98,69.94V11A2.9,2.9,0,0,0,95.07,8.1Z"/><path class="cls-2" d="M84.5,52V26.42l4.12-4.12V16.42H83.69v4.33L80,20.68V16.42c0-.05-4.53,0-4.53,0v4.33H71.81V16.42c0-.06-4.87,0-4.87,0V22.3L71,26.42s.06,12.83.06,12.7-10.92,0-10.94,0,0-5.07,0-5.07l2.77-2.77V24.06c0-.14-4.12.06-4.39,0-.09,0,0,4.25,0,4.25H55.06V24.12H50.6a40.46,40.46,0,0,0,.07,4.12H46.82V24.12H42.49c-.13,0,0,7,0,7l3.11,3.11.07,4.86h-11V26.42l3.92-3.92V16.42H33.71v4.33l-3.78-.07V16.42H25.68s0,4.34,0,4.33-3.45-.07-3.78-.07V16.42s-4.93-.06-4.93,0v6.22l3.78,3.71V52.83s-3.92,3.85-3.92,4,.07,6.42.07,6.42H89V56.48ZM29.19,56.41h-3V45.74h3Zm.07-17.29h-3V28.45h3ZM41.08,53.23h-3V45.67h3ZM60.8,60.66H45.74V50.06s2.89-7.51,7.16-7.57l.13,0,.14-.15.17.17c4.65.38,7.46,7.53,7.46,7.53Zm7.29-7.36h-3V45.74h3Zm11.75,3.11h-3V45.74h3ZM80,37.9H77V27.23h3Z"/></g></g></svg>
+                                                    <span style="--i: 1;"></span>
+                                                    <span style="--i: 2;"></span>
+                                                    <span style="--i: 3;"></span>
+                                                    <span style="--i: 4;"></span>
+                                                    <span style="--i: 5;"></span>
+                                                    <span style="--i: 6;"></span>
+                                                    <span style="--i: 7;"></span>
+                                                    <span style="--i: 8;"></span>
+                                                    <span style="--i: 9;"></span>
+                                                    <span style="--i: 10;"></span>
+                                                    <span style="--i: 11;"></span>
+                                                    <span style="--i: 12;"></span>
+                                                    <span style="--i: 13;"></span>
+                                                    <span style="--i: 14;"></span>
+                                                    <span style="--i: 15;"></span>
+                                                    <span style="--i: 16;"></span>
+                                                    <span style="--i: 17;"></span>
+                                                    <span style="--i: 18;"></span>
+                                                    <span style="--i: 19;"></span>
+                                                    <span style="--i: 20;"></span>
+                                                    <h2 class="text-string">Loading Data<br><b>If this takes more than 15 seconds, reload the page.</b></h2>
                                                 </div>
-
-                                                <div class="metadata-div">
-
-                                                    <h2 class="metadata-title">Gage Name</h2>
-
-                                                    <p class="metadata-disclamer">NOTICE: All data contained herein is preliminary in nature and therefore subject to change. The data is for general information purposes ONLY and SHALL NOT be used in technical applications such as, but not limited to, studies or designs. All critical data should be obtained from and verified by the United States Army Corps of Engineers. The United States Government assumes no liability for the completeness or accuracy of the data contained herein and any use of such data inconsistent with this disclaimer shall be solely at the risk of the user.</p>
-                                                    <p>Datum:</p>
-                                                    <p class="metadata-datum-88">##.## NAVD 88, add datum to stage to obtain elevation</p>
-                                                    <!-- <p class="metadata-datum-29">##.## NGVD 29, add datum to stage to obtain elevation</p> -->
-                                                    <p class="metadata-recorded-time">All values were recorded at 08:00 am project stage in ft</p>
-                                                    <p class="metadata-period-of-record">Period of Record:</p>
-                                                    <p class="metadata-missing-dates">Missing Dates: NA</p>
-                                                    <p class="metadata-highlight-values"></p>
-                                                    <p>If you need additional data, please email <strong>dll-cemvs-water-managers@usace.army.mil</strong></p>
-
-                                                </div>
-
-                                                <div class="table-results">
-
-                                                    <table id="data-table">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Date</th>
-                                                                <th id="table-stage-title">Stage[ft]</th>
-                                                                <th>Quality Code</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="table-tbody">
-                                                            <!-- Rows will be inserted here dynamically -->
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                
                                             </div>
-                                        
-                                        <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script>
-                                        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
-                                        <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-                                        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
-                                        <script type="module" src="../../js/requestData.js"></script>
-                                        <script type="module" src="../js/script.js"></script>
+                                            
+                                            
+                                            <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script>
+                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+                                            <script type="module" src="../js/script.js"></script>
                                         </div>
 
                                         
