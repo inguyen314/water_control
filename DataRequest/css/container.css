@@ -114,6 +114,14 @@
     accent-color: var(--color-active);
 }
 
+.container .input-checkbox #daily-hourly-message{
+    font-style: italic;
+    font-size: 0.8em;
+    transform: translateY(0.2em);
+    margin-left: 1em;
+    color: var(--font-color-3)
+}
+
 .container .buttons {
     position: relative;
     background-color: var(--background-color-2);
@@ -132,8 +140,52 @@
     cursor: pointer;
 }
 
+.container .buttons .info {
+    position: absolute;
+    left: 1em;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+}
+
 .container .buttons button:hover{
     background: var(--color-active);
     color: var(--font-color-1);
     font-weight: bold;
+}
+
+/*========== INSTRUCTIONS =========*/
+#instructions{
+    display: none;
+}
+
+#instructions.show{
+    display: flex;
+    padding: 2em;
+    gap: 1em;
+    box-shadow: var(--shadow-box);
+    margin-top: 1em;
+}
+
+#instructions.show .gage-instructions{
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
+    gap: 1em;
+    width: 50%;
+    border-right: 1px solid gray;
+    color: var(--font-color-2);
+}
+
+#instructions.show .basin-instructions{
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
+    gap: 1em;
+    width: 50%;
+    color: var(--font-color-2);
+}
+
+#instructions.show .title{
+    color: var(--font-color-2);
 }

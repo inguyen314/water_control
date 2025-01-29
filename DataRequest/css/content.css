@@ -19,7 +19,53 @@
     --shadow-box: 0px 5px 5px rgba(0, 0, 0, 0.2);
     --font-color-1: #FFFFFF;
     --font-color-2: #000;
+    --font-color-3: rgb(74, 74, 74);
     --checkbox-border-color: #000;
+}
+
+#page-container.hidden {
+    display: none;
+}
+
+#popup-window.hidden {
+    display: none;
+}
+
+#footer.hidden {
+    display: none;
+}
+
+#maintenance-page.hidden{
+    display: none
+}
+
+#maintenance-page{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#maintenance-page .text-div{
+    width: 40%;
+    height: 50%;
+}
+
+#maintenance-page .text-div h1{
+    text-align: center;
+    padding-bottom: 1em;
+}
+
+#maintenance-page .text-div p{
+    text-align: justify;
+    font-size: 1.2em;
+}
+
+#maintenance-page .text-div p span{
+    color: blue;
+    font-weight: bold;
 }
 
 #content-body {
@@ -44,6 +90,7 @@
     --shadow-box: 0px 5px 5px rgba(255, 255, 255, 0.2);
     --font-color-1: #fff;
     --font-color-2: #fff;
+    --font-color-3: #e0e0e0;
     --checkbox-border-color: #fff;
 }
 

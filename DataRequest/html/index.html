@@ -21,6 +21,14 @@
         <link rel="stylesheet" href="../css/popup.css">
         <link rel="stylesheet" href="../../css/loadingCircle.css">
     </head>
+
+    <div id="maintenance-page" class="hidden">
+        <div class="text-div">
+            <h1>We'll Be Right Back!</h1>
+            <p>Our site is currently undergoing maintenance to bring you a better experience. We apologize for any inconvenience this may cause and appreciate your patience. Please check back soon! If you need assistance in the meantime, feel free to contact <span>Water Control.</span> Thank you for your understanding!</p>
+        </div>
+    </div>
+
     <body>
         <div id="page-container">
             <header id="header">
@@ -118,14 +126,66 @@
                                                     <input type="checkbox" name="day" id="daily" checked>
                                                     <label>Hourly</label>
                                                     <input type="checkbox" name="hour" id="hourly">
+                                                    <label id="daily-hourly-message"> -> Select a data type for the selected gage.</label>
                                                 </div>
                                                 <div class="buttons">
-                                                    <button class="html" id="button-data">Get Data</button>
-                                                    <button class="csv" id="button-csv">Get Excel</button>
-                                                    <button class="csv" id="button-json">Get JSON</button>
-                                                    <button class="csv" id="button-basin-excel">Get Basin Excel</button>
-                                                    <button class="csv" id="button-basin-json">Get Basin JSON</button>
+                                                    <button class="info" id="button-instructions"
+                                                    title="Instructions for how the page work.">Instructions</button>
+
+                                                    <button class="html" id="button-data" disabled="true"
+                                                    title="Obtain the data for the desired gage. The data must be obtain in order to download an Excel or JSON file.">Get Gage Data</button>
+
+                                                    <button class="html" id="button-data-basin"
+                                                    title="Obtain the data for the desired basin. The data must be obtain in order to download an Excel or JSON file.">Get Basin Data</button>
+
+                                                    <button class="csv" id="button-csv"
+                                                    title="Download an Excel file with the obtained data.">Get Gage Excel</button>
+
+                                                    <button class="csv" id="button-json"
+                                                    title="Download a JSON file with the obtained data.">Get Gage JSON</button>
+
+                                                    <button class="csv" id="button-basin-excel"
+                                                    title="Download an Excel file with the data of all the gages in the selected basin">Get Basin Excel</button>
+
+                                                    <button class="csv" id="button-basin-json"
+                                                    title="Download a JSON file with the data of all the gages in the selected basin">Get Basin JSON</button>
                                                 </div>
+
+                                                <div id="important-messages">
+                                                    <h1 class="message-text">This is a message test.</h1>
+                                                </div>
+
+                                                <div id="error-messages">
+                                                    <h1 class="message-text">This is an error message test.</h1>
+                                                </div>
+
+                                                <div id="instructions">
+
+                                                    <div class="gage-instructions">
+                                                        <h2 class="title">To Get Gage Data:</h2>
+                                                        <ul>
+                                                            <li><strong>Choose a basin</strong> from the dropdown menu.</li>
+                                                            <li><strong>Select a gage</strong> you want data for.</li>
+                                                            <li><strong>Select a data type</strong> (Daily or Hourly).</li>
+                                                            <li><strong>Choose a time window</strong> for the data.</li>
+                                                            <li>Press <strong>"Get Gage Data"</strong> to extract the data.</li>
+                                                            <li>Once the data is ready, press <strong>"Get Gage Excel"</strong> to generate and download an Excel file containing the gage's data.</li>
+                                                        </ul>
+                                                    </div>
+
+                                                    <div class="basin-instructions">
+                                                        <h2 class="title">To Get Basin Data:</h2>
+                                                        <ul>
+                                                            <li><strong>Choose a basin</strong> from the dropdown menu.</li>
+                                                            <li><strong>Select a data type</strong> (Daily or Hourly).</li>
+                                                            <li><strong>Choose a time window</strong> for the data.</li>
+                                                            <li>Press <strong>"Get Basin Data"</strong> to extract the data.</li>
+                                                            <li>Once the data is ready, press <strong>"Get Basin Excel"</strong> to generate and download an Excel file, with each tab containing data for a gage in the basin.</li>
+                                                        </ul>
+                                                    </div>
+
+                                                </div>
+
                                             </div>
 
                                             <div class="results">
