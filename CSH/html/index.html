@@ -5,7 +5,7 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>DISTRICT Home Page</title>
+        <title>CSH - Comparative Stage Hydrograph</title> <!-- DISTRICT Home Page -->
         <meta name="Description" content="U.S. Army Corps of Engineers DISTRICT HERE Home Page" />
         <link rel="stylesheet" href="../../css/body.css" />
         <link rel="stylesheet" href="../../css/breadcrumbs.css" />
@@ -104,26 +104,107 @@
                                                                     <td>Ending Year</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td><input type="date" id="begin-input" value="2018-01-01"></td>
-                                                                    <td><input type="date" id="end-input" value="2020-12-31"></td>
+                                                                    <td><input type="date" id="begin-input" disabled="true" value="2018-01-01"></td>
+                                                                    <td><input type="date" id="end-input" disabled="true" value="2020-12-31"></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
                                                     </div>
                                                 </div>
-                                                <div class="input-checkbox">
-                                                    <label>Compute:</label>
-                                                    <label>Ave</label>
-                                                    <input type="checkbox" name="ave" id="average" checked>
-                                                    <label>Max</label>
-                                                    <input type="checkbox" name="max" id="maximum" checked>
-                                                    <label>Min</label>
-                                                    <input type="checkbox" name="min" id="minimum" checked>
+
+                                                <div id="separator-div" class="separator hidden"></div>
+
+                                                <div id="settings-div" class="hidden">
+
+                                                    <div class="input-checkbox">
+
+                                                        <h3>Statistical Time Window</h3>
+
+                                                        <div>
+                                                            <input type="checkbox" name="por" id="por-checkbox">
+                                                            <label>POR - Period of Record - See Default Time Window</label>
+                                                        </div>
+                                                        
+                                                        <div>
+                                                            <input type="checkbox" name="user" id="user-specific-checkbox">
+                                                            <label>User Specified Time Window - Enter Time Window in <strong>"Select Time Window"</strong> table</label>
+                                                        </div>
+                                                        
+                                                        <div>
+                                                            <input type="checkbox" name="noStats" id="no-statistic-checkbox">
+                                                            <label>No Statistics</label>
+                                                        </div>
+                                                        
+                                                    </div>
+
+                                                    <div id="sub-separator-1" class="sub-separator hidden"></div>
+
+                                                    <div class="select-data-plot hidden">
+
+                                                        <h3>Select Data to Plot</h3>
+
+                                                        <div>
+                                                            <label>Plot Year 1:</label>
+                                                            <select name="year1" id="year-1-select"></select>
+                                                        </div>
+
+                                                        <div>
+                                                            <label>Plot Year 2:</label>
+                                                            <select name="year2" id="year-2-select"></select>
+                                                        </div>
+
+                                                        <div>
+                                                            <label>Plot Year 3:</label>
+                                                            <select name="year3" id="year-3-select"></select>
+                                                        </div>
+
+                                                        <div class="space-between"></div>
+
+                                                        <div>
+                                                            <input type="checkbox" name="floodStage" id="flood-stage-checkbox">
+                                                            <label id="flood-stage-text">Plot Flood Stage</label>
+                                                        </div>
+
+                                                        <div>
+                                                            <input type="checkbox" name="LWRP" id="LWRP-checkbox">
+                                                            <label id="lwrp-text">Plot LWRP</label>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div id="sub-separator-2" class="sub-separator hidden"></div>
+
+                                                    <div class="statistic-plot-control hidden">
+
+                                                        <h3>Statistic Plot Control</h3>
+
+                                                        <div>
+                                                            <input type="checkbox" name="ave" id="average-checkbox" checked>
+                                                            <label>Plot Stat AVG</label>
+                                                        </div>
+
+                                                        <div>
+                                                            <input type="checkbox" name="max" id="maximum-checkbox" checked>
+                                                            <label>Plot Stat MAX</label>
+                                                        </div>
+
+                                                        <div>
+                                                            <input type="checkbox" name="min" id="minimum-checkbox" checked>
+                                                            <label>Plot Stat MIN</label>
+                                                        </div>
+
+                                                    </div>
+
                                                 </div>
-                                                <div class="buttons">
-                                                    <button class="html" id="button-html">Compute HTML</button>
-                                                    <button class="csv" id="button-csv">Compute Excel</button>
+
+                                                <div id="buttons-div">
+
+                                                    <button id="instruction-btn">Instructions</button>
+
+                                                    <button id="plot-btn">Plot CSH</button>
+
                                                 </div>
+
                                             </div>
 
                                             <div id="loading-image">
@@ -153,7 +234,7 @@
                                                 </div>
                                             </div>
 
-                                            
+                                            <div id="plot" class="hidden"></div>
                                             
                                             <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script>
                                             <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
@@ -205,6 +286,7 @@
             <!--Footer content populated here by script tag at end of body -->
         </footer>
         <script src="../../js/libraries/jQuery-3.3.6.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script defer>
             // When the document has loaded pull in the page header and footer skins
             $(document).ready(function () {

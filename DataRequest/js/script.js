@@ -1341,6 +1341,11 @@ function initialize(data) {
     // Change the gage values each time the basin value is changed
     basinName.addEventListener('change', function() {
 
+        isProjectText.textContent = "";
+
+        errorMessageDiv.classList.remove('show');
+        errorMessageText.textContent = "Oops, something went wrong! Please try refreshing the page and attempting again. If the problem persists, feel free to contact Water Control for assistance. We apologize for the inconvenience!";
+
         haveGageData = false;
         haveBasinData = false;
         
@@ -1385,6 +1390,11 @@ function initialize(data) {
         if (gageName.value === "All Gages"){
             getDataBtn.disabled = true;
             getBasinDataBtn.disabled = false;
+
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
+
+            isProjectText.textContent = "";
         } else {
             getDataBtn.disabled = false;
             getBasinDataBtn.disabled = true;
@@ -1394,6 +1404,9 @@ function initialize(data) {
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
+
+        errorMessageDiv.classList.remove('show');
+        errorMessageText.textContent = "Oops, something went wrong! Please try refreshing the page and attempting again. If the problem persists, feel free to contact Water Control for assistance. We apologize for the inconvenience!";
 
         haveGageData = false;
 
@@ -1421,6 +1434,12 @@ function initialize(data) {
         if (gageName.value === "All Gages"){
             getDataBtn.disabled = true;
             getBasinDataBtn.disabled = false;
+
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
+
+            isProjectText.textContent = "";
+
         } else {
             getDataBtn.disabled = false;
             getBasinDataBtn.disabled = true;
@@ -1431,6 +1450,11 @@ function initialize(data) {
     isNGVD29(gageName.value);
 
     updateAvailablePORTable(data);
+
+    isProjectText.textContent = "";
+
+    PORBeginDate.textContent = "MM/DD/YYYY";
+    POREndDate.textContent = "MM/DD/YYYY";
 
     previousGage = gageName.value;
 
@@ -1449,6 +1473,9 @@ function initialize(data) {
     console.log("Data: ", data);
 
     getDataBtn.addEventListener('click', function() {
+
+        errorMessageDiv.classList.remove('show');
+        errorMessageText.textContent = "Oops, something went wrong! Please try refreshing the page and attempting again. If the problem persists, feel free to contact Water Control for assistance. We apologize for the inconvenience!";
 
         instructionsDiv.classList.remove('show');
 
@@ -1491,27 +1518,60 @@ function initialize(data) {
         });
 
         if (hourlyCheckbox.checked) {
+
             urlName = stageName;
+
+            let offsetYear = 2;
+            let endDateInput = new Date(endDate.value.split('-')[0], endDate.value.split('-')[1] - 1, endDate.value.split('-')[2]);
+
+            let newYear = parseInt(beginDate.value.split('-')[0]);
+            let compareDate = new Date(`${newYear + offsetYear}`, beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
+            console.log("Compare Date: ", compareDate);
+
+            if (compareDate < endDateInput){
+                errorMessageDiv.classList.add('show');
+                errorMessageText.textContent = `For hourly data, the time window cannot be greater than ${offsetYear} years`;
+
+                loadingDiv.classList.remove('show');
+
+                disableButtons();
+                getDataBtn.disabled = false;
+                if (haveBasinData){
+                    disableBasinFilesBtns();
+                }
+
+                throw new Error("Data time window is greater than" + offsetYear);
+            }
+
         } else {
             urlName = datmanName;
         };
 
         // Handle Daylight Saving
         let newBeginDate = new Date(beginDate.value.split('-')[0], beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
+        let currentEndDate = new Date(endDate.value.split('-')[0], endDate.value.split('-')[1] - 1, endDate.value.split('-')[2]);
         let julyDate = new Date(beginDate.value.split('-')[0], 6, 1);
         let offsetBegin = newBeginDate.getTimezoneOffset();
         let offsetJuly = julyDate.getTimezoneOffset();
 
         let beginHours = "T05%3A00%3A00.00Z&end=";
-        let endHours = "T23%3A59%3A59.59Z";
+
+        let nextDay = new Date(currentEndDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        let endHours = "T04%3A30%3A00.00Z";
+        let newEndDateDay = nextDay.getDate() > 9 ? `${nextDay.getDate()}` : `0${nextDay.getDate()}`;
+        let newEndDateMonth = (nextDay.getMonth() + 1) > 9 ? `${nextDay.getMonth() + 1}` : `0${nextDay.getMonth() + 1}`;
+        let newEndDate = `${nextDay.getFullYear()}-${newEndDateMonth}-${newEndDateDay}`;
 
         if (offsetBegin != offsetJuly){
             beginHours = "T06%3A00%3A00.00Z&end=";
+            endHours = "T05%3A30%3A00.00Z";
         }
 
         // Get data for the period of record
         let dataAmount = 1000000;
-        pageURL = domain + "/timeseries?" + "name=" + urlName + "&office=MVS&begin=" + beginDate.value + beginHours + endDate.value + endHours + "&page-size=" + dataAmount;
+        pageURL = domain + "/timeseries?" + "name=" + urlName + "&office=MVS&begin=" + beginDate.value + beginHours + newEndDate + endHours + "&page-size=" + dataAmount;
         console.log("TimeSerieURL: ", pageURL);
 
         fetchJsonFile(pageURL, function(fetchedData){
@@ -1580,6 +1640,8 @@ function initialize(data) {
 
                 const levelIdNgvd29 = `${gageName.value}.Height.Inst.0.NGVD29`;
                 const ngvd29ApiUrl = `${setBaseUrl}levels/${levelIdNgvd29}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
+
+                console.log("NGVD29 URL: ", ngvd29ApiUrl);
                 
                 fetch(ngvd29ApiUrl)
                     .then(response => {
@@ -1590,7 +1652,7 @@ function initialize(data) {
                     })
                     .then(data => {
                         // Set map to null if the data is null or undefined
-                        // console.log("Data: ", data);
+                        console.log("Project Data: ", data);
                         metadataDatum88.innerHTML = `${(gageMetadata.elevation - data['constant-value']).toFixed(2)} ft NAVD88, add datum to stage to obtain elevation.`;
                     })
                     .catch(error => {
@@ -1670,11 +1732,21 @@ function initialize(data) {
 
             disableButtons();
             disableFilesBtns();
+
+            getDataBtn.disabled = false;
             
             haveGageData = true;
 
             if (haveBasinData){
                 disableBasinFilesBtns();
+            }
+
+            if (haveGageData && getDataBtn.disabled){
+                getDataBtn.disabled = false;
+            }
+
+            if (haveGageData && getExcelBtn.disabled){
+                disableFilesBtns();
             }
         
             loadingDiv.classList.remove('show');
@@ -1912,6 +1984,13 @@ function updateAvailablePORTable(input_data) {
     
                         beginDate.value = `${newInputBeginYear}-${newInputBeginMonth}-${newInputBeginDay}`; // YYYY-MMM-DD
                         endDate.value = `${newInputEndYear}-${newInputEndMonth}-${newInputEndDay}`; // YYYY-MMM-DD
+
+                        if (hourlyCheckbox.checked){
+
+                            beginDate.value = `${parseInt(newInputEndYear) - 1}-${newInputEndMonth}-${newInputEndDay}`; // YYYY-MMM-DD
+
+                        }
+
                     }
                 });
             };
@@ -2158,6 +2237,12 @@ async function exportTableToExcelV2() {
         }
     });
 
+    worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber > infoRows.length){
+            row.getCell(2).numFmt = "0.00";
+        }
+    });
+
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `${filename}.xlsx`);
 }
@@ -2218,6 +2303,9 @@ function exportTableToJSON() {
 }
 
 async function getAllBasinGages(){
+
+    errorMessageDiv.classList.remove('show');
+    errorMessageText.textContent = "Oops, something went wrong! Please try refreshing the page and attempting again. If the problem persists, feel free to contact Water Control for assistance. We apologize for the inconvenience!";
 
     importantMessageDiv.classList.remove('show');
 
@@ -2294,6 +2382,8 @@ async function getAllBasinGages(){
         beginHours = "T06%3A00%3A00.00Z";
     }
 
+    let haveError = false;
+
     gagesList.forEach(gage => {
 
         const levelIdEffectiveDate = "2024-01-01T08:00:00"; 
@@ -2328,6 +2418,23 @@ async function getAllBasinGages(){
 
                 if (hourlyCheckbox.checked) {
                     urlName = gage.stage;
+
+                    let offsetYear = 2;
+                    let endDateInput = new Date(endDate.value.split('-')[0], endDate.value.split('-')[1] - 1, endDate.value.split('-')[2]);
+
+                    let newYear = parseInt(beginDate.value.split('-')[0]);
+                    let compareDate = new Date(`${newYear + offsetYear}`, beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
+
+                    if (compareDate < endDateInput){
+                        errorMessageDiv.classList.add('show');
+                        errorMessageText.textContent = `For hourly data, the time window cannot be greater than ${offsetYear} years`;
+
+                        loadingDiv.classList.remove('show');
+
+                        haveError = true;
+                        throw new Error("Data time window is greater than " + offsetYear + " years.");
+                    }
+
                 } else {
                     urlName = gage.datman;
                 };
@@ -2364,9 +2471,13 @@ async function getAllBasinGages(){
 
                 
             })
-            .catch(error => console.error(`Error fetching ngvd29 level for ${gage.name}:`, error));
+            .catch(error => {
+                console.error(`Error fetching ngvd29 level for ${gage.name}:`, error)
+                throw error;
+            });
 
     });
+
 
     console.log("Getting all gages data, please wait...");
     
@@ -2374,31 +2485,40 @@ async function getAllBasinGages(){
 
     await sleep(waitTime);
 
-    console.log("Gage List: ", gagesList);
+    if (!haveError) {
 
-    if (haveGageData){
-        disableFilesBtns();
-    };
+        console.log("Gage List: ", gagesList);
 
-    disableButtons();
+        if (haveGageData){
+            disableFilesBtns();
+        };
 
-    disableBasinFilesBtns();
+        disableButtons();
 
-    loadingDiv.classList.remove('show');
+        disableBasinFilesBtns();
 
-    haveBasinData = true;
+        loadingDiv.classList.remove('show');
 
-    globalGageList = gagesList;
+        haveBasinData = true;
 
-    basinExcelBtn.removeEventListener('click', createExcelSheet);
-    basinExcelBtn.addEventListener('click', createExcelSheet);
+        globalGageList = gagesList;
 
-    basinJSONBtn.removeEventListener('click', createJSONFile);
-    basinJSONBtn.addEventListener('click', createJSONFile);
+        basinExcelBtn.removeEventListener('click', createExcelSheet);
+        basinExcelBtn.addEventListener('click', createExcelSheet);
 
-    importantMessageDiv.classList.add('show');
-    importantMessageText.textContent = "Basin data has been successfully retrieved! Please click the 'Get Basin Excel' button to download the Excel file containing data for all gages in the selected basin.";
+        basinJSONBtn.removeEventListener('click', createJSONFile);
+        basinJSONBtn.addEventListener('click', createJSONFile);
 
+        importantMessageDiv.classList.add('show');
+        importantMessageText.textContent = "Basin data has been successfully retrieved! Please click the 'Get Basin Excel' button to download the Excel file containing data for all gages in the selected basin.";
+
+    } else {
+        disableButtons();
+        if (haveGageData){
+            disableFilesBtns();
+        };
+    }
+    
 }
 
 async function sleep(ms){
@@ -2601,6 +2721,12 @@ async function createExcelSheet(){
         worksheet.eachRow((row, rowNumber) => {
             if (rowNumber > infoRows.length - 1){
                 row.alignment = {horizontal: "center"}
+            }
+        });
+
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber > infoRows.length){
+                row.getCell(2).numFmt = "0.00";
             }
         });
     
