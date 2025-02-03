@@ -13,6 +13,20 @@ import {
     formatDate
 } from './functions.js';
 
+
+// Web site app information
+const appMetadata = {
+    name: "Data Request",
+    description: "An interactive platform for accessing real-time and historical data on river gages and basins.",
+    author: "U.S. Army Corps of Engineers, St. Louis District",
+    version: "1.0",
+    contact: {
+        email: "dll-cemvs-water-managers@usace.army.mil",
+        website: "https://www.mvs-wc.usace.army.mil/"
+    }
+}
+
+
 // Manually set up Maintenance
 let isMaintenance = false;
 
@@ -24,8 +38,6 @@ if (isDeveloper === "true"){
 }
 
 let domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
-let generalInfoURL = domain + "/catalog/TIMESERIES?office=MVS&like=";
-let gageJsonUrl = "../../../../php_data_api/public/json/gage_control.json";
 //let  = domain + "/timeseries?" + name=Mt%20Vernon-Big%20Muddy.Stage.Inst.15Minutes.0.lrgsShef-rev&office=MVS&begin=2024-01-01T00%3A00%3A00.00Z&end=2024-12-31T23%3A59%3A59.59Z&timezone=CST6CDT
 
 // Change Value to Stage29[ft] --> Need to find out if the gage is a project **IMPORTANT**
