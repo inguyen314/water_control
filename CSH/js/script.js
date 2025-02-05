@@ -17,12 +17,28 @@ import {
 } from './functions.js'
 
 
+// Web site app information
+const appMetadata = {
+    name: "CSH - Comparative Stage Hydrograph",
+    description: "An interactive platform for creating a plot with historical data on river gages.",
+    author: "U.S. Army Corps of Engineers, St. Louis District",
+    version: "1.0",
+    contact: {
+        email: "dll-cemvs-water-managers@usace.army.mil",
+        website: "https://www.mvs-wc.usace.army.mil/"
+    }
+}
+
+
 // Const Elements
 const basinName = document.getElementById('basinCombobox'),
       gageName = document.getElementById('gageCombobox'),
       beginDate = document.getElementById('begin-input'),
       endDate = document.getElementById('end-input'),
+      PORBeginDate = document.querySelector('#info-table .por-start'),
+      POREndDate = document.querySelector('#info-table .por-end'),
       plotCSHBtn = document.getElementById('plot-btn'),
+      instructionsBtn = document.getElementById('instruction-btn'),
       porCheckbox = document.getElementById('por-checkbox'),
       userSpecificCheckbox = document.getElementById('user-specific-checkbox'),
       noStatsCheckbox = document.getElementById('no-statistic-checkbox'),
@@ -32,18 +48,33 @@ const basinName = document.getElementById('basinCombobox'),
       year1SelectBox = document.getElementById('year-1-select'),
       year2SelectBox = document.getElementById('year-2-select'),
       year3SelectBox = document.getElementById('year-3-select'),
+      year4SelectBox = document.getElementById('year-4-select'),
+      year5SelectBox = document.getElementById('year-5-select'),
+      year6SelectBox = document.getElementById('year-6-select'),
+      year1ColorBox = document.getElementById('year-1-color'),
+      year2ColorBox = document.getElementById('year-2-color'),
+      year3ColorBox = document.getElementById('year-3-color'),
+      year4ColorBox = document.getElementById('year-4-color'),
+      year5ColorBox = document.getElementById('year-5-color'),
+      year6ColorBox = document.getElementById('year-6-color'),
+      averageColorBox = document.getElementById('average-color'),
+      meanColorBox = document.getElementById('mean-color'),
+      minMaxColorBox = document.getElementById('min-max-color'),
       floodStageCheckbox = document.getElementById('flood-stage-checkbox'),
+      floodStageColorBox = document.getElementById('flood-stage-color'),
       lwrpCheckbox = document.getElementById('LWRP-checkbox'),
+      lwrpColorBox = document.getElementById('lwrp-color'),
       settingsDiv = document.getElementById('settings-div'),
       separatorDiv = document.getElementById('separator-div'),
       statisticDiv = document.querySelector('#settings-div .statistic-plot-control'),
+      statisticAverageCheckbox = document.getElementById('mean-checkbox'),
       statisticMeanCheckbox = document.getElementById('average-checkbox'),
-      statisticMaxCheckbox = document.getElementById('maximum-checkbox'),
-      statisticMinCheckbox = document.getElementById('minimum-checkbox'),
+      statisticMaxMinCheckbox = document.getElementById('max-min-checkbox'),
       yearPlotDiv = document.querySelector('#settings-div .select-data-plot'),
       subSeparator1 = document.getElementById('sub-separator-1'),
       subSeparator2 = document.getElementById('sub-separator-2'),
       plotDiv = document.getElementById('plot'),
+      instructionsDiv = document.getElementById('instructions-div'),
       floodStageText = document.getElementById('flood-stage-text'),
       lwrpStageText = document.getElementById('lwrp-text');
 
@@ -54,6 +85,9 @@ const cda = params.get("cda") ? params.get("cda") : "internal";
 const conlog = params.get("conlog") ? params.get("conlog") : "false";
 
 const consoleLog = conlog === "true" ? true : false;
+
+// Global Variable
+let globalDatman = null;
 
 
 // Add function to popup window button
@@ -90,6 +124,10 @@ function initialize(data) {
                 gageName.appendChild(option);
             });
         }
+    });
+
+    instructionsBtn.addEventListener('click', function(){
+        instructionsDiv.classList.toggle('hidden');
     });
 
     // Change the gage values each time the basin value is changed
@@ -129,11 +167,28 @@ function initialize(data) {
             plotDiv.classList.add('hidden');
         };
 
+        if(haveClass(floodStageColorBox, 'hidden')){
+            floodStageColorBox.classList.remove('hidden');
+        };
+
+        if(haveClass(lwrpColorBox, 'hidden')){
+            lwrpColorBox.classList.remove('hidden');
+        };
+
         floodStageCheckbox.checked = false;
         lwrpCheckbox.checked = false;
 
         floodStageText.innerHTML = "Plot Flood Stage";
         lwrpStageText.innerHTML = "Plot LWRP";
+
+        year1SelectBox.selectedIndex = 0;
+        year2SelectBox.selectedIndex = 0;
+        year3SelectBox.selectedIndex = 0;        
+        year4SelectBox.selectedIndex = 0;
+        year5SelectBox.selectedIndex = 0;
+        year6SelectBox.selectedIndex = 0;
+
+        statisticMeanCheckbox.checked = false;
 
     });
 
@@ -162,11 +217,28 @@ function initialize(data) {
             plotDiv.classList.add('hidden');
         };
 
+        if(haveClass(floodStageColorBox, 'hidden')){
+            floodStageColorBox.classList.remove('hidden');
+        };
+
+        if(haveClass(lwrpColorBox, 'hidden')){
+            lwrpColorBox.classList.remove('hidden');
+        };
+
         floodStageCheckbox.checked = false;
         lwrpCheckbox.checked = false;
 
         floodStageText.innerHTML = "Plot Flood Stage";
         lwrpStageText.innerHTML = "Plot LWRP";
+
+        year1SelectBox.selectedIndex = 0;
+        year2SelectBox.selectedIndex = 0;
+        year3SelectBox.selectedIndex = 0;        
+        year4SelectBox.selectedIndex = 0;
+        year5SelectBox.selectedIndex = 0;
+        year6SelectBox.selectedIndex = 0;
+
+        statisticMeanCheckbox.checked = false;
 
     });
 
@@ -231,6 +303,7 @@ function initialize(data) {
                     });
                 };
             });
+            globalDatman = datmanName;
 
             // Initialize variables
             let beginValue = formatString("start date", beginDate.value);
@@ -282,19 +355,6 @@ function initialize(data) {
 
 // Main function
 async function main(data) {
-
-    // Fetch data for general information
-    //let formattedName = gageName.value.split('.')[0].split(' ').join('%20');    
-
-    /* Update some other data */
-    // Selected POR Statistic
-    let porStartDate = beginDate.value; // 'yyyy/mm/dd'
-    let porEndDate = endDate.value; // 'yyyy/mm/dd'
-
-    let monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-    let porNewStartDate = `${monthsNames[parseInt(porStartDate.split('-')[1]) - 1]} ${porStartDate.split('-')[0]}`;
-    let porNewEndDate = `${monthsNames[parseInt(porEndDate.split('-')[1]) - 1]} ${porEndDate.split('-')[0]}`;
     
     let objData = data["values"];
     
@@ -310,13 +370,42 @@ async function main(data) {
     let minData = totalData[1];
     let maxData = totalData[2];
 
+    // Time Window interval
+    let timeWindow = `${PORBeginDate.textContent.split('/')[2]} - ${POREndDate.textContent.split('/')[2]}`;
+
+    // Get the actual time window
+    if (userSpecificCheckbox.checked){
+        timeWindow = `${beginDate.value.split('-')[0]} - ${endDate.value.split('-')[0]}`;
+    }
+
     // Get all the years input
     let year1Input = year1SelectBox.value === "NONE" ? null : parseInt(year1SelectBox.value);
     let year2Input = year2SelectBox.value === "NONE" ? null : parseInt(year2SelectBox.value);
     let year3Input = year3SelectBox.value === "NONE" ? null : parseInt(year3SelectBox.value);
-    let yearsInputList = [year1Input, year2Input, year3Input];
+    let year4Input = year4SelectBox.value === "NONE" ? null : parseInt(year4SelectBox.value);
+    let year5Input = year5SelectBox.value === "NONE" ? null : parseInt(year5SelectBox.value);
+    let year6Input = year6SelectBox.value === "NONE" ? null : parseInt(year6SelectBox.value);
 
-    let actualYearInput = yearsInputList.filter(x => x);
+    let year1Color = year1ColorBox.value;
+    let year2Color = year2ColorBox.value;
+    let year3Color = year3ColorBox.value;
+    let year4Color = year4ColorBox.value;
+    let year5Color = year5ColorBox.value;
+    let year6Color = year6ColorBox.value;
+
+    let minMaxColor = minMaxColorBox.value;
+    let averageColor = averageColorBox.value;
+    let meanColor = meanColorBox.value;
+
+    let floodStageColor = floodStageColorBox.value;
+    let lwrpColor = lwrpColorBox.value;
+
+    let yearsInputList = [
+        {year: year1Input, color: year1Color}, {year: year2Input, color: year2Color}, {year: year3Input, color: year3Color},
+        {year: year4Input, color: year4Color}, {year: year5Input, color: year5Color}, {year: year6Input, color: year6Color}
+    ];
+
+    let actualYearInput = yearsInputList.filter(x => x.year !== null);
 
     // Generate dates for 2024 which is a leap year
     let leapYear = 2024;
@@ -330,49 +419,40 @@ async function main(data) {
     // Generate the statistic series for plotting
     //let meanPlotSerie = createMeanSerie(meanData, xAxisValues, "Mean Test", "lines"); // Mean Serie
 
-    if (!noStatsCheckbox.checked){
+    if (!noStatsCheckbox.checked && statisticMaxMinCheckbox.checked){
 
-        if (statisticMaxCheckbox.checked && statisticMinCheckbox.checked){
+        let maxPlotSerie = createMinMaxSerie(maxData, xAxisValues, `Maximum (${timeWindow})`, "lines", false, minMaxColor, false); // Maximum Serie
+        let minPlotSerie = createMinMaxSerie(minData, xAxisValues, `Minimum (${timeWindow})`, "lines", true, minMaxColor, false); // Minimum Serie
+        let dummyMinMax = dummySerie(`Maximum & Minimum (${timeWindow})`, 'group1', minMaxColor, true);
 
-            let maxPlotSerie = createMinMaxSerie(maxData, xAxisValues, "Maximum Test", "lines", false); // Maximum Serie
-            let minPlotSerie = createMinMaxSerie(minData, xAxisValues, "Minimum Test", "lines", true); // Minimum Serie
-
-            plotData = [maxPlotSerie, minPlotSerie];
-
-        } else if (statisticMaxCheckbox.checked){
-
-            let maxPlotSerie = createMinMaxSerie(maxData, xAxisValues, "Maximum Test", "lines", false); // Maximum Serie
-
-            plotData = [maxPlotSerie];
-
-        } else if (statisticMinCheckbox.checked){
-
-            let minPlotSerie = createMinMaxSerie(minData, xAxisValues, "Minimum Test", "lines", false); // Minimum Serie
-
-            plotData = [minPlotSerie];
-
-        }
+        plotData = [maxPlotSerie, minPlotSerie, dummyMinMax[0], dummyMinMax[1]];
 
     };
 
-    let monthMaxPlotSerie = createMonthMinMaxSerie(monthMinAndMax, xAxisValues, "Month Max", "lines", "max", false); // Month Maximum Serie
-    let monthMinPlotSerie = createMonthMinMaxSerie(monthMinAndMax, xAxisValues, "Month Min", "lines", "min", true); // Month Minimum Serie
+    if (!noStatsCheckbox.checked && statisticMeanCheckbox.checked){
 
-    plotData.push(monthMaxPlotSerie);
-    plotData.push(monthMinPlotSerie);
+        let monthMaxPlotSerie = createMonthMinMaxSerie(monthMinAndMax, xAxisValues, `Monthly Max (${timeWindow})`, "lines", "max", false, averageColor, false); // Month Maximum Serie
+        let monthMinPlotSerie = createMonthMinMaxSerie(monthMinAndMax, xAxisValues, `Monthly Min (${timeWindow})`, "lines", "min", true, averageColor, false); // Month Minimum Serie
+        let dummyMonthlyMinMax = dummySerie(`Monthly Max & Min (${timeWindow})`, 'group2', averageColor, true);
 
-    // if (actualYearInput.length === 1 && !noStatsCheckbox.checked){
-    //     plotData.push(monthMaxPlotSerie);
-    //     plotData.push(monthMinPlotSerie);
-    // }
+        plotData.push(monthMaxPlotSerie);
+        plotData.push(monthMinPlotSerie);
+        plotData.push(dummyMonthlyMinMax[0]);
+        plotData.push(dummyMonthlyMinMax[1]);
 
-    // if (actualYearInput.length > 1 && !noStatsCheckbox.checked && statisticMeanCheckbox.checked){
-    //     plotData.push(meanPlotSerie);
-    // }
+    };
+
+    if (!noStatsCheckbox.checked && statisticAverageCheckbox.checked){
+
+        let meanPlotSerie = createMeanSerie(meanData, xAxisValues, `Mean (${timeWindow})`, 'lines', meanColor);
+
+        plotData.push(meanPlotSerie);
+
+    };
 
     // Generate years plot for each year
     actualYearInput.forEach(year => {
-        plotData.push(createYearSerie(wholePeriodList, xAxisValues, year, `Year ${year}`, 'lines'));
+        plotData.push(createYearSerie(wholePeriodList, xAxisValues, year.year, `Year ${year.year}`, 'lines', year.color));
     });
 
     consoleLog ? console.log("Plot Data: ", plotData) : null;
@@ -397,18 +477,17 @@ async function main(data) {
     const levelIdNgvd29 = `${gageName.value}.Height.Inst.0.NGVD29`;
     const NGVD29ApiUrl = `${setBaseUrl}levels/${levelIdNgvd29}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
 
-    console.log("Flood URL: ", FloodApiUrl);
-    console.log("LWRP URL: ", WLRPApiUrl);
-    console.log("NGVD29 URL: ", NGVD29ApiUrl);
-
     let floodStageNum = await awaitFetchData(FloodApiUrl);
     let lwrpStageNum = await awaitFetchData(WLRPApiUrl);
     let ngvd29StageNum = await awaitFetchData(NGVD29ApiUrl);
 
-    console.log("Flood, LWRP, NGVD29: ", [floodStageNum, lwrpStageNum, ngvd29StageNum]);
-
     if (floodStageNum === 909 || floodStageNum === null){
+
         floodStageText.innerHTML = "Plot Flood Stage  -->  <strong>No Flood Stage Data</strong>";
+        if(!haveClass(floodStageColorBox, 'hidden')){
+            floodStageColorBox.classList.add('hidden');
+        }
+
     } else if (ngvd29StageNum !== 909 || ngvd29StageNum !== null) {
 
         floodStageText.innerHTML = "Plot Flood Stage";
@@ -416,10 +495,16 @@ async function main(data) {
         if (isProjectLabel.textContent === "Datum: NGVD29"){
             floodStageNum += ngvd29StageNum;
         }
+
     }
 
     if (lwrpStageNum === 909 || lwrpStageNum === null){
+
         lwrpStageText.innerHTML = "Plot LWRP  -->  <strong>No LWRP Data</strong>";
+        if(!haveClass(lwrpColorBox, 'hidden')){
+            lwrpColorBox.classList.add('hidden');
+        }
+
     } else if (ngvd29StageNum !== 909 || ngvd29StageNum !== null) {
 
         lwrpStageText.innerHTML = "Plot LWRP";
@@ -427,19 +512,16 @@ async function main(data) {
         if (isProjectLabel.textContent === "Datum: NGVD29"){
             lwrpStageNum += ngvd29StageNum;
         }
+
     }
-
-    console.log("New Flood, New LWRP, New NGVD29: ", [floodStageNum, lwrpStageNum, ngvd29StageNum]);
-
-    console.log("Is Flood Checked? -> ", floodStageCheckbox.checked);
 
     // ADD the LWRP and FLOOD STAGE to the plot
     if (floodStageCheckbox.checked && floodStageNum !== null && floodStageNum !== 909){
-        plotData.push(createSingleNumberSerie(floodStageNum, xAxisValues, "Flood Stage", "lines"));
+        plotData.push(createSingleNumberSerie(floodStageNum, xAxisValues, "Flood Stage", "lines", floodStageColor));
     }
 
     if (lwrpCheckbox.checked && lwrpStageNum !== null && lwrpStageNum !== 909){
-        plotData.push(createSingleNumberSerie(lwrpStageNum, xAxisValues, "LWRP", "lines"));
+        plotData.push(createSingleNumberSerie(lwrpStageNum, xAxisValues, "LWRP", "lines", lwrpColor));
     }
 
     let offset = 5;
@@ -692,13 +774,26 @@ async function awaitFetchData(url){
 
 // Create plot Function
 function createPlot(data, title, minValue, maxValue) {
+
+    let subTitle = globalDatman;
+    let subTitleSize = '16px';
+
     let layout = {
-        title: title,
-        width: 1080,
+        title: { 
+            text: `${title}<br><span style="font-size:${subTitleSize}">${subTitle}</span>`, 
+            font: {size: 20} 
+        },
+        width: 1200,
         height: 720,
         xaxis: {
-            title: 'Date',
+            mirror: 'ticks',
+            showlines: true,
+            linewidth: 1,
+            linecolor: 'black',
+            title: { text: 'Date', font: {size: 18} },
             type: 'date',
+            tickfont: { size: 16 },
+            dtick: "M1",
             tickformatstops: [
                 {
                     dtickrange: [null, 86400000 * 31],
@@ -712,7 +807,12 @@ function createPlot(data, title, minValue, maxValue) {
             //tickformat: "%b"  // "%d %b"
         },
         yaxis: {
-            title: 'Stage',
+            mirror: 'ticks',
+            showlines: true,
+            linewidth: 1,
+            linecolor: 'black',
+            title: { text: 'Stage', font: {size: 18} },
+            tickfont: { size: 16 },
             range: [minValue, maxValue]
         },
         legend: {
@@ -720,19 +820,23 @@ function createPlot(data, title, minValue, maxValue) {
             x: 0.5,
             y:-0.2,
             xanchor: 'center',
-            yanchor: 'top'
+            yanchor: 'top',
+            font: { size: 16 }
         }
     };
 
     let config = {
-        responsive: true
+        responsive: true,
+        toImageButtonOptions: {
+            filename: `${title}-Plot`
+        }
     }
 
     Plotly.newPlot('plot', data, layout, config);
 }
 
 // Create serie for LWRP and Flood Stage
-function createSingleNumberSerie(num, dates, serieName, serieMode) {
+function createSingleNumberSerie(num, dates, serieName, serieMode, color) {
 
     let yAxisValues = [];
     let newDateList = [];
@@ -742,11 +846,19 @@ function createSingleNumberSerie(num, dates, serieName, serieMode) {
         yAxisValues.push(num);
     });
 
+    color = color.replace(/^#/, '');
+
+    let r = parseInt(color.substring(0, 2), 16);
+    let g = parseInt(color.substring(2, 4), 16);
+    let b = parseInt(color.substring(4, 6), 16);
+
+    let alpha = 1;
+
     let serie = {
         x: newDateList,
         y: yAxisValues,
         mode: serieMode,
-        line: { color: 'rgba(0,0,0,1)', width: 2 },
+        line: { color: `rgba(${r}, ${g}, ${b}, ${alpha})`, width: 2 },
         name: serieName
     };
 
@@ -771,46 +883,47 @@ function generateDateAxis(year) {
     return dates
 }
 
-// Create series for the Mean
-function createMeanSerie(values, dates, serieName, serieMode) {
-    
-    let yAxisList = [];
-    let newDateList = [];
+// Create Dummy Serie for Legend
+function dummySerie(serieName, group, color, show){
 
-    dates.forEach(date => {
-        let day = `${date.split('-')[0]}-${date.split('-')[1]}`;
+    color = color.replace(/^#/, '');
 
-        let formatDate = `${date.split('-')[2]}-${date.split('-')[0]}-${date.split('-')[1]}`;
+    let r = parseInt(color.substring(0, 2), 16);
+    let g = parseInt(color.substring(2, 4), 16);
+    let b = parseInt(color.substring(4, 6), 16);
 
-        newDateList.push(new Date(formatDate + "T06:00:00Z"));
+    let alpha_1 = 0.2;
+    let alpha_2 = 0.5;
 
-        values.forEach(value => {
-
-            if (value.date === day){
-
-                if (value.stage.length === 2){
-                    yAxisList.push(Math.round(value.stage[0] * 100) / 100);
-                } else {
-                    yAxisList.push(Math.round(value.stage * 100) / 100);
-                }
-            }
-
-        });
-    });
-
-    let serie = {
-        x: newDateList,
-        y: yAxisList,
-        mode: serieMode,
-        line: { color: 'rgba(255,240,0,1)', width: 2 },
-        name: serieName
+    let serie_1 = {
+        x: [null],
+        y: [null],
+        mode: 'lines',
+        line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
+        name: serieName,
+        legendgroup: group,
+        showlegend: false,
+        marker: { opacity: 0 }
     };
 
-    return serie
+    let serie_2 = {
+        x: [null],
+        y: [null],
+        mode: 'lines',
+        fill: 'tonexty',
+        fillcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`,
+        line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
+        name: serieName,
+        legendgroup: group,
+        showlegend: show,
+        marker: { opacity: 0 }
+    };
 
+    return [serie_1, serie_2]
 }
+
 // Create serie for the min and max
-function createMinMaxSerie(values, dates, serieName, serieMode, fill) {
+function createMinMaxSerie(values, dates, serieName, serieMode, fill, color, show) {
     
     let yAxisList = [];
     let newDateList = [];
@@ -838,6 +951,15 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill) {
 
     let serie = {};
 
+    color = color.replace(/^#/, '');
+
+    let r = parseInt(color.substring(0, 2), 16);
+    let g = parseInt(color.substring(2, 4), 16);
+    let b = parseInt(color.substring(4, 6), 16);
+
+    let alpha_1 = 0.2;
+    let alpha_2 = 0.5;
+
     if (fill){
 
         serie = {
@@ -845,9 +967,11 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill) {
             y: yAxisList,
             mode: serieMode,
             fill: 'tonexty',
-            fillcolor: 'rgba(0,0,255,0.2)',
-            line: {color: 'rgba(0,0,255,0.5)'},
-            name: serieName
+            fillcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`,
+            line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
+            name: serieName,
+            legendgroup: 'group1',
+            showlegend: show
         };
 
     } else {
@@ -856,8 +980,10 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill) {
             x: newDateList,
             y: yAxisList,
             mode: serieMode,
-            line: {color: 'rgba(0,0,255,0.5)'},
-            name: serieName
+            line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
+            name: serieName,
+            legendgroup: 'group1',
+            showlegend: show
         };
 
     }
@@ -867,7 +993,7 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill) {
 }
 
 // Create serie for years
-function createYearSerie(values, dates, year, serieName, serieMode) {
+function createYearSerie(values, dates, year, serieName, serieMode, color) {
 
     let yearValues = null;
     values.forEach(element => {
@@ -942,11 +1068,17 @@ function createYearSerie(values, dates, year, serieName, serieMode) {
         });
     });
 
+    let filterValues = yAxisList.filter(x => x !== 0);
+
+    if (year === parseInt(POREndDate.textContent.split('/')[2])){
+        yAxisList = filterValues;
+    };
+
     let serie = {
         x: newDateList,
         y: yAxisList,
         mode: serieMode,
-        line: { color: 'rgba(0,0,255,1)', width: 2 },
+        line: { color: color, width: 2 },
         name: serieName
     };
 
@@ -955,7 +1087,7 @@ function createYearSerie(values, dates, year, serieName, serieMode) {
 } 
 
 // Create serie for min and max for the month
-function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrMax, fill) {
+function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrMax, fill, color, show) {
     
     let yAxisList = [];
     let newDateList = [];
@@ -965,13 +1097,12 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
 
             let formatDate = `${date.split('-')[2]}-${date.split('-')[0]}-${date.split('-')[1]}`;
 
-            newDateList.push(new Date(formatDate + "T06:00:00Z"));
-
             let month = parseInt(`${date.split('-')[0]}`);
     
             monthValues.forEach(element => {
-                if (element.month === month){
+                if (element.month === month && element.max !== NaN && element.min !== NaN){
                     yAxisList.push(element.max);
+                    newDateList.push(new Date(formatDate + "T06:00:00Z"));
                 }
             });
             
@@ -981,13 +1112,12 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
 
             let formatDate = `${date.split('-')[2]}-${date.split('-')[0]}-${date.split('-')[1]}`;
 
-            newDateList.push(new Date(formatDate + "T06:00:00Z"));
-
             let month = parseInt(`${date.split('-')[0]}`);
     
             monthValues.forEach(element => {
-                if (element.month === month){
+                if (element.month === month && element.min !== NaN && element.max !== NaN){
                     yAxisList.push(element.min);
+                    newDateList.push(new Date(formatDate + "T06:00:00Z"));
                 }
             });
             
@@ -996,6 +1126,15 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
 
     let serie = {};
 
+    color = color.replace(/^#/, '');
+
+    let r = parseInt(color.substring(0, 2), 16);
+    let g = parseInt(color.substring(2, 4), 16);
+    let b = parseInt(color.substring(4, 6), 16);
+
+    let alpha_1 = 0.5;
+    let alpha_2 = 0.5;
+
     if (fill){
 
         serie = {
@@ -1003,9 +1142,11 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
             y: yAxisList,
             mode: serieMode,
             fill: 'tonexty',
-            fillcolor: 'rgba(255,240,0,0.4)',
-            line: {color: 'rgba(255,240,0,0.5)'},
-            name: serieName
+            fillcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`,
+            line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
+            name: serieName,
+            legendgroup: 'group2',
+            showlegend: show
         };
 
     } else {
@@ -1014,8 +1155,10 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
             x: newDateList,
             y: yAxisList,
             mode: serieMode,
-            line: {color: 'rgba(255,240,0,0.5)'},
-            name: serieName
+            line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
+            name: serieName,
+            legendgroup: 'group2',
+            showlegend: show
         };
 
     }
@@ -1026,11 +1169,49 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
 
 }
 
+// Create Mean Serie
+function createMeanSerie(meanData, dates, serieName, serieMode, color) {
+
+    let yAxisList = [];
+    let newDateList = [];
+
+    dates.forEach(date => {
+        let day = `${date.split('-')[0]}-${date.split('-')[1]}`;
+
+        let formatDate = `2024-${date.split('-')[0]}-${date.split('-')[1]}`;
+
+        newDateList.push(new Date(formatDate + "T06:00:00Z"));
+
+        meanData.forEach(value => {
+
+            let tempDate = value.date;
+
+            if (tempDate === day){
+
+                yAxisList.push(Math.round(value.stage * 100) / 100);
+
+            }
+
+        });
+    });
+
+    let serie = {
+        x: newDateList,
+        y: yAxisList,
+        mode: serieMode,
+        line: { color: color, width: 2 }, // dash: 'dash' For Dash Lines
+        name: serieName
+    };
+
+    return serie
+
+}
+
 // Get Min and Max for the months
 function getMinMaxForMonths(data) {
     let monthsData = [];
 
-    console.log("Month Data FUnction: ", data);
+    console.log("Month Data Function: ", data);
 
     for (let i = 1; i < 13; i++){
         let monthMax = -999;
@@ -1047,6 +1228,14 @@ function getMinMaxForMonths(data) {
                 }
             }
         });
+
+        if (monthMax === -999){
+            monthMax = NaN;
+        }
+
+        if (monthMin === 999){
+            monthMin = NaN;
+        }
 
         monthsData.push({
             month: i,
@@ -1217,7 +1406,7 @@ function updateAvailablePORTable(data) {
 
 // Populate the years dropdown list
 function populateDropdownList() {
-    let dropdownElement = [year1SelectBox, year2SelectBox, year3SelectBox];
+    let dropdownElement = [year1SelectBox, year2SelectBox, year3SelectBox, year4SelectBox, year5SelectBox, year6SelectBox];
     let currentyear = new Date().getFullYear();
     let lasetYear = 1950;
 

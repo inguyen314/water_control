@@ -90,6 +90,7 @@ header h1{
     display: flex;
     padding: 10px 10px;
     flex-direction: column;
+    width: 250px;
 }
 
 #clear-file-picker-btn {

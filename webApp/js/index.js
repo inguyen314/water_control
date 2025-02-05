@@ -231,6 +231,11 @@ function processData(data) {
   event2_0[0] = event2_0List[2];
   event2_0[1] = event2_0List[3];
 
+  let endDateForEvents = event0_5[1][0][event0_5[1][0].length - 1];
+
+  let above0_5Event = getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, 0.5);
+  let above1_0Event = getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, 1.0);
+
   let tableHeader = ["Event", "Duration", "Start Date", "End Date"];
   let tableRows = [];
   
@@ -294,7 +299,7 @@ function processData(data) {
 
   createChart(yAxisTitle=chartYaxisLabel, title=newTitle, xAxisArray=dateList, yAxisArray=stageList,
     upperLimitSerie=upperList, lowerLimitSerie=lowerList, plot0_5=event0_5plot, plot1_0=event1_0plot, 
-    plot1_5=event1_5plot, plot2_0=event2_0plot
+    plot1_5=event1_5plot, plot2_0=event2_0plot, plotAbove0_5=above0_5Event, plotAbove1_0=above1_0Event
   );
 
   let userData = {
@@ -351,6 +356,35 @@ function processExcelData(data, outputFileName){
   console.log("globalExcelData: ", globalExcelData);
 }
 
+function getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, eventFeet){
+
+  let aboveValues = [];
+
+  let startCounting = false;
+  for (let i = 0; i < stageList.length; i++){
+    let tempStage = stageList[i];
+    let eventElevation = eventFeet + upperLimit;
+    let tempDate = dateList[i];
+
+    console.log("TempDate, endDateForEvents", [tempDate, endDateForEvents]);
+
+    if (tempDate === endDateForEvents){
+      startCounting = true;
+    };
+
+    if (startCounting && tempStage > eventElevation){
+      aboveValues.push({
+        stage: tempStage,
+        date: tempDate
+      });
+    };
+
+  };
+
+  return aboveValues
+
+}
+
 // Report Btn Clicked
 function getReport() {
   createTableTextFile(tableRowsData, tableHeaderData, textData, `${fileName}.txt`);
@@ -365,19 +399,10 @@ function getEvents(stageList, upperLimit, dateList, eventFt) {
   let eventDatesStr = []
   let otherEvents = [];
   let otherEventsDates = [];
-  let lastIndex = 0;
-  let eventsIndex = 0;
   let eventUpperLimit = upperLimit - eventFt;
 
   // Event Duration
-  let daycount = parseInt(eventDurationDays.value);   // Change if needed.
-  let obj = {
-    stageList: stageList,
-    upperLimit: upperLimit,
-    dateList: dateList,
-    eventFt: eventFt
-  }
-  //console.log("Data: ", obj)
+  let daycount = parseInt(eventDurationDays.value); 
 
   stageList.forEach((value, index) => {
 
@@ -435,7 +460,7 @@ function getList(list, elemIndex) {
   return newList
 }
 
-function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie, upperLimitSerie, plot0_5, plot1_0, plot1_5, plot2_0) {
+function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie, upperLimitSerie, plot0_5, plot1_0, plot1_5, plot2_0, plotAbove0_5, plotAbove1_0) {
 
   // Font Size
   let titleFontSize = titleSize.value + "px";
@@ -478,7 +503,7 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: '0.5 ft ' + '[' + plot0_5.length + "]",
+      name: '-0.5 ft ' + '[' + plot0_5.length + "]",
       data: plot0_5,
       color: "#277DA1",
       marker: {
@@ -486,7 +511,7 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: '1.0 ft ' + '[' + plot1_0.length + "]",
+      name: '-1.0 ft ' + '[' + plot1_0.length + "]",
       data: plot1_0,
       color: '#F94144',
       marker: {
@@ -494,7 +519,7 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: '1.5 ft ' + '[' + plot1_5.length + "]",
+      name: '-1.5 ft ' + '[' + plot1_5.length + "]",
       data: plot1_5,
       color: '#43AA8B',
       marker: {
@@ -502,12 +527,32 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: '2.0 ft ' + '[' + plot2_0.length + "]",
+      name: '-2.0 ft ' + '[' + plot2_0.length + "]",
       data: plot2_0,
       color: '#F9844A',
       marker: {
         enabled: false // Disable markers for this series
       }
+    },
+    {
+      name: '0.5 ft ' + '[' + plotAbove0_5.length + "]",
+      data: [null],
+      color: '#000000',
+      marker: {
+        enabled: false // Disable markers for this series
+      },
+      showInLegend: true,
+      legendSymbol: 'none'
+    },
+    {
+      name: '1.0 ft ' + '[' + plotAbove1_0.length + "]",
+      data: [null],
+      color: '#000000',
+      marker: {
+        enabled: false // Disable markers for this series
+      },
+      showInLegend: true,
+      legendSymbol: 'none'
     }
   ];
 

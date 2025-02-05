@@ -146,16 +146,37 @@
                                                         <div>
                                                             <label>Plot Year 1:</label>
                                                             <select name="year1" id="year-1-select"></select>
+                                                            <input type="color" name="year1-color" id="year-1-color" value="#FF006E">
                                                         </div>
 
                                                         <div>
                                                             <label>Plot Year 2:</label>
                                                             <select name="year2" id="year-2-select"></select>
+                                                            <input type="color" name="year2-color" id="year-2-color" value="#8338EC">
                                                         </div>
 
                                                         <div>
                                                             <label>Plot Year 3:</label>
                                                             <select name="year3" id="year-3-select"></select>
+                                                            <input type="color" name="year3-color" id="year-3-color" value="#3A86FF">
+                                                        </div>
+
+                                                        <div>
+                                                            <label>Plot Year 4:</label>
+                                                            <select name="year4" id="year-4-select"></select>
+                                                            <input type="color" name="year4-color" id="year-4-color" value="#5FAD56">
+                                                        </div>
+
+                                                        <div>
+                                                            <label>Plot Year 5:</label>
+                                                            <select name="year5" id="year-5-select"></select>
+                                                            <input type="color" name="year5-color" id="year-5-color" value="#F2C14E">
+                                                        </div>
+
+                                                        <div>
+                                                            <label>Plot Year 6:</label>
+                                                            <select name="year6" id="year-6-select"></select>
+                                                            <input type="color" name="year6-color" id="year-6-color" value="#B4436C">
                                                         </div>
 
                                                         <div class="space-between"></div>
@@ -163,11 +184,13 @@
                                                         <div>
                                                             <input type="checkbox" name="floodStage" id="flood-stage-checkbox">
                                                             <label id="flood-stage-text">Plot Flood Stage</label>
+                                                            <input type="color" name="flood-stage-color" id="flood-stage-color" value="#000000">
                                                         </div>
 
                                                         <div>
                                                             <input type="checkbox" name="LWRP" id="LWRP-checkbox">
                                                             <label id="lwrp-text">Plot LWRP</label>
+                                                            <input type="color" name="lwrp-color" id="lwrp-color" value="#000000">
                                                         </div>
 
                                                     </div>
@@ -179,18 +202,21 @@
                                                         <h3>Statistic Plot Control</h3>
 
                                                         <div>
-                                                            <input type="checkbox" name="ave" id="average-checkbox" checked>
+                                                            <input type="checkbox" name="mean" id="mean-checkbox" checked>
                                                             <label>Plot Stat AVG</label>
+                                                            <input type="color" name="mean-color" id="mean-color" value="#FB5607">
                                                         </div>
 
                                                         <div>
-                                                            <input type="checkbox" name="max" id="maximum-checkbox" checked>
-                                                            <label>Plot Stat MAX</label>
+                                                            <input type="checkbox" name="max-min" id="max-min-checkbox" checked>
+                                                            <label>Plot Stat MIN & MAX</label>
+                                                            <input type="color" name="min-max-color" id="min-max-color" value="#3A86FF">
                                                         </div>
 
                                                         <div>
-                                                            <input type="checkbox" name="min" id="minimum-checkbox" checked>
-                                                            <label>Plot Stat MIN</label>
+                                                            <input type="checkbox" name="ave" id="average-checkbox">
+                                                            <label>Plot Stat Monthly MIN & MAX</label>
+                                                            <input type="color" name="average-color" id="average-color" value="#FFF700">
                                                         </div>
 
                                                     </div>
@@ -202,6 +228,22 @@
                                                     <button id="instruction-btn">Instructions</button>
 
                                                     <button id="plot-btn">Plot CSH</button>
+
+                                                </div>
+
+                                                <div id="instructions-div" class="hidden">
+
+                                                    <h2 class="title">How to Generate the Plot.</h2>
+
+                                                    <ul>
+                                                        <li><strong>Select a Basin</strong> - Choose a basin from the dropdown list.</li>
+                                                        <li><strong>Select a Gage</strong> - Pick the desired gage from the available options.</li>
+                                                        <li><strong>Choose a Time Window</strong> - If <strong>"No Statistics"</strong> is selected, the entire period of record will be used.</li>
+                                                        <li><strong>Select Years</strong> - Specify the years you want to display on the plot.</li>
+                                                        <li><strong>Optional: Display Additional Data</strong> - Enable <strong>"Flood Stage"</strong> or <strong>"LWRP"</strong> if the selected gage contains this information.</li>
+                                                        <li><strong>Select Statistical Data</strong> - Choose the statistical metrics you want to include in the plot.</li>
+                                                        <li><strong>Generate the Plot</strong> - Click <strong>"Plot CSH"</strong> to visualize the selected data.</li>
+                                                    </ul>
 
                                                 </div>
 

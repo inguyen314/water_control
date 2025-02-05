@@ -430,6 +430,53 @@
     color: red;
 }
 
+/* ======= STYLE COLOR PICKED ===========*/
+#lwrp-color {
+    margin-left: 3em;
+}
+
+#average-color {
+    margin-left: 0em;
+}
+
+#min-max-color {
+    margin-left: 4.6em;
+}
+
+#mean-color {
+    margin-left: 8.3em;
+}
+
+#flood-stage-color.hidden,
+#lwrp-color.hidden {
+    display: none;
+}
+
+/* ========== INSTRUCTIONS ==============*/
+#instructions-div.hidden {
+    display: none;
+}
+
+#instructions-div {
+    margin: 1em 0em;
+    padding: 1em 2em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    font-size: 1em;
+    box-shadow: var(--shadow-box);
+}
+
+#instructions-div .title{
+    font-size: 1.5em;
+    color: var(--font-color-2);
+}
+
+#instructions-div ul li{
+    color: var(--font-color-2);
+    margin-top: 0.5em;
+}
+
 /* ========== LOADING DATA ==============*/
 
 #loading-image {
