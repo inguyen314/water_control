@@ -64,6 +64,7 @@ const basinName = document.getElementById('basinCombobox'),
       dataTable = document.getElementById('data-table'),
       metadataDiv = document.querySelector('.results .metadata-div'),
       metadataTitle = document.querySelector('.results .metadata-div .metadata-title'),
+      metadataDescription = document.querySelector('.results .metadata-div .metadata-description'),
       metadataDatum88 = document.querySelector('.results .metadata-div .metadata-datum-88'),
       metadataRecordedTime = document.querySelector('.results .metadata-div .metadata-recorded-time'),
       metadataPeriodOfRecord = document.querySelector('.results .metadata-div .metadata-period-of-record'),
@@ -1638,6 +1639,8 @@ function initialize(data) {
             // insertMissingDates(formattedData, actualMissingDates);
 
             metadataTitle.textContent = gageName.value;
+
+            metadataDescription.innerHTML = `Description:<br>${gageMetadata.description}`;
 
             if (isProjectText.textContent !== "Datum: NGVD29"){
                 metadataDatum88.innerHTML = `${gageMetadata.elevation.toFixed(2)}ft NAVD 88, add datum to stage to obtain elevation`;
