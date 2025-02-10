@@ -411,7 +411,11 @@ async function main(data) {
     let leapYear = 2024;
     let xAxisValues = generateDateAxis(leapYear);
 
-    let monthMinAndMax = getMinMaxForMonths(meanData);
+    //let monthMinAndMax = getMinMaxForMonths(meanData);
+
+    let monthMinAndMax = extractMinMaxforMonths(wholePeriodList);
+
+    console.log("Monthly Values: ", monthMinAndMax);
 
     // List for the plotting
     let plotData = [];
@@ -421,9 +425,9 @@ async function main(data) {
 
     if (!noStatsCheckbox.checked && statisticMaxMinCheckbox.checked){
 
-        let maxPlotSerie = createMinMaxSerie(maxData, xAxisValues, `Maximum (${timeWindow})`, "lines", false, minMaxColor, false); // Maximum Serie
-        let minPlotSerie = createMinMaxSerie(minData, xAxisValues, `Minimum (${timeWindow})`, "lines", true, minMaxColor, false); // Minimum Serie
-        let dummyMinMax = dummySerie(`Maximum & Minimum (${timeWindow})`, 'group1', minMaxColor, true);
+        let maxPlotSerie = createMinMaxSerie(maxData, xAxisValues, `Max (${timeWindow})`, "lines", false, minMaxColor, false); // Maximum Serie
+        let minPlotSerie = createMinMaxSerie(minData, xAxisValues, `Min (${timeWindow})`, "lines", true, minMaxColor, false); // Minimum Serie
+        let dummyMinMax = dummySerie(`Max & Min (${timeWindow})`, 'group1', minMaxColor, true);
 
         plotData = [maxPlotSerie, minPlotSerie, dummyMinMax[0], dummyMinMax[1]];
 
@@ -811,7 +815,7 @@ function createPlot(data, title, minValue, maxValue) {
             showlines: true,
             linewidth: 1,
             linecolor: 'black',
-            title: { text: 'Stage', font: {size: 18} },
+            title: { text: 'Stage(ft)', font: {size: 18} },
             tickfont: { size: 16 },
             range: [minValue, maxValue]
         },
@@ -821,14 +825,16 @@ function createPlot(data, title, minValue, maxValue) {
             y:-0.2,
             xanchor: 'center',
             yanchor: 'top',
-            font: { size: 16 }
+            font: { size: 14 },
+            ncols: 2
         }
     };
 
     let config = {
         responsive: true,
         toImageButtonOptions: {
-            filename: `${title}-Plot`
+            filename: `${title}-Plot`,
+            scale: 2
         }
     }
 
@@ -858,7 +864,7 @@ function createSingleNumberSerie(num, dates, serieName, serieMode, color) {
         x: newDateList,
         y: yAxisValues,
         mode: serieMode,
-        line: { color: `rgba(${r}, ${g}, ${b}, ${alpha})`, width: 2 },
+        line: { color: `rgba(${r}, ${g}, ${b}, ${alpha})`, width: 2, dash: 'dash' },
         name: serieName
     };
 
@@ -1078,7 +1084,7 @@ function createYearSerie(values, dates, year, serieName, serieMode, color) {
         x: newDateList,
         y: yAxisList,
         mode: serieMode,
-        line: { color: color, width: 2 },
+        line: { color: color, width: 3 },
         name: serieName
     };
 
@@ -1100,7 +1106,7 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
             let month = parseInt(`${date.split('-')[0]}`);
     
             monthValues.forEach(element => {
-                if (element.month === month && element.max !== NaN && element.min !== NaN){
+                if (element.month === month && element.max !== NaN){
                     yAxisList.push(element.max);
                     newDateList.push(new Date(formatDate + "T06:00:00Z"));
                 }
@@ -1115,7 +1121,7 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
             let month = parseInt(`${date.split('-')[0]}`);
     
             monthValues.forEach(element => {
-                if (element.month === month && element.min !== NaN && element.max !== NaN){
+                if (element.month === month && element.min !== NaN){
                     yAxisList.push(element.min);
                     newDateList.push(new Date(formatDate + "T06:00:00Z"));
                 }
@@ -1132,8 +1138,8 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
     let g = parseInt(color.substring(2, 4), 16);
     let b = parseInt(color.substring(4, 6), 16);
 
-    let alpha_1 = 0.5;
-    let alpha_2 = 0.5;
+    let alpha_1 = 0.2;
+    let alpha_2 = 0.2;
 
     if (fill){
 
@@ -1199,7 +1205,7 @@ function createMeanSerie(meanData, dates, serieName, serieMode, color) {
         x: newDateList,
         y: yAxisList,
         mode: serieMode,
-        line: { color: color, width: 2 }, // dash: 'dash' For Dash Lines
+        line: { color: color, width: 4 }, // dash: 'dash' For Dash Lines
         name: serieName
     };
 
@@ -1208,10 +1214,111 @@ function createMeanSerie(meanData, dates, serieName, serieMode, color) {
 }
 
 // Get Min and Max for the months
+function extractMinMaxforMonths(allData){
+
+    // Object to hold all the results
+    let results = [];
+    let finalResults = [];
+
+    // Loop for the months
+    for (let i = 1; i < 13; i++){
+
+        results.push({
+            month: i,
+            stage: {
+                mean: [],
+                max: [],
+                min: []
+            }
+        });
+
+        finalResults.push({
+            month: i,
+            mean: null,
+            min: null,
+            max: null
+        });
+
+    }
+    
+    // Loop through Years
+    allData.forEach(element => {
+        let tempData = element.data;
+
+        results.forEach(x => {
+            let resMonth = x.month;
+            let tempList = [];
+
+            // Loop inside year
+            tempData.forEach(item => {
+                let tempDate = item.date;
+                let tempStage = item.stage;
+
+                let tempMonth = parseInt(tempDate.split('-')[1]);
+
+                if (resMonth === tempMonth){
+                    tempList.push(tempStage);
+                }
+                
+            });
+
+            tempList = tempList.filter(x => x);
+            tempList = tempList.filter(x => x !== 0);
+            tempList = tempList.filter(x => x !== null);
+            tempList = tempList.filter(x => !isNaN(x));
+
+            let tempMax = Math.max(...tempList);
+            let tempMin = Math.min(...tempList);
+
+            let currentMonthAvg = tempList.reduce((acc, num) => acc + num, 0) / tempList.length;
+
+            x.stage.mean.push(currentMonthAvg);
+            x.stage.max.push(tempMax);
+            x.stage.min.push(tempMin);
+
+        });
+
+    });
+
+    console.log("Test 1: ", results);
+
+    results = results.filter(x => x.stage.mean.length > 0);
+
+    console.log("Test 2: ", results);
+
+    results.forEach(element => {
+        // let filteredList = element.stage.filter(x => !isNaN(x));
+
+        let meanFilter = element.stage.mean.filter(x => !isNaN(x));
+        let maxFilter = element.stage.max.filter(x => !isNaN(x));
+        let minFilter = element.stage.min.filter(x => !isNaN(x));
+
+        meanFilter = meanFilter.filter(Number.isFinite);
+        maxFilter = maxFilter.filter(Number.isFinite);
+        minFilter = minFilter.filter(Number.isFinite);
+
+        console.log("Monthly List: ", { meanFilter, maxFilter, minFilter });
+
+        let maxAverage = maxFilter.reduce((acc, num) => acc + num, 0) / maxFilter.length;
+        let minAverage = minFilter.reduce((acc, num) => acc + num, 0) / minFilter.length;
+        let meanAverage = meanFilter.reduce((acc, num) => acc + num, 0) / meanFilter.length;
+
+        finalResults.forEach(result => {
+            if (result.month === element.month){
+                result.mean = Math.round(meanAverage * 100) / 100;
+                result.min = Math.round(minAverage * 100) / 100;
+                result.max = Math.round(maxAverage * 100) / 100;
+            }
+        });
+    });
+
+    return finalResults
+
+} 
+
+// Get Min and Max for the months
 function getMinMaxForMonths(data) {
     let monthsData = [];
-
-    console.log("Month Data Function: ", data);
 
     for (let i = 1; i < 13; i++){
         let monthMax = -999;
@@ -1243,8 +1350,6 @@ function getMinMaxForMonths(data) {
             min: monthMin
         });
     };
-
-    console.log("Monthly Min and Max for mean: ", monthsData);
 
     return monthsData
 
