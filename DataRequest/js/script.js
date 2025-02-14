@@ -1276,12 +1276,16 @@ function initialize(data) {
         if (!dailyCheckbox.checked) {
             dailyCheckbox.click();
         }
+
+        metadataDiv.classList.remove('show');
     });
 
     hourlyCheckbox.addEventListener('click', function() {
         if (!hourlyCheckbox.checked) {
             hourlyCheckbox.click();
         }
+
+        metadataDiv.classList.remove('show');
     });
 
     missingDateWindowCloseBtn.addEventListener('click', function() {
