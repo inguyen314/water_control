@@ -21,6 +21,8 @@
     --font-color-2: #000;
     --font-color-3: rgb(74, 74, 74);
     --checkbox-border-color: #000;
+    --color-blue-1: blue;
+    --color-gray-for-text: rgb(82, 82, 82);
 }
 
 #page-container.hidden {
@@ -92,6 +94,8 @@
     --font-color-2: #fff;
     --font-color-3: #e0e0e0;
     --checkbox-border-color: #fff;
+    --color-blue-1: rgb(180, 180, 255);
+    --color-gray-for-text: rgb(224, 224, 224);
 }
 
 #loading-image {

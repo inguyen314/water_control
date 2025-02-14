@@ -1,0 +1,28 @@
+
+body {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.text-div{
+    width: 40%;
+    height: 50%;
+}
+
+.text-div h1{
+    text-align: center;
+    padding-bottom: 1em;
+}
+
+.text-div p{
+    text-align: justify;
+    font-size: 1.2em;
+}
+
+.text-div p span{
+    color: blue;
+    font-weight: bold;
+}

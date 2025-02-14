@@ -124,6 +124,7 @@ table th, table td {
 }
 
 .results .metadata-div.show{
+    position: relative;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -199,4 +200,91 @@ table th, table td {
     font-size: 1em;
     font-weight: bold;
     color: #000;
+}
+
+/* ==== MISSING DAYS NUMBER ====*/
+#missing-number{
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--color-blue-1);
+    cursor: pointer;
+}
+
+#missing-dates-table.hidden {
+    display: none;
+}
+
+#missing-dates-table {
+    display: flex;
+    gap: 1em;
+    height: auto;
+    max-height: 30em;
+    width: 100%;
+    background-color: var(--background-body);
+    padding: 2em;
+}
+
+#missing-dates-table .dates-table{
+    border-radius: 1em;
+    padding: 1em;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2),
+    inset 5px 5px 5px rgba(255, 255, 255, 0.8),
+    inset 10px 10px 30px rgba(0, 0, 0, 0.1),
+    inset -5px -5px 5px rgba(0, 0, 0, 0.05),
+    inset -10px -10px 30px rgba(255, 255, 255, 0.8);
+    overflow-y: auto;
+}
+
+#missing-dates-table .dates-table table th{
+    text-align: center;
+}
+
+#missing-dates-table .dates-table table td{
+    text-align: center;
+}
+
+#missing-dates-table .close-div {
+    position: relative;
+    padding: 0.5em;
+}
+
+#close-btn {
+    position: absolute;
+    width: 2em;
+    height: 2em;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: red;
+    cursor: pointer;
+
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2),
+    inset 5px 5px 8px rgba(255, 255, 255, 0.5),
+    inset -2px -2px 5px rgba(0, 0, 0, 0.2);
+}
+
+#close-btn .x-text {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: white;
+}
+
+#missing-dates-table .info-text {
+    width: 50em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-left: 2em;
+}
+
+#missing-dates-table .info-text p {
+    text-align: left;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 0;
 }

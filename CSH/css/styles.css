@@ -26,6 +26,7 @@
     --datrep-body-color: rgb(248, 249, 250);
     --datrep-body-odd-color: rgb(233, 236, 239);
     --loader-font-color: rgb(51, 51, 51);
+    --error-message: rgb(255, 155, 155);
 }
 
 .page-content.blur {
@@ -61,6 +62,7 @@
     --datrep-body-color: rgb(160, 161, 163);
     --datrep-body-odd-color: rgb(107, 108, 109);
     --loader-font-color: rgb(172, 172, 172);
+    --error-message: rgb(255, 50, 50);
 }
 
 .header {
@@ -477,6 +479,28 @@
     margin-top: 0.5em;
 }
 
+/* ========== ERROR MESSAGE =============*/
+#error-message.hidden {
+    display: none;
+}
+
+#error-message {
+    background-color: var(--error-message);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5em;
+    margin-top: 0.5em;
+    box-shadow: var(--shadow-box);
+}
+
+#error-message h2 {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--font-color-2);
+}
+
 /* ========== LOADING DATA ==============*/
 
 #loading-image {
@@ -523,4 +547,24 @@
     font-size: 0.65em;
     font-style: italic;
     color: var(--loader-font-color);
+}
+
+/* =========== TIME SERIE ===========*/
+#time-serie-name-div.hidden {
+    display: none;
+}
+
+#time-serie-name-div {
+    display: flex;
+    align-items: center;
+    padding-left: 1em;
+    width: 100%;
+    height: 3em;
+    background-color: var(--background-color-2);
+}
+
+#time-serie-name-div h2 {
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
 }

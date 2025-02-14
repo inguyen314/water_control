@@ -85,8 +85,8 @@
                                                                     <td>End Time</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td class="por-start">03/24/1986</td>
-                                                                    <td class="por-end">06/10/2024</td>
+                                                                    <td class="por-start">MM/DD/YYYY</td>
+                                                                    <td class="por-end">MM/DD/YYYY</td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -227,7 +227,7 @@
 
                                                     <button id="instruction-btn">Instructions</button>
 
-                                                    <button id="plot-btn">Plot CSH</button>
+                                                    <button id="plot-btn" disabled>Plot CSH</button>
 
                                                 </div>
 
@@ -245,6 +245,10 @@
                                                         <li><strong>Generate the Plot</strong> - Click <strong>"Plot CSH"</strong> to visualize the selected data.</li>
                                                     </ul>
 
+                                                </div>
+
+                                                <div id="error-message" class="hidden">
+                                                    <h2>Error Message</h2>
                                                 </div>
 
                                             </div>
@@ -277,11 +281,22 @@
                                             </div>
 
                                             <div id="plot" class="hidden"></div>
+
+                                            <div id="time-serie-name-div" class="hidden">
+                                                <h2></h2>
+                                            </div>
                                             
-                                            <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script>
-                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-                                            <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+                                            <!-- <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script> -->
+                                            <script src="../../js/xlsx.full.min.js"></script>
+
+                                            <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script> -->
+                                            <script src="../../js/jspdf.umd.min.js"></script>
+
+                                            <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script> -->
+                                            <script src="../../js/jspdf.plugin.autotable.min.js"></script>
+
+                                            <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script> -->
+                                            <script src="../../js/html2canvas.min.js"></script>
 
                                             <script type="module" src="../js/script.js"></script>
                                         </div>

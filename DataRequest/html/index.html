@@ -22,13 +22,6 @@
         <link rel="stylesheet" href="../../css/loadingCircle.css">
     </head>
 
-    <div id="maintenance-page" class="hidden">
-        <div class="text-div">
-            <h1>We'll Be Right Back!</h1>
-            <p>Our site is currently undergoing maintenance to bring you a better experience. We apologize for any inconvenience this may cause and appreciate your patience. Please check back soon! If you need assistance in the meantime, feel free to contact <span>Water Control.</span> Thank you for your understanding!</p>
-        </div>
-    </div>
-
     <body>
         <div id="page-container">
             <header id="header">
@@ -135,7 +128,7 @@
                                                     <button class="html" id="button-data" disabled="true"
                                                     title="Obtain the data for the desired gage. The data must be obtain in order to download an Excel or JSON file.">Get Gage Data</button>
 
-                                                    <button class="html" id="button-data-basin"
+                                                    <button class="html" id="button-data-basin" disabled="true"
                                                     title="Obtain the data for the desired basin. The data must be obtain in order to download an Excel or JSON file.">Get Basin Data</button>
 
                                                     <button class="csv" id="button-csv"
@@ -232,6 +225,27 @@
                                                     <p class="metadata-highlight-values"></p>
                                                     <p>If you need additional data, please email <strong>dll-cemvs-water-managers@usace.army.mil</strong></p>
 
+                                                </div>
+
+                                                <div id="missing-dates-table" class="hidden">
+                                                    <div class="dates-table">
+                                                        <table>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Missing Dates</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody></tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="close-div">
+                                                        <div id="close-btn">
+                                                            <span class="x-text">X</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="info-text">
+                                                        <p>Important Notice: The main table displays only the available data and does not include dates with missing values. Any dates for which no data was recorded are omitted entirely. To ensure full awareness of these gaps, please refer to the adjacent table, which lists all missing dates.</p>
+                                                    </div>
                                                 </div>
 
                                                 <div class="table-results">

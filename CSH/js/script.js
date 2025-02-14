@@ -76,7 +76,11 @@ const basinName = document.getElementById('basinCombobox'),
       plotDiv = document.getElementById('plot'),
       instructionsDiv = document.getElementById('instructions-div'),
       floodStageText = document.getElementById('flood-stage-text'),
-      lwrpStageText = document.getElementById('lwrp-text');
+      lwrpStageText = document.getElementById('lwrp-text'),
+      errorMessageDiv = document.getElementById('error-message'),
+      errorMessageText = document.querySelector('#error-message h2'),
+      timeSerieDiv = document.getElementById('time-serie-name-div'),
+      timeSerieText = document.querySelector('#time-serie-name-div h2');
 
 
 let params = new URLSearchParams(window.location.search);
@@ -114,17 +118,17 @@ function initialize(data) {
     addBasinNames(basinName, namesObject);
 
     // Add data to the gage combobox at the beggining of the code
-    gageName.options.length = 0;
-    namesObject.forEach(element => {
-        if (element['basin'] === basinName.value) {
-            element['datman'].forEach(item => {
-                let option = document.createElement('option');
-                option.value = item;
-                option.textContent = item.split('.')[0];
-                gageName.appendChild(option);
-            });
-        }
-    });
+    // gageName.options.length = 0;
+    // namesObject.forEach(element => {
+    //     if (element['basin'] === basinName.value) {
+    //         element['datman'].forEach(item => {
+    //             let option = document.createElement('option');
+    //             option.value = item;
+    //             option.textContent = item.split('.')[0];
+    //             gageName.appendChild(option);
+    //         });
+    //     }
+    // });
 
     instructionsBtn.addEventListener('click', function(){
         instructionsDiv.classList.toggle('hidden');
@@ -132,6 +136,12 @@ function initialize(data) {
 
     // Change the gage values each time the basin value is changed
     basinName.addEventListener('change', function() {
+
+        plotCSHBtn.disabled = true;
+
+        if (!haveClass(timeSerieDiv, 'hidden')){
+            timeSerieDiv.classList.add('hidden')
+        }
 
         gageName.options.length = 0;
         namesObject.forEach(element => {
@@ -152,6 +162,11 @@ function initialize(data) {
 
         gageName.insertBefore(selectGageOption, gageName.firstChild);
         gageName.selectedIndex = 0;
+
+        if (basinName.value === "Select Basin"){
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
+        }
 
         // Determine if it's project
         isGageProject(data);
@@ -175,6 +190,10 @@ function initialize(data) {
             lwrpColorBox.classList.remove('hidden');
         };
 
+        if (!haveClass(errorMessageDiv, 'hidden')){
+            errorMessageDiv.classList.add('hidden');
+        }
+
         floodStageCheckbox.checked = false;
         lwrpCheckbox.checked = false;
 
@@ -193,9 +212,17 @@ function initialize(data) {
     });
 
     updateAvailablePORTable(data);
+    PORBeginDate.textContent = "MM/DD/YYYY";
+    POREndDate.textContent = "MM/DD/YYYY";
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
+
+        plotCSHBtn.disabled = true;
+
+        if (!haveClass(timeSerieDiv, 'hidden')){
+            timeSerieDiv.classList.add('hidden')
+        }
 
         updateAvailablePORTable(data);
 
@@ -206,6 +233,15 @@ function initialize(data) {
             activateSettingWindow();
         } else if (!haveClass(settingsDiv, 'hidden')) {
             settingsDiv.classList.add('hidden');
+        }
+
+        if (!haveClass(errorMessageDiv, 'hidden')){
+            errorMessageDiv.classList.add('hidden');
+        }
+
+        if (gageName.value === "Select Gage"){
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
         }
 
         resetSomeSettingWindow()
@@ -279,8 +315,7 @@ function initialize(data) {
     basinName.insertBefore(selectBasinOption, basinName.firstChild);
     basinName.selectedIndex = 0;
 
-    gageName.insertBefore(selectGageOption, gageName.firstChild);
-    gageName.selectedIndex = 0;
+    gageName.append(selectGageOption);
 
     // HTML button clicked
     plotCSHBtn.addEventListener('click', function() {
@@ -289,6 +324,10 @@ function initialize(data) {
         if (haveOneYearOfData(beginDate.value, endDate.value) && beginDate.value < endDate.value) {
 
             plotDiv.classList.add('hidden');
+
+            if (!haveClass(errorMessageDiv, 'hidden')){
+                errorMessageDiv.classList.add('hidden');
+            }
 
             loadingPageData();
 
@@ -306,8 +345,8 @@ function initialize(data) {
             globalDatman = datmanName;
 
             // Initialize variables
-            let beginValue = formatString("start date", beginDate.value);
-            let endValue = formatString('end date', endDate.value);
+            let beginValue = formatString("start date", beginDate.value); // YYYY-MM-DD
+            let endValue = formatString('end date', endDate.value); // YYYY-MM-DD
 
             // Create the URL to get the data
             let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
@@ -405,6 +444,23 @@ async function main(data) {
         {year: year4Input, color: year4Color}, {year: year5Input, color: year5Color}, {year: year6Input, color: year6Color}
     ];
 
+    // If year is not in the time window trow an error
+    let stopFunction = false;
+    yearsInputList.forEach(element => {
+        if ((element.year > parseInt(endDate.value.split('-')[0]) || element.year < parseInt(beginDate.value.split('-')[0])) && element.year !== null){
+            stopFunction = true
+        }
+    });
+
+    if (stopFunction) {
+        if (haveClass(errorMessageDiv, 'hidden')){
+            errorMessageDiv.classList.remove('hidden');
+            errorMessageText.textContent = "One or more of the selected years are outside the selected time window."
+        }
+        loadingPageData();
+        return
+    }
+
     let actualYearInput = yearsInputList.filter(x => x.year !== null);
 
     // Generate dates for 2024 which is a leap year
@@ -414,8 +470,6 @@ async function main(data) {
     //let monthMinAndMax = getMinMaxForMonths(meanData);
 
     let monthMinAndMax = extractMinMaxforMonths(wholePeriodList);
-
-    console.log("Monthly Values: ", monthMinAndMax);
 
     // List for the plotting
     let plotData = [];
@@ -427,7 +481,7 @@ async function main(data) {
 
         let maxPlotSerie = createMinMaxSerie(maxData, xAxisValues, `Max (${timeWindow})`, "lines", false, minMaxColor, false); // Maximum Serie
         let minPlotSerie = createMinMaxSerie(minData, xAxisValues, `Min (${timeWindow})`, "lines", true, minMaxColor, false); // Minimum Serie
-        let dummyMinMax = dummySerie(`Max & Min (${timeWindow})`, 'group1', minMaxColor, true);
+        let dummyMinMax = dummySerie(`Max & Min (${timeWindow})     `, 'group1', minMaxColor, true);
 
         plotData = [maxPlotSerie, minPlotSerie, dummyMinMax[0], dummyMinMax[1]];
 
@@ -437,7 +491,7 @@ async function main(data) {
 
         let monthMaxPlotSerie = createMonthMinMaxSerie(monthMinAndMax, xAxisValues, `Monthly Max (${timeWindow})`, "lines", "max", false, averageColor, false); // Month Maximum Serie
         let monthMinPlotSerie = createMonthMinMaxSerie(monthMinAndMax, xAxisValues, `Monthly Min (${timeWindow})`, "lines", "min", true, averageColor, false); // Month Minimum Serie
-        let dummyMonthlyMinMax = dummySerie(`Monthly Max & Min (${timeWindow})`, 'group2', averageColor, true);
+        let dummyMonthlyMinMax = dummySerie(`Monthly Max & Min (${timeWindow})      `, 'group2', averageColor, true);
 
         plotData.push(monthMaxPlotSerie);
         plotData.push(monthMinPlotSerie);
@@ -448,7 +502,7 @@ async function main(data) {
 
     if (!noStatsCheckbox.checked && statisticAverageCheckbox.checked){
 
-        let meanPlotSerie = createMeanSerie(meanData, xAxisValues, `Mean (${timeWindow})`, 'lines', meanColor);
+        let meanPlotSerie = createMeanSerie(meanData, xAxisValues, `Mean (${timeWindow})      `, 'lines', meanColor);
 
         plotData.push(meanPlotSerie);
 
@@ -456,7 +510,7 @@ async function main(data) {
 
     // Generate years plot for each year
     actualYearInput.forEach(year => {
-        plotData.push(createYearSerie(wholePeriodList, xAxisValues, year.year, `Year ${year.year}`, 'lines', year.color));
+        plotData.push(createYearSerie(wholePeriodList, xAxisValues, year.year, `Year ${year.year}      `, 'lines', year.color));
     });
 
     consoleLog ? console.log("Plot Data: ", plotData) : null;
@@ -521,11 +575,11 @@ async function main(data) {
 
     // ADD the LWRP and FLOOD STAGE to the plot
     if (floodStageCheckbox.checked && floodStageNum !== null && floodStageNum !== 909){
-        plotData.push(createSingleNumberSerie(floodStageNum, xAxisValues, "Flood Stage", "lines", floodStageColor));
+        plotData.push(createSingleNumberSerie(floodStageNum, xAxisValues, "Flood Stage    ", "lines", floodStageColor, 0));
     }
 
     if (lwrpCheckbox.checked && lwrpStageNum !== null && lwrpStageNum !== 909){
-        plotData.push(createSingleNumberSerie(lwrpStageNum, xAxisValues, "LWRP", "lines", lwrpColor));
+        plotData.push(createSingleNumberSerie(lwrpStageNum, xAxisValues, "LWRP    ", "lines", lwrpColor, 1));
     }
 
     let offset = 5;
@@ -543,210 +597,17 @@ async function main(data) {
     let maxValue = Math.max(...maxValueList);
     let minValue = Math.min(...minValueList);
 
+    //initializeTooltipStyles();
+
     createPlot(plotData, gageName.value, minValue + offset, maxValue + offset);
 
     plotDiv.classList.remove('hidden');
-    
-    // fetch(FloodApiUrl)
-    //     .then(response => {
-    //         if (!response.ok){
-    //             throw new Error("Network was not ok. " + response.status);
-    //         }
-    //         return response.json();
-    //     })
-    //     .then(floodData => {
-    //         // Set map to null if the data is null or undefined
-    //         console.log("Flood Data: ", floodData);
 
-    //         let floodStageNum = Math.round(floodData['constant-value'] * 100) / 100;
+    timeSerieText.textContent = `Time Serie: ${globalDatman}`;
 
-    //         const levelIdLWRP = `${gageName.value}.Stage.Inst.0.LWRP`;
-    //         const WLRPApiUrl = `${setBaseUrl}levels/${levelIdLWRP}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
-
-    //         console.log("LWRP URL: ", WLRPApiUrl);
-            
-    //         fetch(WLRPApiUrl)
-    //             .then(response => {
-    //                 if (!response.ok){
-    //                     throw new Error("Network was not ok. " + response.status);
-    //                 }
-    //                 return response.json();
-    //             })
-    //             .then(lwrpData => {
-    //                 // Set map to null if the data is null or undefined
-    //                 console.log("LWRP Data: ", lwrpData);
-
-    //                 let lwrpStageNum = Math.round(lwrpData['constant-value'] * 100) / 100;
-
-    //                 const levelIdNgvd29 = `${gageName.value}.Height.Inst.0.NGVD29`;
-    //                 const NGVD29ApiUrl = `${setBaseUrl}levels/${levelIdNgvd29}?office=${officeName.toLowerCase()}&effective-date=${levelIdEffectiveDate}&unit=ft`;
-
-    //                 console.log("NGVD29 URL: ", NGVD29ApiUrl);
-
-    //                 fetch(NGVD29ApiUrl)
-    //                     .then(response => {
-    //                         if (!response.ok){
-    //                             throw new Error("Network was not ok. " + response.status);
-    //                         }
-    //                         return response.json();
-    //                     })
-    //                     .then(ngvd29Data => {
-    //                         // Set map to null if the data is null or undefined
-    //                         console.log("LWRP Data: ", ngvd29Data);
-
-    //                         let ngvd29StageNum = Math.round(ngvd29Data['constant-value'] * 100) / 100;
-
-    //                         floodStageNum += ngvd29StageNum;
-    //                         lwrpStageNum += ngvd29StageNum;
-                            
-                            
-
-    //                     })
-    //                     .catch(error => {
-    //                         console.error(`Error fetching ngvd29 level for ${gageName.value.split('.')[0]}:`, error);
-    //                         loadingPageData();
-    //                     });
-                    
-    //             })
-    //             .catch(error => {
-    //                 console.error(`Error fetching ngvd29 level for ${gageName.value.split('.')[0]}:`, error);
-    //                 loadingPageData();
-    //             });
-
-    //     })
-    //     .catch(error => {
-    //         console.error(`Error fetching ngvd29 level for ${gageName.value.split('.')[0]}:`, error);
-    //         loadingPageData();
-    //     });
-
-
-    // // Extract the data which is going to be shown in the table
-    // let meanDataTable = extractDataForTable(meanData);
-    // let minDataTable = extractDataForTable(minData);
-    // let maxDataTable = extractDataForTable(maxData);
-
-    // // Get all the data for the total stats
-    // let totalPORData = [];
-    // wholePeriodList.forEach(element => {
-    //     element.data.forEach(item => {
-    //         totalPORData.push(item.stage);
-    //     });
-    // });
-
-    // // Get mean, max and min
-    // let removeUndefinedTotal = totalPORData.filter(x => x);
-    // let totalMean = removeUndefinedTotal.reduce((x, y) => x + y)/removeUndefinedTotal.length;
-    // let totalMax = Math.max(...removeUndefinedTotal);
-    // let totalFilteredMinData = removeUndefinedTotal.filter(x => x !== 0);
-    // let totalMin = Math.min(...totalFilteredMinData);
-
-    // // Get date for min and max
-    // let maxTotalDate = null;
-    // wholePeriodList.forEach(element => {
-    //     element.data.forEach(item => {
-    //         if (item.stage === totalMax) {
-    //             maxTotalDate = item.date;
-    //         }
-    //     });
-    // });
-
-    // let minTotalDate = null;
-    // wholePeriodList.forEach(element => {
-    //     element.data.forEach(item => {
-    //         if (item.stage === totalMin) {
-    //             minTotalDate = item.date;
-    //         }
-    //     });
-    // });
-
-    // // Get all the data for the mean stats
-    // let allMeanData = [];
-    // meanDataTable.forEach(element => {
-    //     for (let i = 0; i < element.length; i++){
-    //         allMeanData.push(element[i]);
-    //     };
-    // });
-
-    // // Get mean, max and min
-    // let noCeroData = allMeanData.filter(x => x !== 0);
-    // let aveMean = noCeroData.reduce((x, y) => x + y)/noCeroData.length;
-    // let aveMax = Math.max(...allMeanData);
-    // let aveMin = Math.min(...noCeroData);
-
-    // // Get date for min and max
-    // let maxMeanDate = null;
-    // meanData.forEach(element => {
-    //     if (element.stage === aveMax) {
-    //         maxMeanDate = element.date;
-    //     }
-    // });
-
-    // let minMeanDate = null;
-    // meanData.forEach(element => {
-    //     if (element.stage === aveMin) {
-    //         minMeanDate = element.date;
-    //     }
-    // });
-
-    // // Get all the data for the min stats
-    // let allMinData = [];
-    // minDataTable.forEach(element => {
-    //     for (let i = 0; i < element.length; i++){
-    //         allMinData.push(element[i][0]);
-    //     };
-    // });
-
-    // // Get mean, max and min
-    // let removeUndefined = allMinData.filter(x => x);
-    // let minFilteredMinData = removeUndefined.filter(x => x !== 0);
-    // let minMean = minFilteredMinData.reduce((x, y) => x + y)/minFilteredMinData.length;
-    // let minMax = Math.max(...removeUndefined);
-    // let minMin = Math.min(...minFilteredMinData);
-
-    // // Get date for min and max
-    // let maxMinDate = null;
-    // minData.forEach(element => {
-    //     if (element.stage[0] === minMax) {
-    //         maxMinDate = `${element.stage[1]}-${element.date}`;
-    //     }
-    // });
-
-    // let minMinDate = null;
-    // minData.forEach(element => {
-    //     if (element.stage[0] === minMin) {
-    //         minMinDate = `${element.stage[1]}-${element.date}`;
-    //     }
-    // });
-
-    // // Get all the data for the max stats
-    // let allMaxData = [];
-    // maxDataTable.forEach(element => {
-    //     for (let i = 0; i < element.length; i++){
-    //         allMaxData.push(element[i][0]);
-    //     };
-    // });
-
-    // // Get mean, max and min
-    // let removeUndefinedMax = allMaxData.filter(x => x);
-    // let maxFilteredMinData = removeUndefinedMax.filter(x => x !== 0);
-    // let maxMean = maxFilteredMinData.reduce((x, y) => x + y)/maxFilteredMinData.length;
-    // let maxMax = Math.max(...removeUndefinedMax);
-    // let maxMin = Math.min(...maxFilteredMinData);
-
-    // // Get date for min and max
-    // let maxMaxDate = null;
-    // maxData.forEach(element => {
-    //     if (element.stage[0] === maxMax) {
-    //         maxMaxDate = `${element.stage[1]}-${element.date}`;
-    //     }
-    // });
-
-    // let minMaxDate = null;
-    // maxData.forEach(element => {
-    //     if (element.stage[0] === maxMin) {
-    //         minMaxDate = `${element.stage[1]}-${element.date}`;
-    //     }
-    // });
+    if (haveClass(timeSerieDiv, 'hidden')){
+        timeSerieDiv.classList.remove('hidden')
+    }
 
     // Change button text
     loadingPageData();
@@ -779,12 +640,9 @@ async function awaitFetchData(url){
 // Create plot Function
 function createPlot(data, title, minValue, maxValue) {
 
-    let subTitle = globalDatman;
-    let subTitleSize = '16px';
-
     let layout = {
         title: { 
-            text: `${title}<br><span style="font-size:${subTitleSize}">${subTitle}</span>`, 
+            text: title, 
             font: {size: 20} 
         },
         width: 1200,
@@ -842,7 +700,7 @@ function createPlot(data, title, minValue, maxValue) {
 }
 
 // Create serie for LWRP and Flood Stage
-function createSingleNumberSerie(num, dates, serieName, serieMode, color) {
+function createSingleNumberSerie(num, dates, serieName, serieMode, color, variant) {
 
     let yAxisValues = [];
     let newDateList = [];
@@ -852,20 +710,27 @@ function createSingleNumberSerie(num, dates, serieName, serieMode, color) {
         yAxisValues.push(num);
     });
 
-    color = color.replace(/^#/, '');
+    // color = color.replace(/^#/, '');
 
-    let r = parseInt(color.substring(0, 2), 16);
-    let g = parseInt(color.substring(2, 4), 16);
-    let b = parseInt(color.substring(4, 6), 16);
+    // let r = parseInt(color.substring(0, 2), 16);
+    // let g = parseInt(color.substring(2, 4), 16);
+    // let b = parseInt(color.substring(4, 6), 16);
 
-    let alpha = 1;
+    let lineMode = variant === 0 ? "dash" : "dashdot";
 
     let serie = {
         x: newDateList,
         y: yAxisValues,
         mode: serieMode,
-        line: { color: `rgba(${r}, ${g}, ${b}, ${alpha})`, width: 2, dash: 'dash' },
-        name: serieName
+        line: { color: color, width: 2, dash: lineMode },
+        name: serieName,
+        hoverlabel: {
+            font: {
+                color: "white"
+            },
+            bgcolor: color
+        },
+        hovertemplate: `<span style="color:white;">%{y}  |  ${serieName}</span><br><extra></extra>`
     };
 
     return serie
@@ -966,6 +831,8 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill, color, sho
     let alpha_1 = 0.2;
     let alpha_2 = 0.5;
 
+    let legendText = serieName.split('(')[0]
+
     if (fill){
 
         serie = {
@@ -977,7 +844,14 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill, color, sho
             line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
             name: serieName,
             legendgroup: 'group1',
-            showlegend: show
+            showlegend: show,
+            hoverlabel: {
+                font: {
+                    color: "black"
+                },
+                bgcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`
+            },
+            hovertemplate: `<span style="color:black;">%{y}  |  ${legendText}</span><br><extra></extra>`
         };
 
     } else {
@@ -989,7 +863,14 @@ function createMinMaxSerie(values, dates, serieName, serieMode, fill, color, sho
             line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
             name: serieName,
             legendgroup: 'group1',
-            showlegend: show
+            showlegend: show,
+            hoverlabel: {
+                font: {
+                    color: "black"
+                },
+                bgcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`
+            },
+            hovertemplate: `<span style="color:black;">%{y}  |  ${legendText}</span><br><extra></extra>`
         };
 
     }
@@ -1084,8 +965,15 @@ function createYearSerie(values, dates, year, serieName, serieMode, color) {
         x: newDateList,
         y: yAxisList,
         mode: serieMode,
-        line: { color: color, width: 3 },
-        name: serieName
+        line: { color: color, width: 2 },
+        name: serieName,
+        hoverlabel: {
+            font: {
+                color: "white"
+            },
+            bgcolor: color
+        },
+        hovertemplate: `<span style="color:white;">%{y}  |  ${serieName}</span><br><extra></extra>`
     };
 
     return serie
@@ -1141,6 +1029,8 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
     let alpha_1 = 0.2;
     let alpha_2 = 0.2;
 
+    let legendText = serieName.split('(')[0]
+
     if (fill){
 
         serie = {
@@ -1152,7 +1042,14 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
             line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
             name: serieName,
             legendgroup: 'group2',
-            showlegend: show
+            showlegend: show,
+            hoverlabel: {
+                font: {
+                    color: "black"
+                },
+                bgcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`
+            },
+            hovertemplate: `<span style="color:black;">%{y}  |  ${legendText}</span><br><extra></extra>`
         };
 
     } else {
@@ -1164,7 +1061,14 @@ function createMonthMinMaxSerie(monthValues, dates, serieName, serieMode, minOrM
             line: {color: `rgba(${r}, ${g}, ${b}, ${alpha_2})`},
             name: serieName,
             legendgroup: 'group2',
-            showlegend: show
+            showlegend: show,
+            hoverlabel: {
+                font: {
+                    color: "black"
+                },
+                bgcolor: `rgba(${r}, ${g}, ${b}, ${alpha_1})`
+            },
+            hovertemplate: `<span style="color:black;">%{y}  |  ${legendText}</span><br><extra></extra>`
         };
 
     }
@@ -1201,12 +1105,21 @@ function createMeanSerie(meanData, dates, serieName, serieMode, color) {
         });
     });
 
+    let legendText = serieName.split('(')[0]
+
     let serie = {
         x: newDateList,
         y: yAxisList,
         mode: serieMode,
         line: { color: color, width: 4 }, // dash: 'dash' For Dash Lines
-        name: serieName
+        name: serieName,
+        hoverlabel: {
+            font: {
+                color: "white"
+            },
+            bgcolor: color
+        },
+        hovertemplate: `<span style="color:white;">%{y}  |  ${legendText}</span><br><extra></extra>`
     };
 
     return serie
@@ -1280,11 +1193,7 @@ function extractMinMaxforMonths(allData){
 
     });
 
-    console.log("Test 1: ", results);
-
     results = results.filter(x => x.stage.mean.length > 0);
-
-    console.log("Test 2: ", results);
 
     results.forEach(element => {
         // let filteredList = element.stage.filter(x => !isNaN(x));
@@ -1296,8 +1205,6 @@ function extractMinMaxforMonths(allData){
         meanFilter = meanFilter.filter(Number.isFinite);
         maxFilter = maxFilter.filter(Number.isFinite);
         minFilter = minFilter.filter(Number.isFinite);
-
-        console.log("Monthly List: ", { meanFilter, maxFilter, minFilter });
 
         let maxAverage = maxFilter.reduce((acc, num) => acc + num, 0) / maxFilter.length;
         let minAverage = minFilter.reduce((acc, num) => acc + num, 0) / minFilter.length;
@@ -1540,6 +1447,8 @@ function porCheckboxChecked() {
     userSpecificCheckbox.checked = false;
     noStatsCheckbox.checked = false;
 
+    plotCSHBtn.disabled = false;
+
     let porEndDateList = document.querySelector('#info-table .por-end').textContent.split('/');
 
     beginDate.value = "1800-01-01";
@@ -1571,6 +1480,8 @@ function userSpecificCheckboxChecked() {
     porCheckbox.checked = false;
     userSpecificCheckbox.checked = true;
     noStatsCheckbox.checked = false;
+
+    plotCSHBtn.disabled = false;
 
     let porBeginDateList = document.querySelector('#info-table .por-start').textContent.split('/');
     let porEndDateList = document.querySelector('#info-table .por-end').textContent.split('/');
@@ -1604,6 +1515,8 @@ function noStatsCheckboxChecked() {
     porCheckbox.checked = false;
     userSpecificCheckbox.checked = false;
     noStatsCheckbox.checked = true;
+
+    plotCSHBtn.disabled = false;
 
     let porEndDateList = document.querySelector('#info-table .por-end').textContent.split('/');
 

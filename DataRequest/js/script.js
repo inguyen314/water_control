@@ -78,7 +78,10 @@ const basinName = document.getElementById('basinCombobox'),
       importantMessageText = document.querySelector('#important-messages .message-text'),
       errorMessageDiv = document.getElementById('error-messages'),
       errorMessageText = document.querySelector('#error-messages .message-text'),
-      instructionsDiv = document.getElementById('instructions');
+      instructionsDiv = document.getElementById('instructions'),
+      missingDateWindowCloseBtn = document.getElementById('close-btn'),
+      missingDateWindow = document.getElementById('missing-dates-table'),
+      missingDateTableBody = document.querySelector('#missing-dates-table table tbody');
 
 
 let fetchedData = [];
@@ -95,25 +98,17 @@ let previousGage;
 let haveGageData = false;
 let haveBasinData = false;
 let refreshPage = true;
+let paintRow;
 
 let userData = loadUserData();
 
+getBasinDataBtn.disabled = true;
+
 if (isMaintenance){
 
-    let pageContainer = document.getElementById('page-container');
-    let popupWindow = document.getElementById('popup-window');
-    let footer = document.getElementById('footer');
-    let maintenancePage = document.getElementById('maintenance-page');
-
-    pageContainer.classList.add('hidden');
-    popupWindow.classList.add('hidden');
-    footer.classList.add('hidden');
-    maintenancePage.classList.remove('hidden')
+    window.location.href = "../../html/maintenance.html";
 
 } else {
-
-    let maintenancePage = document.getElementById('maintenance-page');
-    maintenancePage.classList.add('hidden')
 
     if (userData == null || userData.length < 1) {
 
@@ -666,6 +661,7 @@ if (isMaintenance){
                             console.log("TEST: ", combinedData);
 
                             try{
+                                getBasinDataBtn.disabled = true;
                                 initialize(combinedData);
                                 disableButtons();
                             } catch (error){
@@ -1256,6 +1252,7 @@ if (isMaintenance){
                 }
             }
         });
+
     } catch (error){
         console.error(error);
         errorMessageDiv.classList.add('show');
@@ -1287,6 +1284,12 @@ function initialize(data) {
         }
     });
 
+    missingDateWindowCloseBtn.addEventListener('click', function() {
+        if (!haveClass(missingDateWindow, 'hidden')){
+            missingDateWindow.classList.add('hidden')
+        }
+    });
+
     // Excel initial function (Alert)
     getExcelBtn.addEventListener('click', excelNoDataMessage);
 
@@ -1309,12 +1312,23 @@ function initialize(data) {
         }
         addGageNames(namesObject);
 
-        // Add option for whole basin
-        let option = document.createElement('option');
-        option.value = 'All Gages';
-        option.text = "All Gages";
+        if (basinName.value !== "Select Basin"){
+            // Add option for whole basin
+            let option = document.createElement('option');
+            option.value = 'All Gages';
+            option.text = "All Gages";
 
-        gageName.insertBefore(option, gageName.firstChild);
+            gageName.insertBefore(option, gageName.firstChild);
+        }
+
+        // Add Select Gage Option
+        let option_2 = document.createElement('option');
+        option_2.value = 'Select Gage';
+        option_2.text = "Select Gage";
+        
+        gageName.insertBefore(option_2, gageName.firstChild);
+
+        gageName.selectedIndex = 0;
 
         gageName.value = previousGage;
     });
@@ -1325,12 +1339,23 @@ function initialize(data) {
         }
         addGageNames(namesObject);
 
-        // Add option for whole basin
-        let option = document.createElement('option');
-        option.value = 'All Gages';
-        option.text = "All Gages";
+        if (basinName.value !== "Select Basin"){
+            // Add option for whole basin
+            let option = document.createElement('option');
+            option.value = 'All Gages';
+            option.text = "All Gages";
 
-        gageName.insertBefore(option, gageName.firstChild);
+            gageName.insertBefore(option, gageName.firstChild);
+        }
+
+        // Add Select Gage Option
+        let option_2 = document.createElement('option');
+        option_2.value = 'Select Gage';
+        option_2.text = "Select Gage";
+
+        gageName.insertBefore(option_2, gageName.firstChild);
+
+        gageName.selectedIndex = 0;
 
         gageName.value = previousGage;
 
@@ -1340,19 +1365,27 @@ function initialize(data) {
     addBasinNames(basinName, namesObject);
 
     // Add data to the gage combobox at the beggining of the code
-    addGageNames(namesObject);
+    //addGageNames(namesObject);
 
     // Add option for whole basin
-    let option = document.createElement('option');
-    option.value = 'All Gages';
-    option.text = "All Gages";
+    // let option = document.createElement('option');
+    // option.value = 'All Gages';
+    // option.text = "All Gages";
 
-    gageName.insertBefore(option, gageName.firstChild);
+    // Add Select Gage Option
+    let option_2 = document.createElement('option');
+    option_2.value = 'Select Gage';
+    option_2.text = "Select Gage";
 
-    gageName.selectedIndex = 0;
+    //gageName.insertBefore(option, gageName.firstChild);
+    gageName.append(option_2);
 
     // Change the gage values each time the basin value is changed
     basinName.addEventListener('change', function() {
+
+        if (!haveClass(missingDateWindow, 'hidden')){
+            missingDateWindow.classList.add('hidden');
+        }
 
         isProjectText.textContent = "";
 
@@ -1391,14 +1424,26 @@ function initialize(data) {
 
         isNGVD29(gageName.value);
 
-        // Add option for whole basin
-        let option = document.createElement('option');
-        option.value = 'All Gages';
-        option.text = "All Gages";
+        if (basinName.value !== "Select Basin"){
+            // Add option for whole basin
+            let option = document.createElement('option');
+            option.value = 'All Gages';
+            option.text = "All Gages";
 
-        gageName.insertBefore(option, gageName.firstChild);
+            gageName.insertBefore(option, gageName.firstChild);
+        }
+
+        // Add Select Gage Option
+        let option_2 = document.createElement('option');
+        option_2.value = 'Select Gage';
+        option_2.text = "Select Gage";
+
+        gageName.insertBefore(option_2, gageName.firstChild);
 
         gageName.selectedIndex = 0;
+
+        getDataBtn.disabled = true;
+        getBasinDataBtn.disabled = true;
 
         if (gageName.value === "All Gages"){
             getDataBtn.disabled = true;
@@ -1413,10 +1458,46 @@ function initialize(data) {
             getBasinDataBtn.disabled = true;
         }
 
+        if (basinName.value === "Select Basin"){
+            gageName.selectedIndex = 0;
+            getDataBtn.disabled = true;
+            getBasinDataBtn.disabled = true;
+
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
+
+            isProjectText.textContent = "";
+        }
+
+        if (gageName.value === "Select Gage"){
+            getDataBtn.disabled = true;
+            getBasinDataBtn.disabled = true;
+
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
+
+            isProjectText.textContent = "";
+        }
+
     });
+
+    // Add option for whole basin
+    let selectBasinOption = document.createElement('option');
+    selectBasinOption.value = 'Select Basin';
+    selectBasinOption.text = "Select Basin";
+
+    basinName.insertBefore(selectBasinOption, basinName.firstChild);
+
+    basinName.selectedIndex = 0;
+
+    getBasinDataBtn.disabled = true;
 
     // Update 'Avaliable POR' table everytime the gage name is changed
     gageName.addEventListener('change', function(){
+
+        if (!haveClass(missingDateWindow, 'hidden')){
+            missingDateWindow.classList.add('hidden');
+        }
 
         errorMessageDiv.classList.remove('show');
         errorMessageText.textContent = "Oops, something went wrong! Please try refreshing the page and attempting again. If the problem persists, feel free to contact Water Control for assistance. We apologize for the inconvenience!";
@@ -1458,6 +1539,15 @@ function initialize(data) {
             getBasinDataBtn.disabled = true;
         }
 
+        if (gageName.value === "Select Gage"){
+            getDataBtn.disabled = true;
+
+            PORBeginDate.textContent = "MM/DD/YYYY";
+            POREndDate.textContent = "MM/DD/YYYY";
+
+            isProjectText.textContent = "";
+        }
+
     });
 
     isNGVD29(gageName.value);
@@ -1486,6 +1576,10 @@ function initialize(data) {
     console.log("Data: ", data);
 
     getDataBtn.addEventListener('click', function() {
+
+        if (!haveClass(missingDateWindow, 'hidden')){
+            missingDateWindow.classList.add('hidden');
+        }
 
         errorMessageDiv.classList.remove('show');
         errorMessageText.textContent = "Oops, something went wrong! Please try refreshing the page and attempting again. If the problem persists, feel free to contact Water Control for assistance. We apologize for the inconvenience!";
@@ -1636,6 +1730,8 @@ function initialize(data) {
                 }
             })
 
+            console.log("Missing Dates: ", actualMissingDates);
+
             // insertMissingDates(formattedData, actualMissingDates);
 
             metadataTitle.textContent = gageName.value;
@@ -1693,7 +1789,9 @@ function initialize(data) {
 
             if (actualMissingDates.length > 0){
                 let dssMessage = "If this data is going to be used to create a DSS file, please choose <strong>'IR-DAY'</strong> on the time interval."
-                metadataMissingDates.innerHTML = `Missing Dates: <strong>${actualMissingDates.length}</strong>` + "<br>" + dssMessage;
+                let missingExtraText = "  -> Click the number to see all the missing dates.";
+                let style_1 = "font-size:0.8em; font-style:italic; font-weight:bold; color: var(--color-gray-for-text)"
+                metadataMissingDates.innerHTML = `Missing Dates:  <a id="missing-number"><strong>${actualMissingDates.length}</strong></a> <span style="${style_1}">${missingExtraText}</span>` + "<br>" + dssMessage;
             } else {
                 metadataMissingDates.innerHTML = "Missing Dates: NA";
             };
@@ -1706,7 +1804,8 @@ function initialize(data) {
                                 let datmanEndDate = gage['extents-data']['datman'][0]['lastUpdate'].split('T')[0].split('-');
                                 let hourlyEndDate = gage['extents-data']['datman'][1]['lastUpdate'].split('T')[0].split('-');
 
-                                metadataHighlightValues.innerHTML = `Data QA/QC Up Until: <strong>${datmanEndDate[1]}-${datmanEndDate[2]}-${datmanEndDate[0]}</strong>`;
+                                let startPaintingDate = `${datmanEndDate[1]}-${datmanEndDate[2]}-${datmanEndDate[0]}`;
+                                metadataHighlightValues.innerHTML = `Data QA/QC Up Until: <strong>${startPaintingDate}</strong>`;
                             }
                         });
                     }
@@ -1722,6 +1821,17 @@ function initialize(data) {
             formattedData.forEach(element => {
                 globalFormattedData.push(element);
             });
+
+            if (hourlyCheckbox.checked){
+                let startPaintingDate = `${metadataHighlightValues.innerHTML.toString().split('<strong>')[1].split('</strong>')[0]} 00:00`;
+                //Get row to start painting
+                globalFormattedData.forEach((element, index) => {
+                    if (element.date === startPaintingDate){
+                        paintRow = index;
+                    }
+                })
+            }
+            
 
             // 500 Rows Max
             createFirstRows(tableTBody, globalFormattedData);
@@ -1769,6 +1879,30 @@ function initialize(data) {
             tableResultsDiv.classList.add('show');
             loadingDiv.classList.remove('show');
 
+            // Create tooltip for missing values
+            let word = document.getElementById("missing-number");
+
+            // Create tooltip element
+            if (word !== null){
+                word.addEventListener('click', function() {
+                    if (haveClass(missingDateWindow, 'hidden')){
+                        missingDateWindow.classList.remove('hidden')
+                    }
+                });
+            }
+
+            if (actualMissingDates.length > 0){
+                missingDateTableBody.innerHTML = "";
+                actualMissingDates.forEach(element => {
+                    let newRow = document.createElement('tr');
+                    newRow.innerHTML = `<td>${element}</td>`
+
+                    missingDateTableBody.append(newRow)
+                })
+            }
+
+
+
         }, function(){
             errorMessageDiv.classList.add('show');
             loadingDiv.classList.remove('show');
@@ -1777,6 +1911,17 @@ function initialize(data) {
 
     getBasinDataBtn.addEventListener('click', getAllBasinGages);
 
+}
+
+// Check is an element have a specific class
+function haveClass(element, classString) {
+    let result = false;
+    element.classList.forEach(item => {
+        if (item === classString){
+            result = true;
+        }
+    });
+    return result
 }
 
 function scrollFunction(){
@@ -1792,7 +1937,7 @@ function scrollFunction(){
 
 function disableButtons() {
 
-    let elementList = [basinName, gageName, beginDate, endDate, getDataBtn, getBasinDataBtn, dailyCheckbox, hourlyCheckbox, darkModeCheckbox];
+    let elementList = [basinName, gageName, beginDate, endDate, getDataBtn, dailyCheckbox, hourlyCheckbox, darkModeCheckbox];
     elementList.forEach(element => {
         if (!element.disabled) {
             element.disabled = true;
@@ -1868,11 +2013,16 @@ function findMissingDates(dates) {
 }
 
 function createFirstRows(tableBody, tableData) {
+    let paintStyle = "color:red; font-weight:bold;";
 
     if (tableData.length > 500) {
         // There is more than 500 values
         for(let i = 0; i < 500; i++){
             let newRow = document.createElement('tr');
+
+            if (i >= paintRow){
+                newRow.style = paintStyle;
+            }
 
             let tableValue = tableData[i].value === null ? "--" : tableData[i].value.toFixed(2);
 
@@ -1886,6 +2036,10 @@ function createFirstRows(tableBody, tableData) {
         // There is less than 500 values
         for(let i = 0; i < tableData.length; i++){
             let newRow = document.createElement('tr');
+
+            if (i >= paintRow){
+                newRow.style = paintStyle;
+            }
 
             let tableValue = tableData[i].value === null ? "--" : tableData[i].value.toFixed(2);
 
@@ -1901,6 +2055,7 @@ function createFirstRows(tableBody, tableData) {
 function appendToTable(tableBody, tableData) {
     // Get the amount of data already on the table
     let currentRows = dataTable.children[1].children.length;
+    let paintStyle = "color:red; font-weight:bold;";
 
     // Check if the remaining data is greater than 10
     if (currentRows < tableData.length){
@@ -1911,12 +2066,17 @@ function appendToTable(tableBody, tableData) {
             for(let i = 0; i < 10; i++){
                 let newRow = document.createElement('tr');
 
-                let tableValue = tableData[currentRows + i].value === null ? "--" : tableData[i].value.toFixed(2);
+                if (currentRows >= paintRow){
+                    newRow.style = paintStyle;
+                }
+
+                let tableValue = tableData[currentRows + i].value === null ? "--" : tableData[currentRows + i].value.toFixed(2);
 
                 newRow.innerHTML = `<td>${tableData[currentRows + i].date}</td>
                 <td>${tableValue}</td>
                 <td>${tableData[currentRows + i].qualityCode}</td>`;
                 tableBody.append(newRow);
+
             }
     
         } else {
@@ -1924,7 +2084,11 @@ function appendToTable(tableBody, tableData) {
             // Add one by one if the remining data is less than 10
             let newRow = document.createElement('tr');
 
-            let tableValue = tableData[currentRows + i].value === null ? "--" : tableData[i].value.toFixed(2);
+            if (currentRows >= paintRow){
+                newRow.style = paintStyle;
+            }
+
+            let tableValue = tableData[currentRows + i].value === null ? "--" : tableData[currentRows + i].value.toFixed(2);
 
             newRow.innerHTML = `<td>${tableData[currentRows].date}</td>
             <td>${tableValue}</td>
@@ -2143,11 +2307,11 @@ async function exportTableToExcelV2() {
     infoRows.push([`${metadataPeriodOfRecord.textContent}`]);
 
     if (metadataMissingDates.textContent !== "Missing Dates: NA"){
-        let missingDateText = metadataMissingDates.innerHTML.toString().split('<strong>').join('').split('</strong>').join('');
-        let missingDateNumber = missingDateText.split('<br>')[0];
-        let missingDateMessage = missingDateText.split('<br>')[1];
+        let missingDateText = metadataMissingDates.innerHTML.toString()
+        let missingDateNumber = missingDateText.split('<strong>')[1].split('</strong>')[0];
+        let missingDateMessage = missingDateText.split('<br>')[1].split('<strong>').join('').split('</strong>').join('');
 
-        infoRows.push([`${missingDateNumber}`]);
+        infoRows.push([`Missing Dates: ${missingDateNumber}`]);
         infoRows.push([`${missingDateMessage}`]);
     } else {
         infoRows.push(["Missing Dates: NA"]);
@@ -2258,6 +2422,43 @@ async function exportTableToExcelV2() {
         }
     });
 
+    // If it's hourly highlight text
+    if (hourlyCheckbox.checked){
+        let tempValue = worksheet.getCell(`A${infoRows.length - 2}`).value;
+        let firstDate = `${tempValue.split(':')[1].trim()} 00:00`;
+        let firstPaintRow = null;
+
+        worksheet.getCell(`A${infoRows.length - 2}`).value = {
+            richText: [
+                {text: `${tempValue.split(':')[0]}: `},
+                {
+                    text: `${tempValue.split(':')[1]}`,
+                    font: {
+                        bold: true,
+                        color: { argb: 'FF0000 '},
+                        size: 16
+                    }
+                }
+            ]
+        }
+
+        worksheet.eachRow((row, rowNumber) => {
+            let currentCell = String(row.getCell(1).value).trim();
+            if (currentCell === firstDate){
+                firstPaintRow = rowNumber;
+            }
+        });
+
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber >= firstPaintRow && firstPaintRow !== null){
+                row.getCell(1).font = { color: {argb: "FF0000"} };
+                row.getCell(2).font = { color: {argb: "FF0000"} };
+                row.getCell(3).font = { color: {argb: "FF0000"} };
+            }
+        });
+
+    }
+
     const buffer = await workbook.xlsx.writeBuffer();
     saveAs(new Blob([buffer]), `${filename}.xlsx`);
 }
@@ -2295,7 +2496,7 @@ function exportTableToJSON() {
         datum: metadataDatum88.textContent,
         recordTime: metadataRecordedTime.textContent !== "" ? metadataRecordedTime.textContent : null,
         periodOfRecord: metadataPeriodOfRecord.textContent,
-        missingDates: metadataMissingDates.innerHTML === "Missing Dates: NA" ? null : metadataMissingDates.innerHTML.toString().split('<strong>').join('').split('</strong>').join('').split('<br>')[0],
+        missingDates: metadataMissingDates.innerHTML === "Missing Dates: NA" ? null : metadataMissingDates.innerHTML.toString().split('<br>')[0].split('<strong>').join('').split('</strong>').join(''),
         disclamer: disclamerText
     };
 
@@ -2496,7 +2697,7 @@ async function getAllBasinGages(){
 
     console.log("Getting all gages data, please wait...");
     
-    let waitTime = 10000;
+    let waitTime = 15000;
 
     await sleep(waitTime);
 
@@ -2564,6 +2765,10 @@ async function createExcelSheet(){
     const workbook = new ExcelJS.Workbook();
 
     globalGageList.forEach(currentGage => {
+
+        if (!currentGage){
+            return
+        }
 
         const worksheet = workbook.addWorksheet(`${currentGage.name}`);
 
@@ -2744,6 +2949,43 @@ async function createExcelSheet(){
                 row.getCell(2).numFmt = "0.00";
             }
         });
+
+        // If it's hourly highlight text
+        if (hourlyCheckbox.checked){
+            let tempValue = worksheet.getCell(`A${infoRows.length - 2}`).value;
+            let firstDate = `${tempValue.split(':')[1].trim()} 00:00`;
+            let firstPaintRow = null;
+    
+            worksheet.getCell(`A${infoRows.length - 2}`).value = {
+                richText: [
+                    {text: `${tempValue.split(':')[0]}: `},
+                    {
+                        text: `${tempValue.split(':')[1]}`,
+                        font: {
+                            bold: true,
+                            color: { argb: 'FF0000 '},
+                            size: 16
+                        }
+                    }
+                ]
+            }
+
+            worksheet.eachRow((row, rowNumber) => {
+                let currentCell = String(row.getCell(1).value).trim();
+                if (currentCell === firstDate){
+                    firstPaintRow = rowNumber;
+                }
+            });
+
+            worksheet.eachRow((row, rowNumber) => {
+                if (rowNumber >= firstPaintRow && firstPaintRow !== null){
+                    row.getCell(1).font = { color: {argb: "FF0000"} };
+                    row.getCell(2).font = { color: {argb: "FF0000"} };
+                    row.getCell(3).font = { color: {argb: "FF0000"} };
+                }
+            });
+
+        }
     
     });
 
@@ -2886,6 +3128,15 @@ function createJSONFile(){
 
     loadingDiv.classList.remove('show');
 
+}
+
+function daysBetween(date1, date2) {
+    // Convert both dates to milliseconds
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const diffInMs = Math.abs(new Date(date2) - new Date(date1)); // YYYY-MM-DD
+    
+    // Convert milliseconds to days
+    return Math.floor(diffInMs / msPerDay);
 }
 
 function openOutlookMail() {
