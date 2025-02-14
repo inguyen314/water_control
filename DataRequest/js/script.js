@@ -1278,6 +1278,7 @@ function initialize(data) {
         }
 
         metadataDiv.classList.remove('show');
+        tableResultsDiv.classList.remove('show');
     });
 
     hourlyCheckbox.addEventListener('click', function() {
@@ -1286,6 +1287,7 @@ function initialize(data) {
         }
 
         metadataDiv.classList.remove('show');
+        tableResultsDiv.classList.remove('show');
     });
 
     missingDateWindowCloseBtn.addEventListener('click', function() {
@@ -1313,6 +1315,11 @@ function initialize(data) {
     dailyCheckbox.addEventListener('click', function() {
         if (hourlyCheckbox.checked) {
             hourlyCheckbox.checked = false;
+            getExcelBtn.disabled = true;
+            getJSONBtn.disabled = true;
+            basinExcelBtn.disabled = true;
+            basinJSONBtn.disabled = true;
+            importantMessageDiv.classList.remove('show');
         }
         addGageNames(namesObject);
 
@@ -1340,6 +1347,11 @@ function initialize(data) {
     hourlyCheckbox.addEventListener('click', function() {
         if (dailyCheckbox.checked) {
             dailyCheckbox.checked = false;
+            getExcelBtn.disabled = true;
+            getJSONBtn.disabled = true;
+            basinExcelBtn.disabled = true;
+            basinJSONBtn.disabled = true;
+            importantMessageDiv.classList.remove('show');
         }
         addGageNames(namesObject);
 
@@ -1551,6 +1563,9 @@ function initialize(data) {
 
             isProjectText.textContent = "";
         }
+
+        getExcelBtn.disabled = true;
+        getJSONBtn.disabled = true;
 
     });
 
@@ -1808,8 +1823,8 @@ function initialize(data) {
                                 let datmanEndDate = gage['extents-data']['datman'][0]['lastUpdate'].split('T')[0].split('-');
                                 let hourlyEndDate = gage['extents-data']['datman'][1]['lastUpdate'].split('T')[0].split('-');
 
-                                let startPaintingDate = `${datmanEndDate[1]}-${datmanEndDate[2]}-${datmanEndDate[0]}`;
-                                metadataHighlightValues.innerHTML = `Data QA/QC Up Until: <strong>${startPaintingDate}</strong>`;
+                                let QAQCDate = `${datmanEndDate[1]}-${datmanEndDate[2]}-${datmanEndDate[0]}`;
+                                metadataHighlightValues.innerHTML = `Data QA/QC Up Until: <strong>${QAQCDate}</strong>`;
                             }
                         });
                     }
@@ -1827,7 +1842,19 @@ function initialize(data) {
             });
 
             if (hourlyCheckbox.checked){
-                let startPaintingDate = `${metadataHighlightValues.innerHTML.toString().split('<strong>')[1].split('</strong>')[0]} 00:00`;
+                let startPaintingDay = parseInt(metadataHighlightValues.innerHTML.toString().split('<strong>')[1].split('</strong>')[0].split('-')[1]);
+                let startPaintingMonth = parseInt(metadataHighlightValues.innerHTML.toString().split('<strong>')[1].split('</strong>')[0].split('-')[0]);
+                let startPaintingYear = parseInt(metadataHighlightValues.innerHTML.toString().split('<strong>')[1].split('</strong>')[0].split('-')[2]);
+
+                let dateFormatted = new Date(startPaintingYear, startPaintingMonth - 1, startPaintingDay);
+                dateFormatted.setDate(dateFormatted.getDate() + 1);
+
+                let newMonth = String(dateFormatted.getMonth() + 1).padStart(2, "0");
+                let newDay = String(dateFormatted.getDate()).padStart(2, "0");
+                let newYear = dateFormatted.getFullYear();
+
+                let startPaintingDate = `${newMonth}-${newDay}-${newYear} 00:00`;
+                console.log("Paint Date: ", startPaintingDate);
                 //Get row to start painting
                 globalFormattedData.forEach((element, index) => {
                     if (element.date === startPaintingDate){
@@ -2429,7 +2456,8 @@ async function exportTableToExcelV2() {
     // If it's hourly highlight text
     if (hourlyCheckbox.checked){
         let tempValue = worksheet.getCell(`A${infoRows.length - 2}`).value;
-        let firstDate = `${tempValue.split(':')[1].trim()} 00:00`;
+        let firstDate = `${tempValue.split(':')[1].trim()}`;
+        let nextDay = `${addOneDayToDate(firstDate)} 00:00`;
         let firstPaintRow = null;
 
         worksheet.getCell(`A${infoRows.length - 2}`).value = {
@@ -2448,7 +2476,7 @@ async function exportTableToExcelV2() {
 
         worksheet.eachRow((row, rowNumber) => {
             let currentCell = String(row.getCell(1).value).trim();
-            if (currentCell === firstDate){
+            if (currentCell === nextDay){
                 firstPaintRow = rowNumber;
             }
         });
@@ -2957,7 +2985,8 @@ async function createExcelSheet(){
         // If it's hourly highlight text
         if (hourlyCheckbox.checked){
             let tempValue = worksheet.getCell(`A${infoRows.length - 2}`).value;
-            let firstDate = `${tempValue.split(':')[1].trim()} 00:00`;
+            let firstDate = `${tempValue.split(':')[1].trim()}`;
+            let nextDay = `${addOneDayToDate(firstDate)} 00:00`
             let firstPaintRow = null;
     
             worksheet.getCell(`A${infoRows.length - 2}`).value = {
@@ -2976,7 +3005,7 @@ async function createExcelSheet(){
 
             worksheet.eachRow((row, rowNumber) => {
                 let currentCell = String(row.getCell(1).value).trim();
-                if (currentCell === firstDate){
+                if (currentCell === nextDay){
                     firstPaintRow = rowNumber;
                 }
             });
@@ -3134,13 +3163,19 @@ function createJSONFile(){
 
 }
 
-function daysBetween(date1, date2) {
-    // Convert both dates to milliseconds
-    const msPerDay = 1000 * 60 * 60 * 24;
-    const diffInMs = Math.abs(new Date(date2) - new Date(date1)); // YYYY-MM-DD
-    
-    // Convert milliseconds to days
-    return Math.floor(diffInMs / msPerDay);
+function addOneDayToDate(date) {
+    let startDay = parseInt(date.split('-')[1]);
+    let startMonth = parseInt(date.split('-')[0]);
+    let startYear = parseInt(date.split('-')[2]);
+
+    let dateFormatted = new Date(startYear, startMonth - 1, startDay);
+    dateFormatted.setDate(dateFormatted.getDate() + 1);
+
+    let newMonth = String(dateFormatted.getMonth() + 1).padStart(2, "0");
+    let newDay = String(dateFormatted.getDate()).padStart(2, "0");
+    let newYear = dateFormatted.getFullYear();
+
+    return `${newMonth}-${newDay}-${newYear}`;
 }
 
 function openOutlookMail() {

@@ -149,7 +149,7 @@ table th, table td {
 }
 
 .results .metadata-highlight-values strong{
-    color: red;
+    color: var(--color-qaqc-text);
     font-size: 1.2em;
 }
 
