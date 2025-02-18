@@ -236,6 +236,29 @@ function processData(data) {
   let above0_5Event = getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, 0.5);
   let above1_0Event = getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, 1.0);
 
+  let above0_5LinePlot = [];
+  let above1_0LinePlot = [];
+
+  console.log( { above0_5Event, above1_0Event } );
+
+  above0_5Event.forEach((element) => {
+
+    above0_5LinePlot.push({
+      y: upperLimit + 0.5,
+      x: element.date
+    })
+
+  });
+
+  above1_0Event.forEach((element) => {
+    
+    above1_0LinePlot.push({
+      y: upperLimit + 1.0,
+      x: element.date
+    })
+
+  });
+
   let tableHeader = ["Event", "Duration", "Start Date", "End Date"];
   let tableRows = [];
   
@@ -297,9 +320,12 @@ function processData(data) {
 
   let chartYaxisLabel = yAxisLabel.value !== "" ? yAxisLabel.value : "Elevation[ft]";
 
+  console.log( { event0_5plot: event0_5plot } );
+  console.log( { above0_5LinePlot: above0_5LinePlot } );
+
   createChart(yAxisTitle=chartYaxisLabel, title=newTitle, xAxisArray=dateList, yAxisArray=stageList,
     upperLimitSerie=upperList, lowerLimitSerie=lowerList, plot0_5=event0_5plot, plot1_0=event1_0plot, 
-    plot1_5=event1_5plot, plot2_0=event2_0plot, plotAbove0_5=above0_5Event, plotAbove1_0=above1_0Event
+    plot1_5=event1_5plot, plot2_0=event2_0plot, plotAbove0_5=above0_5LinePlot, plotAbove1_0=above1_0LinePlot
   );
 
   let userData = {
@@ -361,22 +387,39 @@ function getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, eventF
   let aboveValues = [];
 
   let startCounting = false;
+  let startCountIndex = 0;
+  let previousIndex = null;
   for (let i = 0; i < stageList.length; i++){
     let tempStage = stageList[i];
     let eventElevation = eventFeet + upperLimit;
     let tempDate = dateList[i];
 
-    console.log("TempDate, endDateForEvents", [tempDate, endDateForEvents]);
+    if (startCounting) {
+      startCountIndex += 1;
+    }
 
     if (tempDate === endDateForEvents){
       startCounting = true;
     };
 
     if (startCounting && tempStage > eventElevation){
+      previousIndex = i;
+    }
+
+    if (startCounting && tempStage > eventElevation && previousIndex - i < 2){
+
       aboveValues.push({
         stage: tempStage,
-        date: tempDate
+        date: i
       });
+
+    } else if (startCounting && startCountIndex > 0) {
+
+      aboveValues.push({
+        stage: null,
+        date: null
+      });
+
     };
 
   };
@@ -475,6 +518,22 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
   let minLimit = Math.min(...limitsList.limits);
   let graphIntervals = parseFloat(limitsList.interval);
 
+  // Count the events above 0.5ft and 1.0ft
+  let plotAbove0_5Count = 0;
+  let plotAbove1_0Count = 0;
+
+  plotAbove0_5.forEach((element) => {
+    if (element.x !== null){
+      plotAbove0_5Count += 1;
+    }
+  });
+
+  plotAbove1_0.forEach((element) => {
+    if (element.x !== null){
+      plotAbove1_0Count += 1;
+    }
+  });
+
   // Initial series data
   const series = [
     {
@@ -535,24 +594,26 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: '0.5 ft ' + '[' + plotAbove0_5.length + "]",
-      data: [null],
-      color: '#000000',
+      name: '0.5 ft ' + '[' + plotAbove0_5Count + "]",
+      data: plotAbove0_5,
+      color: '#DD00FA',
       marker: {
         enabled: false // Disable markers for this series
       },
       showInLegend: true,
-      legendSymbol: 'none'
+      //connectNulls: false,
+      //legendSymbol: 'none'
     },
     {
-      name: '1.0 ft ' + '[' + plotAbove1_0.length + "]",
-      data: [null],
-      color: '#000000',
+      name: '1.0 ft ' + '[' + plotAbove1_0Count + "]",
+      data: plotAbove1_0,
+      color: '#0091FF',
       marker: {
         enabled: false // Disable markers for this series
       },
       showInLegend: true,
-      legendSymbol: 'none'
+      //connectNulls: false,
+      //legendSymbol: 'none'
     }
   ];
 

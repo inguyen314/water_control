@@ -549,6 +549,28 @@
     color: var(--loader-font-color);
 }
 
+/* =========== PRINT BTN ============*/
+#print-btn-div.hidden {
+    display: none;
+}
+
+#print-btn-div {
+    padding: 1em 8em 0em 1em;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#print-btn {
+    width: 5em;
+    height: 2em;
+    border-radius: 0.75em;
+    font-size: 1em;
+    font-weight: bold;
+    background-color: var(--background-color-2);
+    color: #fff;
+    cursor: pointer;
+}
+
 /* =========== TIME SERIE ===========*/
 #time-serie-name-div.hidden {
     display: none;

@@ -80,7 +80,9 @@ const basinName = document.getElementById('basinCombobox'),
       errorMessageDiv = document.getElementById('error-message'),
       errorMessageText = document.querySelector('#error-message h2'),
       timeSerieDiv = document.getElementById('time-serie-name-div'),
-      timeSerieText = document.querySelector('#time-serie-name-div h2');
+      timeSerieText = document.querySelector('#time-serie-name-div h2'),
+      printBtnDiv = document.getElementById('print-btn-div'),
+      printBtn= document.getElementById('print-btn');
 
 
 let params = new URLSearchParams(window.location.search);
@@ -111,24 +113,14 @@ function initialize(data) {
         document.getElementById('page-container').classList.toggle('dark');
     });
 
+    // Add print Function
+    printBtn.addEventListener('click', printPlot);
+
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);
 
     // Add the basins names to the basin combobox
     addBasinNames(basinName, namesObject);
-
-    // Add data to the gage combobox at the beggining of the code
-    // gageName.options.length = 0;
-    // namesObject.forEach(element => {
-    //     if (element['basin'] === basinName.value) {
-    //         element['datman'].forEach(item => {
-    //             let option = document.createElement('option');
-    //             option.value = item;
-    //             option.textContent = item.split('.')[0];
-    //             gageName.appendChild(option);
-    //         });
-    //     }
-    // });
 
     instructionsBtn.addEventListener('click', function(){
         instructionsDiv.classList.toggle('hidden');
@@ -138,6 +130,10 @@ function initialize(data) {
     basinName.addEventListener('change', function() {
 
         plotCSHBtn.disabled = true;
+
+        if (!haveClass(printBtnDiv, 'hidden')){
+            printBtnDiv.classList.add('hidden')
+        }
 
         if (!haveClass(timeSerieDiv, 'hidden')){
             timeSerieDiv.classList.add('hidden')
@@ -220,6 +216,10 @@ function initialize(data) {
 
         plotCSHBtn.disabled = true;
 
+        if (!haveClass(printBtnDiv, 'hidden')){
+            printBtnDiv.classList.add('hidden')
+        }
+
         if (!haveClass(timeSerieDiv, 'hidden')){
             timeSerieDiv.classList.add('hidden')
         }
@@ -275,6 +275,8 @@ function initialize(data) {
         year6SelectBox.selectedIndex = 0;
 
         statisticMeanCheckbox.checked = false;
+
+        populateDropdownList();
 
     });
 
@@ -602,6 +604,8 @@ async function main(data) {
     createPlot(plotData, gageName.value, minValue + offset, maxValue + offset);
 
     plotDiv.classList.remove('hidden');
+
+    printBtnDiv.classList.remove('hidden');
 
     timeSerieText.textContent = `Time Serie: ${globalDatman}`;
 
@@ -1223,45 +1227,6 @@ function extractMinMaxforMonths(allData){
 
 } 
 
-// Get Min and Max for the months
-function getMinMaxForMonths(data) {
-    let monthsData = [];
-
-    for (let i = 1; i < 13; i++){
-        let monthMax = -999;
-        let monthMin = 999;
-
-        data.forEach(element => {
-            let elementMonth = parseInt(element.date.split('-')[0]);
-
-            if (elementMonth === i){
-                if (element.stage > monthMax){
-                    monthMax = element.stage;
-                } else if (element.stage < monthMin && element.stage !== 0){
-                    monthMin = element.stage;
-                }
-            }
-        });
-
-        if (monthMax === -999){
-            monthMax = NaN;
-        }
-
-        if (monthMin === 999){
-            monthMin = NaN;
-        }
-
-        monthsData.push({
-            month: i,
-            max: monthMax,
-            min: monthMin
-        });
-    };
-
-    return monthsData
-
-}
-
 // Open the settings window
 function activateSettingWindow() {
     if (haveClass(settingsDiv, 'hidden')){
@@ -1367,11 +1332,6 @@ function isGageProject(data) {
     }
 }
 
-// Wait function
-async function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 // Disable and enable every input
 function inputsDisableAndEnable() {
 
@@ -1420,10 +1380,16 @@ function updateAvailablePORTable(data) {
 function populateDropdownList() {
     let dropdownElement = [year1SelectBox, year2SelectBox, year3SelectBox, year4SelectBox, year5SelectBox, year6SelectBox];
     let currentyear = new Date().getFullYear();
-    let lasetYear = 1950;
+    let earliestYear = PORBeginDate.textContent.split('/')[2];
+
+    console.log({earliestYear});
+
+    dropdownElement.forEach((element) => {
+        element.innerHTML = "";
+    });
 
     dropdownElement.forEach(element => {
-        for (let i = currentyear; i > lasetYear; i--){
+        for (let i = currentyear; i >= earliestYear; i--){
             let option = document.createElement('option');
             option.value = i;
             option.text = i;
@@ -1542,6 +1508,15 @@ function noStatsCheckboxChecked() {
         statisticDiv.classList.add("hidden");
     }
 }
+
+function printPlot() {
+    Plotly.toImage('plot', { format: 'png', width: 1080, height: 720 })
+      .then(function(imgData) {
+        var newWin = window.open('');
+        newWin.document.write('<img src="' + imgData + '" onload="window.print(); window.close();" />');
+        newWin.document.close();
+      });
+  }
 
 document.addEventListener('DOMContentLoaded', async function () {
 
