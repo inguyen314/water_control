@@ -1,0 +1,592 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100&display=swap');
+
+/* *{
+    font-family: "Poppins", sans-serif;
+} */
+
+:root 
+{
+    --background-body: #fff;
+    --background-color-1: darkblue;
+    --background-color-2: darkblue;
+    --background-color-3: #fff;
+    --border-color-1: #191919;
+    --border-color-2: #C6C6C6;
+    --background-info-table: #EDEDED;
+    --color-active: #74b3ff;
+    --body-width: 100%;
+    --body-width-before: 1074px; /* body width - 6px */
+    --shadow-box: 0px 5px 5px rgba(0, 0, 0, 0.2);
+    --font-color-1: #FFFFFF;
+    --font-color-2: #000;
+    --checkbox-border-color: #000;
+
+    --datrep-header-color: rgb(52, 58, 64);
+    --datrep-body-color: rgb(248, 249, 250);
+    --datrep-body-odd-color: rgb(233, 236, 239);
+    --loader-font-color: rgb(51, 51, 51);
+    --error-message: rgb(255, 155, 155);
+}
+
+.page-content.blur {
+    filter: blur(20px);
+    pointer-events: none;
+}
+
+#content-body {
+    width: var(--body-width);
+    margin: auto;
+    font-size: 14px;
+    background: var(--background-body);
+    color: var(--font-color-2);
+}
+
+#content-body.dark {
+    --background-body: #525252;
+    --background-color-1: #191919;
+    --background-color-2: #000;
+    --background-color-3: #5f5f5f;
+    --border-color-1: #fff;
+    --border-color-2: #000;
+    --background-info-table: #000;
+    --color-active: #2276d6;
+    --body-width: 100%;
+    --body-width-before: 1074px; /* body width - 6px */
+    --shadow-box: 0px 5px 5px rgba(255, 255, 255, 0.2);
+    --font-color-1: #fff;
+    --font-color-2: #fff;
+    --checkbox-border-color: #fff;
+
+    --datrep-header-color: rgb(24, 27, 30);
+    --datrep-body-color: rgb(160, 161, 163);
+    --datrep-body-odd-color: rgb(107, 108, 109);
+    --loader-font-color: rgb(172, 172, 172);
+    --error-message: rgb(255, 50, 50);
+}
+
+.header {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    grid-template-areas: 
+    "title button";
+    background: var(--background-color-2);
+    box-shadow: var(--shadow-box);
+    margin: 3px;
+    padding-right: 100px;
+}
+
+.header h1 {
+    display: none;
+    grid-area: title;
+    font-size: 26px;
+    font-weight: bolder;
+    color: var(--font-color-2);
+    margin: 15px 0px 15px 340px;
+}
+
+.header label {
+    position: relative;
+    grid-area: button;
+    margin: 10px 0px 10px 150px;
+    width: 50px;
+    height: 25px;
+    background: #fff;
+    box-shadow: 0 0 0 2px var(--checkbox-border-color);
+    border-radius: 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header label input {
+    appearance: none;
+}
+
+.header label b {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    border-radius: 15px;
+    transition: 0.5s;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.header label input:checked ~ b {
+    background: #2276d6;
+}
+
+.header label span {
+    z-index: 10;
+    position: absolute;
+    background: var(--checkbox-border-color);
+    width: 23px;
+    height: 23px;
+    top: 1px;
+    left: 1px;
+    border-radius: 50%;
+    transition: 0.5s;
+}
+
+.header label input:checked ~ span {
+    transform: translateX(25px);
+    transition: 0.5s;
+}
+
+.header label h4 {
+    position: absolute;
+    left: 60px;
+    text-wrap: nowrap;
+    color: #fff;    
+    font-size: 12px;
+}
+
+.container .input-container {
+    position: relative;
+    background-color: var(--background-color-3);
+    margin: 0px 3px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 15px 10px;
+}
+
+.container .input-container::before {
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 10px;
+    background-color: var(--background-color-2);
+
+}
+
+.container .data-info .basin,.gage,.data-type {
+    display: flex;
+    padding: 5px;
+    font-weight: bold;
+}
+
+.container .data-info .gage label{
+    padding-right: 3px;
+}
+
+.container .data-info select{
+    margin-left: 10px;
+    width: 315px;
+    cursor: pointer; 
+}
+
+.container .time-info {
+    display: flex;
+    justify-content: center;
+}
+
+.container .select-time {
+    display: flex;
+    justify-content: center;
+}
+
+.container #info-table {
+    background-color: var(--background-info-table);
+    padding: 5px 5px;
+    border: 2px solid var(--border-color-1);
+}
+
+.container #info-table th,#info-table td {
+    padding: 0px 20px;
+    border: 1px solid var(--border-color-1);
+}
+
+.container #info-table tbody tr:nth-child(1) {
+    font-style: italic;
+    font-weight: bolder;
+}
+
+.container #input-table {
+    background-color: var(--background-color-3);
+    border: 2px solid var(--background-color-1);
+    padding: 5px 5px;
+}
+
+.container #input-table tbody tr:nth-child(1){
+    font-style: italic;
+    font-weight: bolder;
+}
+
+.container #input-table th,#input-table td {
+    padding: 2px 10px;
+    border: 1px solid var(--border-color-2);
+}
+
+.container #input-table tbody tr:nth-child(1) td:nth-child(-n+2) {
+    padding: 0px 20px;
+}
+
+.container #input-table tbody tr:nth-child(2) td:nth-child(-n+2) {
+    background-color: var(--background-info-table);
+}
+
+.container #input-table input {
+    padding-left: 5px;
+    border: 1px solid var(--background-color-2);
+    border-radius: 5px;
+}
+
+.container #input-table select {
+    margin-left: 25px;
+    border: 1px solid var(--background-color-2);
+    border-radius: 5px;
+}
+
+.container .input-container{
+    position: relative;
+}
+
+.container .separator.hidden {
+    display: none;
+}
+
+.container .separator {
+    position: relative;
+    background-color: var(--background-color-2);
+    width: 100%;
+    height: 1em;
+}
+
+/* ======= SETTINGS DIV ===========*/
+
+#settings-div.hidden {
+    display: none;
+}
+
+#settings-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: auto;
+    margin-top: 1em;
+    box-shadow: var(--shadow-box);
+}
+
+/* ======== SET TITLE FONT ==========*/
+#settings-div .input-checkbox h3,
+#settings-div .select-data-plot h3,
+#settings-div .statistic-plot-control h3 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 1em;
+    color: var(--font-color-2);
+}
+ /* ======== CHECKBOX =========*/
+#settings-div .input-checkbox {
+    background-color: var(--background-color-3);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 1.5em;
+    gap: 5px;
+    font-weight: bold;
+}
+
+#settings-div .input-checkbox div {
+    display: flex;
+    gap: 1em;
+}
+
+#settings-div .input-checkbox input {
+    cursor: pointer;
+}
+
+#settings-div .input-checkbox input:checked {
+    accent-color: var(--color-active);
+}
+
+/* ======== SELECT YEARS =========*/
+#settings-div .select-data-plot.hidden {
+    display: none;
+}
+
+#settings-div .select-data-plot {
+    background-color: var(--background-color-3);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 1.5em;
+    gap: 5px;
+    font-weight: bold;
+}
+
+#settings-div .select-data-plot div {
+    display: flex;
+    gap: 1em;
+}  
+
+/* =========== PLOT CONTROL ==============*/
+#settings-div .statistic-plot-control.hidden {
+    display: none;
+}
+
+#settings-div .statistic-plot-control {
+    background-color: var(--background-color-3);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 1.5em;
+    gap: 5px;
+    font-weight: bold;
+}
+
+#settings-div .statistic-plot-control div {
+    display: flex;
+    gap: 1em;
+}
+
+/* ========== OTHER CHECKBOX =============*/
+#settings-div .select-data-plot input {
+    cursor: pointer;
+}
+
+#settings-div .statistic-plot-control input {
+    cursor: pointer;
+}
+
+/* =============== BUTTONS ===============*/
+#buttons-div {
+    margin-top: 1em;
+    position: relative;
+    background: var(--background-color-2);
+    width: 100%;
+    height: 3em;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    padding: 0 1em;
+    box-shadow: var(--shadow-box);
+}
+
+#instruction-btn {
+    position: absolute;
+    left: 1em;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#buttons-div button {
+    width: 7em;
+    height: 2em;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 0.5em;
+    font-size: 1em;
+}
+
+#buttons-div button:hover {
+    font-weight: bold;
+    color: #fff;
+    background: rgb(142, 142, 255);
+    padding-top: 0.2em;
+}
+
+/* =========== SUB-SEPARATOR =============*/
+#settings-div .sub-separator.hidden {
+    display: none;
+}
+
+#settings-div .sub-separator {
+    display: block;
+    width: 98%;
+    height: 3px;
+    background-color: gray;
+}
+
+/* ========= SPACE BETWEEN ================*/
+
+#settings-div .space-between {
+    width: 100%;
+    height: 2em;
+}
+
+/* =============== PLOT ==================*/
+#plot.hidden {
+    display: none;
+}
+
+#plot {
+    margin-top: 1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: auto;
+} 
+
+/* ========= Messages Text ==============*/
+#flood-stage-text strong,
+#lwrp-text strong {
+    font-weight: bold;
+    color: red;
+}
+
+/* ======= STYLE COLOR PICKED ===========*/
+#lwrp-color {
+    margin-left: 3em;
+}
+
+#average-color {
+    margin-left: 0em;
+}
+
+#min-max-color {
+    margin-left: 4.6em;
+}
+
+#mean-color {
+    margin-left: 8.3em;
+}
+
+#flood-stage-color.hidden,
+#lwrp-color.hidden {
+    display: none;
+}
+
+/* ========== INSTRUCTIONS ==============*/
+#instructions-div.hidden {
+    display: none;
+}
+
+#instructions-div {
+    margin: 1em 0em;
+    padding: 1em 2em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    font-size: 1em;
+    box-shadow: var(--shadow-box);
+}
+
+#instructions-div .title{
+    font-size: 1.5em;
+    color: var(--font-color-2);
+}
+
+#instructions-div ul li{
+    color: var(--font-color-2);
+    margin-top: 0.5em;
+}
+
+/* ========== ERROR MESSAGE =============*/
+#error-message.hidden {
+    display: none;
+}
+
+#error-message {
+    background-color: var(--error-message);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5em;
+    margin-top: 0.5em;
+    box-shadow: var(--shadow-box);
+}
+
+#error-message h2 {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--font-color-2);
+}
+
+/* ========== LOADING DATA ==============*/
+
+#loading-image {
+    display: none;
+}
+
+#loading-image.show {
+    position: relative;
+    display: flex;
+    height: 400px;
+    width: 100%;
+    margin: 5px;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    background: var(--background-body);
+    box-shadow: 0 5px 30px rgba(0,0,0,0.30);
+}
+
+#loading-image.show .loader {
+    position: absolute;
+    top: 20%;
+    padding: 0;
+    margin: 0;
+}
+
+#loading-image.show .loader .text-string {
+    position: absolute;
+    width: 10em;
+    top: 140%;
+    left: 50%;
+    transform: translateX(-32%);
+    font-size: 1.5em;
+    font-weight: bold;
+    color: rgb(239, 19, 19);
+}
+
+#loading-image.show .loader .text-string b {
+    position: absolute;
+    width: 30em;
+    top: 140%;
+    left: 17%;
+    transform: translateX(-32%);
+    font-size: 0.65em;
+    font-style: italic;
+    color: var(--loader-font-color);
+}
+
+/* =========== PRINT BTN ============*/
+#print-btn-div.hidden {
+    display: none;
+}
+
+#print-btn-div {
+    padding: 1em 8em 0em 1em;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#print-btn {
+    width: 5em;
+    height: 2em;
+    border-radius: 0.75em;
+    font-size: 1em;
+    font-weight: bold;
+    background-color: var(--background-color-2);
+    color: #fff;
+    cursor: pointer;
+}
+
+/* =========== TIME SERIE ===========*/
+#time-serie-name-div.hidden {
+    display: none;
+}
+
+#time-serie-name-div {
+    display: flex;
+    align-items: center;
+    padding-left: 1em;
+    width: 100%;
+    height: 3em;
+    background-color: var(--background-color-2);
+}
+
+#time-serie-name-div h2 {
+    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+}
