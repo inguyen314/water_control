@@ -15,8 +15,8 @@ import {
 
 // Web site app information
 const appMetadata = {
-    name: "CSH - Comparative Stage Hydrograph",
-    description: "An interactive platform for creating a plot with historical data on river gages.",
+    name: "TITLE",
+    description: "PAGE DESCRIPTION",
     author: "U.S. Army Corps of Engineers, St. Louis District",
     version: "1.0",
     contact: {
@@ -307,7 +307,6 @@ async function main(data) {
 
     consoleLog ? console.log("Whole Period Data: ", wholePeriodList) : null;
     consoleLog ? console.log("Total Data: ", totalData) : null;
-
     
     // Change button text
     loadingPageData();

@@ -1,471 +1,14 @@
-import {
-    fetchJsonFile,
-    getNames,
-    addBasinNames,
-    createUrl,
-    formatString,
-    getList,
-    getMeanMinMaxList,
-    haveOneYearOfData,
-    blurBackground,
-    popupMessage,
-    loadingPageData
-} from './functions.js'
-
-
-// Web site app information
-const appMetadata = {
-    name: "CSH - Comparative Stage Hydrograph",
-    description: "An interactive platform for creating a plot with historical data on river gages.",
-    author: "U.S. Army Corps of Engineers, St. Louis District",
-    version: "1.0",
-    contact: {
-        email: "dll-cemvs-water-managers@usace.army.mil",
-        website: "https://www.mvs-wc.usace.army.mil/"
-    }
-}
-
-
-// Const Elements
-const basinName = document.getElementById('basinCombobox'),
-      gageName = document.getElementById('gageCombobox'),
-      beginDate = document.getElementById('begin-input'),
-      endDate = document.getElementById('end-input'),
-      PORBeginDate = document.querySelector('#info-table .por-start'),
-      POREndDate = document.querySelector('#info-table .por-end'),
-      PORCheckbox = document.getElementById('por-checkbox'),
-      userSpecifiedCheckbox = document.getElementById('user-specific-checkbox'),
-      analyzerBtn = document.getElementById('analyzer-btn'),
-      instructionsBtn = document.getElementById('instruction-btn'),
-      darkModeCheckbox = document.querySelector('.header label input'),
-      popupWindowBtn = document.getElementById('popup-button'),
-      isProjectLabel = document.getElementById('is-project'),
-      separatorDiv = document.getElementById('separator-div'),
-      settingDiv = document.querySelector('#settings-div'),
-      subSeparator1 = document.getElementById('sub-separator-1'),
-      subSeparator2 = document.getElementById('sub-separator-2'),
-      instructionsDiv = document.getElementById('instructions-div'),
-      resultsDiv = document.getElementById('results'),
-      errorMessageDiv = document.getElementById('error-message'),
-      errorMessageText = document.querySelector('#error-message h2');
-
-
-let params = new URLSearchParams(window.location.search);
-const officeName = params.get("office") ? params.get("office").toUpperCase() : "MVS";
-const cda = params.get("cda") ? params.get("cda") : "internal";
-const conlog = params.get("log") ? params.get("log") : "false";
-
-const consoleLog = conlog === "true" ? true : false;
-
-// Global Variable
-let globalDatman = null;
-
-
-// Add function to popup window button
-popupWindowBtn.addEventListener('click', blurBackground);
-
-loadingPageData();
-
-/**============= Main functions when data is retrieved ================**/
-// Initilize page
-function initialize(data) {
-
-    consoleLog ? console.log("Initialize Data: ", data) : null;
-
-    // Add dark mode functionality
-    darkModeCheckbox.addEventListener('click', function() {
-        document.getElementById('content-body').classList.toggle('dark');
-        document.getElementById('page-container').classList.toggle('dark');
-    });
-
-    // Add functions to checkbox
-    PORCheckbox.addEventListener('click', PORCheckboxChecked);
-    userSpecifiedCheckbox.addEventListener('click', userSpecifiedCheckboxChecked);
-
-    // Extract the names of the basins with the list of gages
-    let namesObject = getNames(data);
-
-    // Add the basins names to the basin combobox
-    addBasinNames(basinName, namesObject);
-
-    instructionsBtn.addEventListener('click', function(){
-        instructionsDiv.classList.toggle('hidden');
-    });
-
-    // Change the gage values each time the basin value is changed
-    basinName.addEventListener('change', function() {
-
-        analyzerBtn.disabled = true;
-
-        gageName.options.length = 0;
-        namesObject.forEach(element => {
-            if (element['basin'] === basinName.value) {
-                element['datman'].forEach(item => {
-                    let option = document.createElement('option');
-                    option.value = item;
-                    option.textContent = item.split('.')[0];
-                    gageName.appendChild(option);
-                });
-            }
-        });
-
-        // Add empty selections to the dropdown list
-        let selectGageOption = document.createElement('option');
-        selectGageOption.value = "Select Gage";
-        selectGageOption.text = "Select Gage";
-
-        gageName.insertBefore(selectGageOption, gageName.firstChild);
-        gageName.selectedIndex = 0;
-
-        PORBeginDate.textContent = "MM/DD/YYYY";
-        POREndDate.textContent = "MM/DD/YYYY";
-
-        if (!haveClass(settingDiv, 'hidden')){
-            settingDiv.classList.add('hidden');
-        }
-
-        if (!haveClass(separatorDiv, 'hidden')){
-            separatorDiv.classList.add('hidden');
-        }
-
-        PORCheckbox.checked = true;
-        userSpecifiedCheckbox.checked = false;
-
-        // Determine if it's project
-        isGageProject(data);
-
-        updateAvailablePORTable(data);
-
-        beginDate.disabled = true;
-        endDate.disabled = true;
-
-        if (!haveClass(errorMessageDiv, 'hidden')){
-            errorMessageDiv.classList.add('hidden');
-        }
-
-        if (gageName.value === "Select Gage"){
-            PORBeginDate.textContent = "MM/DD/YYYY";
-            POREndDate.textContent = "MM/DD/YYYY";
-        }
-
-    });
-
-    updateAvailablePORTable(data);
-    PORBeginDate.textContent = "MM/DD/YYYY";
-    POREndDate.textContent = "MM/DD/YYYY";
-
-    // Update 'Avaliable POR' table everytime the gage name is changed
-    gageName.addEventListener('change', function(){
-
-        updateAvailablePORTable(data);
-
-        // Determine if it's project
-        isGageProject(data);
-
-        if (!haveClass(errorMessageDiv, 'hidden')){
-            errorMessageDiv.classList.add('hidden');
-        }
-
-        if (gageName.value === "Select Gage"){
-            PORBeginDate.textContent = "MM/DD/YYYY";
-            POREndDate.textContent = "MM/DD/YYYY";
-
-            if (!haveClass(settingDiv, 'hidden')){
-                settingDiv.classList.add('hidden');
-            }
-
-            if (!haveClass(separatorDiv, 'hidden')){
-                separatorDiv.classList.add('hidden');
-            }
-
-            PORCheckbox.checked = true;
-            userSpecifiedCheckbox.checked = false;
-
-            analyzerBtn.disabled = true;
-
-        } else {
-            settingDiv.classList.remove('hidden');
-            separatorDiv.classList.remove('hidden');
-
-            analyzerBtn.disabled = false;
-        }
-
-        beginDate.disabled = true;
-        endDate.disabled = true;
-
-    });
-
-    // Determine if it's project
-    isGageProject(data);
-
-    // Get all data to create the url
-    const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
-    const timeSeries = "/timeseries?";
-    const timeZone = "CST6CDT";
-
-    inputsDisableAndEnable();
-
-    //loadingElement.hidden = true;
-
-    loadingPageData();
-
-    // Add empty selections to the dropdown list
-    let selectBasinOption = document.createElement('option');
-    selectBasinOption.value = "Select Basin";
-    selectBasinOption.text = "Select Basin";
-
-    let selectGageOption = document.createElement('option');
-    selectGageOption.value = "Select Gage";
-    selectGageOption.text = "Select Gage";
-
-    basinName.insertBefore(selectBasinOption, basinName.firstChild);
-    basinName.selectedIndex = 0;
-
-    gageName.append(selectGageOption);
-
-    // HTML button clicked
-    analyzerBtn.addEventListener('click', function() {
-
-        // Verify if the selected period is more than one year.
-        if (haveOneYearOfData(beginDate.value, endDate.value) && beginDate.value < endDate.value) {
-
-            if (!haveClass(errorMessageDiv, 'hidden')){
-                errorMessageDiv.classList.add('hidden');
-            }
-
-            loadingPageData();
-
-            // Get Datman name ID
-            let datmanName;
-            data.forEach(element => {
-                if (element['id'] === basinName.value) {
-                    element['assigned-locations'].forEach(item => {
-                        if (item['location-id'] === gageName.value) {
-                            datmanName = item['extents-data']['datman'][0]['name'];
-                        };
-                    });
-                };
-            });
-            globalDatman = datmanName;
-
-            // Initialize variables
-            let beginValue = formatString("start date", beginDate.value); // YYYY-MM-DD
-            let endValue = formatString('end date', endDate.value); // YYYY-MM-DD
-
-            // Create the URL to get the data
-            let stageUrl = createUrl(domain,timeSeries,datmanName,officeName,beginValue,endValue,timeZone)
-
-            let pageSize = 500000;
-
-            stageUrl = stageUrl + `&page-size=${pageSize}`;
-
-            consoleLog ? console.log(stageUrl) : null;
-
-            fetchJsonFile(stageUrl, function(newData) { 
-
-                // Update Location Info
-                let gageInformation = null;
-                data.forEach(basin => {
-                    if (basin['id'] === basinName.value) {
-                        basin['assigned-locations'].forEach(gage => {
-                            if (gage['location-id'] === gageName.value) {
-                                gageInformation = gage['metadata'];
-                            };
-                        });
-                    };
-                });
-
-                main(newData);
-
-
-            }, function(){
-                popupMessage("error", "There was an error getting the data.<br>Error: '" + error + "'");
-                popupWindowBtn.click();
-            });
-
-        } else {
-
-            popupMessage("error", "There was an error with the time window selected. Make sure the time window is <strong>ONE</strong> year or more, and the ending date is greater than the starting date");
-            popupWindowBtn.click();
-        }
-
-        
-    });   
-    
-}
-
-// Main function
-async function main(data) {
-    
-    let objData = data["values"];
-
-    consoleLog ? console.log({objData}) : null;
-    
-    // Get list with all the years
-    let wholePeriodList = getList(objData);
-    let totalData = getMeanMinMaxList(wholePeriodList);
-
-    consoleLog ? console.log("Whole Period Data: ", wholePeriodList) : null;
-    consoleLog ? console.log("Total Data: ", totalData) : null;
-
-    
-    // Change button text
-    loadingPageData();
-
-}
-
-// Wait for the fetched data
-async function awaitFetchData(url){
-
-    try{
-        let response = await fetch(url);
-        if (!response.ok){
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        let data = await response.json();
-        let target = Math.round(data['constant-value'] * 100) / 100;
-
-        console.log("Data received:", data);
-        console.log("Target Data:", target);
-
-        return target
-    } catch (error){
-        console.error("Fetch error: ", error.message);
-        return null
-    }
-
-}
-
-// Check is an element have a specific class
-function haveClass(element, classString) {
-    let result = false;
-    element.classList.forEach(item => {
-        if (item === classString){
-            result = true;
-        }
-    });
-    return result
-}
-
-// Is Project Function
-function isGageProject(data) {
-    // Determine if it's project
-    let isProject = false;
-    data.forEach(element => {
-        if (element['id'] === basinName.value) {
-            element['assigned-locations'].forEach(item => {
-                if (item['location-id'] === gageName.value) {
-                    let projectsList = item['project']['assigned-locations'] ? item['project']['assigned-locations'] : null;
-                    if (projectsList) {
-                        projectsList.forEach(gage => {
-                            if (gage['location-id'] === gageName.value) {
-                                isProject = true;
-                            };
-                        });
-                    };
-                };
-            });
-        };
-    });
-
-    // Change Datum type on the HTML
-    if (isProject) {
-        isProjectLabel.innerHTML = 'Datum: NGVD29';
-        // mean29_88label.innerHTML = 'Mean Elev:';
-        // extreme29_88label.innerHTML = 'Extreme Elev:';
-    } else {
-        isProjectLabel.innerHTML = 'Datum: NAVD88';
-        // mean29_88label.innerHTML = 'Mean Stage:';
-        // extreme29_88label.innerHTML = 'Extreme Stage:';
-    }
-}
-
-// Disable and enable every input
-function inputsDisableAndEnable() {
-
-    let inputsList = [basinName, gageName, beginDate, endDate];
-
-    inputsList.forEach(element => {
-        // Set disable if it's enabled and enables if it's disabled
-        element.disabled = element.disabled ? false : true;
-    });
-}
-
-// Update Available POR Function
-function updateAvailablePORTable(data) {
-
-    data.forEach(element => {
-        if (element['id'] === basinName.value) {
-            element['assigned-locations'].forEach(item => {
-                if (item['location-id'] === gageName.value) {
-                    let earliestDate = item['extents-data']['datman'][0]['earliestTime'];
-                    let latestDate = item['extents-data']['datman'][0]['latestTime'];
-                    let startPORDate = document.querySelector('#info-table .por-start');
-                    let endPORDate = document.querySelector('#info-table .por-end');
-                    let startDateList = earliestDate.split('T')[0].split('-');
-                    let endDateList = latestDate.split('T')[0].split('-');
-                    let newInputBeginYear = startDateList[0];
-                    let newInputBeginMonth = startDateList[1];
-                    let newInputBeginDay = startDateList[2];
-                    let newInputEndYear = endDateList[0];
-                    let newInputEndMonth = endDateList[1];
-                    let newInputEndDay = endDateList[2];
-
-                    startPORDate.innerText = `${newInputBeginMonth}/${newInputBeginDay}/${newInputBeginYear}`;
-                    endPORDate.innerHTML = `${newInputEndMonth}/${newInputEndDay}/${newInputEndYear}`;
-
-                    beginDate.value = `${newInputBeginYear}-${newInputBeginMonth}-${newInputBeginDay}`; // YYYY-MMM-DD
-                    endDate.value = `${newInputEndYear}-${newInputEndMonth}-${newInputEndDay}`; // YYYY-MMM-DD
-
-                }
-            });
-        };
-    });
-    
-}
-
-// POR checkbox
-function PORCheckboxChecked(){
-    if (!PORCheckbox.checked){
-        PORCheckbox.checked = true;
-    }
-
-    if (userSpecifiedCheckbox.checked){
-        userSpecifiedCheckbox.checked = false;
-    }
-
-    beginDate.disabled = true;
-    endDate.disabled = true;
-
-    analyzerBtn.disabled = false;
-}
-
-// User Specified checkbox
-function userSpecifiedCheckboxChecked(){
-    if (!userSpecifiedCheckbox.checked){
-        userSpecifiedCheckbox.checked = true;
-    }
-
-    if (PORCheckbox.checked){
-        PORCheckbox.checked = false;
-    }
-
-    beginDate.disabled = false;
-    endDate.disabled = false;
-
-    analyzerBtn.disabled = false;
-}
-
-// Fetch all data for app
 document.addEventListener('DOMContentLoaded', async function () {
+    // Display the loading indicator for water quality alarm
+    //const loadingIndicator = document.getElementById('loading_alarm_datman');
+    //loadingIndicator.style.display = 'block'; // Show the loading indicator
 
-    inputsDisableAndEnable();
+    // Set the category and base URL for API calls
+    let setCategory = "Datman";
 
-    let setCategory = "Basins"; 
-
-    //let office = "MVS";
-    //let type = "no idea";
+    let cda = "internal";
+    let office = "MVS";
+    let type = "no idea";
 
     // Get the current date and time, and compute a "look-back" time for historical data
     const currentDateTime = new Date();
@@ -473,27 +16,26 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let setBaseUrl = null;
     if (cda === "internal") {
-        setBaseUrl = `https://coe-${officeName.toLowerCase()}uwa04${officeName.toLowerCase()}.${officeName.toLowerCase()}.usace.army.mil:8243/${officeName.toLowerCase()}-data/`;
+        setBaseUrl = `https://coe-${office.toLowerCase()}uwa04${office.toLowerCase()}.${office.toLowerCase()}.usace.army.mil:8243/${office.toLowerCase()}-data/`;
+        console.log("setBaseUrl: ", setBaseUrl);
     } else if (cda === "public") {
         setBaseUrl = `https://cwms-data.usace.army.mil/cwms-data/`;
+        console.log("setBaseUrl: ", setBaseUrl);
     }
 
     // Define the URL to fetch location groups based on category
-    const categoryApiUrl = setBaseUrl + `location/group?office=${officeName}&include-assigned=false&location-category-like=${setCategory}`;
+    const categoryApiUrl = setBaseUrl + `location/group?office=${office}&include-assigned=false&location-category-like=${setCategory}`;
+    console.log("categoryApiUrl: ", categoryApiUrl);
 
     // Initialize maps to store metadata and time-series ID (TSID) data for various parameters
     const metadataMap = new Map();
     const ownerMap = new Map();
     const tsidDatmanMap = new Map();
-    const tsidStageMap = new Map();
-    const projectMap = new Map();
 
     // Initialize arrays for storing promises
     const metadataPromises = [];
     const ownerPromises = [];
     const datmanTsidPromises = [];
-    const stageTsidPromises = [];
-    const projectPromises = [];
 
     // Fetch location group data from the API
     fetch(categoryApiUrl)
@@ -510,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
 
             // Filter and map the returned data to basins belonging to the target category
-            const targetCategory = { "office-id": officeName, "id": setCategory };
+            const targetCategory = { "office-id": office, "id": setCategory };
             const filteredArray = filterByLocationCategory(data, targetCategory);
             const basins = filteredArray.map(item => item.id);
 
@@ -525,7 +67,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             // Loop through each basin and fetch data for its assigned locations
             basins.forEach(basin => {
-                const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${officeName}&category-id=${setCategory}`;
+                const basinApiUrl = setBaseUrl + `location/group/${basin}?office=${office}&category-id=${setCategory}`;
+                console.log("basinApiUrl: ", basinApiUrl);
 
                 apiPromises.push(
                     fetch(basinApiUrl)
@@ -554,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     // console.log(loc['location-id']);
 
                                     // Fetch metadata for each location
-                                    const locApiUrl = setBaseUrl + `locations/${loc['location-id']}?office=${officeName}`;
+                                    const locApiUrl = setBaseUrl + `locations/${loc['location-id']}?office=${office}`;
                                     // console.log("locApiUrl: ", locApiUrl);
                                     metadataPromises.push(
                                         fetch(locApiUrl)
@@ -577,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     );
 
                                     // Fetch owner for each location
-                                    let ownerApiUrl = setBaseUrl + `location/group/Datman?office=${officeName}&category-id=${officeName}`;
+                                    let ownerApiUrl = setBaseUrl + `location/group/${office}?office=${office}&category-id=${office}`;
                                     if (ownerApiUrl) {
                                         ownerPromises.push(
                                             fetch(ownerApiUrl)
@@ -593,6 +136,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 })
                                                 .then(ownerData => {
                                                     if (ownerData) {
+                                                        console.log("ownerData", ownerData);
                                                         ownerMap.set(loc['location-id'], ownerData);
                                                     }
                                                 })
@@ -602,35 +146,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                                         );
                                     }
 
-                                    // Fetch project for each location
-                                    let projectApiUrl = setBaseUrl + `location/group/Project?office=${officeName}&category-id=${officeName}`;
-                                    if (projectApiUrl) {
-                                        projectPromises.push(
-                                            fetch(projectApiUrl)
-                                                .then(response => {
-                                                    if (response.status === 404) {
-                                                        console.warn(`Temp-Water TSID data not found for location: ${loc['location-id']}`);
-                                                        return null;
-                                                    }
-                                                    if (!response.ok) {
-                                                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                                                    }
-                                                    return response.json();
-                                                })
-                                                .then(projectData => {
-                                                    if (projectData) {
-                                                        projectMap.set(loc['location-id'], projectData);
-                                                    }
-                                                })
-                                                .catch(error => {
-                                                    console.error(`Problem with the fetch operation for stage TSID data at ${projectApiUrl}:`, error);
-                                                })
-                                        );
-                                    }
-
 
                                     // Fetch datman TSID data
-                                    const tsidDatmanApiUrl = setBaseUrl + `timeseries/group/Datman?office=${officeName}&category-id=${loc['location-id']}`;
+                                    const tsidDatmanApiUrl = setBaseUrl + `timeseries/group/Datman?office=${office}&category-id=${loc['location-id']}`;
                                     // console.log('tsidDatmanApiUrl:', tsidDatmanApiUrl);
                                     datmanTsidPromises.push(
                                         fetch(tsidDatmanApiUrl)
@@ -649,27 +167,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                                 console.error(`Problem with the fetch operation for stage TSID data at ${tsidDatmanApiUrl}:`, error);
                                             })
                                     );
-
-                                    // Fetch stage TSID data
-                                    const tsidStageApiUrl = setBaseUrl + `timeseries/group/Stage?office=${officeName}&category-id=${loc['location-id']}`;
-                                    // console.log('tsidStageApiUrl:', tsidStageApiUrl);
-                                    stageTsidPromises.push(
-                                        fetch(tsidStageApiUrl)
-                                            .then(response => {
-                                                if (response.status === 404) return null; // Skip if not found
-                                                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
-                                                return response.json();
-                                            })
-                                            .then(tsidStageData => {
-                                                // console.log('tsidStageData:', tsidStageData);
-                                                if (tsidStageData) {
-                                                    tsidStageMap.set(loc['location-id'], tsidStageData);
-                                                }
-                                            })
-                                            .catch(error => {
-                                                console.error(`Problem with the fetch operation for stage TSID data at ${tsidStageApiUrl}:`, error);
-                                            })
-                                    );
                                 });
                             }
                         })
@@ -684,7 +181,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .then(() => Promise.all(metadataPromises))
                 .then(() => Promise.all(ownerPromises))
                 .then(() => Promise.all(datmanTsidPromises))
-                .then(() => Promise.all(stageTsidPromises))
                 .then(() => {
                     combinedData.forEach(basinData => {
                         if (basinData['assigned-locations']) {
@@ -703,11 +199,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     loc['owner'] = ownerMapData;
                                 };
 
-                                // Add project to json
-                                const projectMapData = projectMap.get(loc['location-id']);
-                                if (projectMapData) {
-                                    loc['project'] = projectMapData;
-                                };
 
                                 // Add datman to json
                                 const tsidDatmanMapData = tsidDatmanMap.get(loc['location-id']);
@@ -718,25 +209,14 @@ document.addEventListener('DOMContentLoaded', async function () {
                                     loc['tsid-datman'] = null;  // Append null if missing
                                 }
 
-                                // Add stage to json
-                                const tsidStageMapData = tsidStageMap.get(loc['location-id']);
-                                if (tsidStageMapData) {
-                                    reorderByAttribute(tsidStageMapData);
-                                    loc['tsid-stage'] = tsidStageMapData;
-                                } else {
-                                    loc['tsid-stage'] = null;  // Append null if missing
-                                }
-
                                 // Initialize empty arrays to hold API and last-value data for various parameters
                                 loc['datman-api-data'] = [];
                                 loc['datman-last-value'] = [];
-
-                                // Initialize empty arrays to hold API and last-value data for various parameters
-                                loc['stage-api-data'] = [];
-                                loc['stage-last-value'] = [];
                             });
                         }
                     });
+
+                    console.log('combinedData:', combinedData);
 
                     const timeSeriesDataPromises = [];
 
@@ -750,8 +230,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                             const timeSeriesDataFetchPromises = (timeSeries, type) => {
                                 return timeSeries.map((series, index) => {
                                     const tsid = series['timeseries-id'];
-                                    const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${officeName}`;
-                                   
+                                    const timeSeriesDataApiUrl = setBaseUrl + `timeseries?name=${tsid}&begin=${lookBackHours.toISOString()}&end=${currentDateTime.toISOString()}&office=${office}`;
+                                    console.log('timeSeriesDataApiUrl:', timeSeriesDataApiUrl);
 
                                     return fetch(timeSeriesDataApiUrl, {
                                         method: 'GET',
@@ -849,7 +329,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                             // Additional API call for extents data
                             const timeSeriesDataExtentsApiCall = (type) => {
-                                const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${officeName}`;
+                                const extentsApiUrl = setBaseUrl + `catalog/TIMESERIES?page-size=5000&office=${office}`;
+                                console.log('extentsApiUrl:', extentsApiUrl);
 
                                 return fetch(extentsApiUrl, {
                                     method: 'GET',
@@ -914,50 +395,69 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 })
                 .then(() => {
- 
-                    // Step 1: Filter out locations where 'attribute' ends with '.1'
+                    console.log('All combinedData data fetched successfully:', combinedData);
+
+                    // Check and remove all attribute ending in 0.1
                     combinedData.forEach((dataObj, index) => {
-                        // console.log(`Processing dataObj at index ${index}:`, dataObj['assigned-locations']);
- 
-                        // Filter out locations with 'attribute' ending in '.1'
-                        dataObj['assigned-locations'] = dataObj['assigned-locations'].filter(location => {
-                            const attribute = location['attribute'].toString();
-                            if (attribute.endsWith('.1')) {
-                                // Log the location being removed
-                                return false; // Filter out this location
-                            }
-                            return true; // Keep the location
+                        // console.log(`Processing dataObj at index ${index}:`, dataObj[`assigned-locations`]);
+
+                        // Filter out locations where the 'attribute' ends with '.1'
+                        dataObj[`assigned-locations`] = dataObj[`assigned-locations`].filter(location => {
+                            const attribute = location[`attribute`].toString();
+                            // console.log(`Checking attribute: ${attribute}`);
+                            return !attribute.endsWith('.1');
                         });
- 
-                        // console.log(`Updated assigned-locations for index ${index}:`, dataObj['assigned-locations']);
+
+                        // console.log(`Updated assigned-locations for index ${index}:`, dataObj[`assigned-locations`]);
                     });
- 
- 
-                    // Step 2: Filter out locations where 'location-id' doesn't match owner's 'assigned-locations'
-                    combinedData.forEach(dataGroup => {
-                        // Iterate over each assigned-location in the dataGroup
-                        let locations = dataGroup['assigned-locations'];
- 
-                        // Loop through the locations array in reverse to safely remove items
-                        for (let i = locations.length - 1; i >= 0; i--) {
-                            let location = locations[i];
- 
-                            // Find if the current location-id exists in owner's assigned-locations
-                            let matchingOwnerLocation = location['owner']['assigned-locations'].some(ownerLoc => {
-                                return ownerLoc['location-id'] === location['location-id'];
-                            });
- 
-                            // If no match, remove the location
-                            if (!matchingOwnerLocation) {
-                                locations.splice(i, 1);
+
+                    console.log('All combinedData data filtered successfully:', combinedData);
+
+                    if (type === "status") {
+                        // Only call createTable if no valid data exists
+                        const table = createTable(combinedData);
+
+                        // Append the table to the specified container
+                        const container = document.getElementById('table_container_alarm_datman');
+                        container.appendChild(table);
+                    } else {
+                        // Check if there are valid lastDatmanValues in the data
+                        if (hasLastValue(combinedData)) {
+                            if (hasDataSpike(combinedData)) {
+                                console.log("Data spike detected.");
+                                // call createTable if data spike exists
+                                const table = createTableDataSpike(combinedData);
+
+                                // Append the table to the specified container
+                                const container = document.getElementById('table_container_alarm_datman');
+                                container.appendChild(table);
+                            } else {
+                                console.log("No data spikes detected.");
+                                console.log('Valid lastDatmanValue found. Displaying image instead.');
+
+                                // Create an img element
+                                const img = document.createElement('img');
+                                img.src = '/apps/alarms/images/passed.png'; // Set the image source
+                                img.alt = 'Process Completed'; // Optional alt text for accessibility
+                                img.style.width = '50px'; // Optional: set the image width
+                                img.style.height = '50px'; // Optional: set the image height
+
+                                // Get the container and append the image
+                                //const container = document.getElementById('table_container_alarm_datman');
+                                //container.appendChild(img);
                             }
+
+                        } else {
+                            // Only call createTable if no valid data exists
+                            const table = createTable(combinedData);
+
+                            // Append the table to the specified container
+                            //const container = document.getElementById('table_container_alarm_datman');
+                            //container.appendChild(table);
                         }
-                    });
+                    }
 
                     //loadingIndicator.style.display = 'none';
-                    initialize(combinedData);
-
-// =======================================================================================================================================
                 })
                 .catch(error => {
                     console.error('There was a problem with one or more fetch operations:', error);
@@ -968,9 +468,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         .catch(error => {
             console.error('There was a problem with the initial fetch operation:', error);
             //loadingIndicator.style.display = 'none';
-            popupMessage("error", "There was an error retrieving the data.<br>See the console log for more information.");
-            popupWindowBtn.click();
-            loadingPageData();
         });
 
     function filterByLocationCategory(array, setCategory) {
@@ -1127,7 +624,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const assignedLocations = item['assigned-locations'];
                 // Check if assigned-locations is an object
                 if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    consoleLog(3, 'No assigned-locations found in basin:', item);
+                    console.log('No assigned-locations found in basin:', item);
                     allLocationsValid = false; // Mark as invalid since no assigned locations are found
                     continue; // Skip to the next basin
                 }
@@ -1156,7 +653,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                             // Step 1: If the entry is null, set hasValidValue to false
                             if (entry === null) {
-                                //console.log(`Entry at index ${i} is null and not valid.`);
+                                // console.log(`Entry at index ${i} is null and not valid.`);
                                 hasValidValue = false;
                                 continue; // Skip to the next iteration, this is not valid
                             }
@@ -1166,7 +663,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                                 // console.log(`Valid entry found at index ${i}:`, entry);
                                 hasValidValue = true; // Set to true only if we have a valid entry
                             } else {
-                                consoleLog(3, `Entry at index ${i} has an invalid value:`, entry.value);
+                                console.log(`Entry at index ${i} has an invalid value:`, entry.value);
                                 hasValidValue = false; // Invalid value, so set it to false
                             }
                         }
@@ -1178,7 +675,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                             // console.log("No valid entries found in the array.");
                         }
                     } else {
-                        consoleLog(3, `datmanTsidArray is either empty or not an array for location ${locationName}.`);
+                        console.log(`datmanTsidArray is either empty or not an array for location ${locationName}.`);
                     }
 
                     // If no valid values found in the current location, mark as invalid
@@ -1191,7 +688,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         // Return true only if all locations are valid
         if (allLocationsValid) {
-            consoleLog(3, 'All locations have valid entries.');
+            console.log('All locations have valid entries.');
             return true;
         } else {
             // console.log('Some locations are missing valid entries.');
@@ -1209,7 +706,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 const assignedLocations = item['assigned-locations'];
                 // Check if assigned-locations is an object
                 if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-                    consoleLog(3, 'No assigned-locations found in basin:', item);
+                    console.log('No assigned-locations found in basin:', item);
                     continue; // Skip to the next basin
                 }
 
@@ -1244,59 +741,59 @@ document.addEventListener('DOMContentLoaded', async function () {
                             return true; // Return true if any spike is found
                         }
                     } else {
-                        consoleLog(3, `No valid 'datman-api-data' found in location ${locationName}.`);
+                        console.log(`No valid 'datman-api-data' found in location ${locationName}.`);
                     }
                 }
             }
         }
 
         // Return false if no data spikes were found
-        consoleLog(3, 'No data spikes detected in any location.');
+        console.log('No data spikes detected in any location.');
         return false;
     }
 
     function hasDataSpike(data) {
         // Iterate through each key in the data object
-        // for (const locationIndex in data) {
-        //     if (data.hasOwnProperty(locationIndex)) { // Ensure the key belongs to the object
-        //         const item = data[locationIndex];
-        //         console.log(`Checking basin ${parseInt(locationIndex) + 1}:`, item); // Log the current item being checked
+        for (const locationIndex in data) {
+            if (data.hasOwnProperty(locationIndex)) { // Ensure the key belongs to the object
+                const item = data[locationIndex];
+                console.log(`Checking basin ${parseInt(locationIndex) + 1}:`, item); // Log the current item being checked
 
-        //         const assignedLocations = item['assigned-locations'];
-        //         // Check if assigned-locations is an object
-        //         if (typeof assignedLocations !== 'object' || assignedLocations === null) {
-        //             console.log('No assigned-locations found in basin:', item);
-        //             continue; // Skip to the next basin
-        //         }
+                const assignedLocations = item['assigned-locations'];
+                // Check if assigned-locations is an object
+                if (typeof assignedLocations !== 'object' || assignedLocations === null) {
+                    console.log('No assigned-locations found in basin:', item);
+                    continue; // Skip to the next basin
+                }
 
-        //         // Iterate through each location in assigned-locations
-        //         for (const locationName in assignedLocations) {
-        //             const location = assignedLocations[locationName];
-        //             console.log(`Checking location: ${locationName}`, location); // Log the current location being checked
-        //             const datmanMaxValue = location['datman-max-value'][0][`value`];
-        //             const datmanMinValue = location['datman-min-value'][0][`value`];
+                // Iterate through each location in assigned-locations
+                for (const locationName in assignedLocations) {
+                    const location = assignedLocations[locationName];
+                    console.log(`Checking location: ${locationName}`, location); // Log the current location being checked
+                    const datmanMaxValue = location['datman-max-value'][0][`value`];
+                    const datmanMinValue = location['datman-min-value'][0][`value`];
 
-        //             // Check if datmanMaxValue or datmanMinValue exists
-        //             if (datmanMaxValue || datmanMinValue) {
-        //                 // Check if the max value exceeds 999 or the min value is less than -999
-        //                 if (datmanMaxValue > 999) {
-        //                     console.log(`Data spike detected in location ${locationName}: max = ${datmanMaxValue}`);
-        //                     return true; // Return true if any spike is found
-        //                 }
-        //                 if (datmanMinValue < -999) {
-        //                     console.log(`Data spike detected in location ${locationName}: min = ${datmanMinValue}`);
-        //                     return true; // Return true if any spike is found
-        //                 }
-        //             } else {
-        //                 console.log(`No valid 'datman-max-value' or 'datman-min-value' found in location ${locationName}.`);
-        //             }
-        //         }
-        //     }
-        // }
+                    // Check if datmanMaxValue or datmanMinValue exists
+                    if (datmanMaxValue || datmanMinValue) {
+                        // Check if the max value exceeds 999 or the min value is less than -999
+                        if (datmanMaxValue > 999) {
+                            console.log(`Data spike detected in location ${locationName}: max = ${datmanMaxValue}`);
+                            return true; // Return true if any spike is found
+                        }
+                        if (datmanMinValue < -999) {
+                            console.log(`Data spike detected in location ${locationName}: min = ${datmanMinValue}`);
+                            return true; // Return true if any spike is found
+                        }
+                    } else {
+                        console.log(`No valid 'datman-max-value' or 'datman-min-value' found in location ${locationName}.`);
+                    }
+                }
+            }
+        }
 
-        // // Return false if no data spikes were found
-        // console.log('No data spikes detected in any location.');
-        // return false;
+        // Return false if no data spikes were found
+        console.log('No data spikes detected in any location.');
+        return false;
     }
 
     function createTable(data) {
