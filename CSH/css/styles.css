@@ -346,6 +346,11 @@
     gap: 1em;
 }
 
+#settings-div .statistic-plot-control .sub-div {
+    display: flex;
+    gap: 0em;
+}
+
 /* ========== OTHER CHECKBOX =============*/
 #settings-div .select-data-plot input {
     cursor: pointer;
@@ -412,11 +417,15 @@
 }
 
 /* =============== PLOT ==================*/
-#plot.hidden {
+#plot.hidden,
+#plot-2.hidden,
+#plot-3.hidden {
     display: none;
 }
 
-#plot {
+#plot,
+#plot-2,
+#plot-3 {
     margin-top: 1em;
     display: flex;
     justify-content: center;
@@ -550,17 +559,23 @@
 }
 
 /* =========== PRINT BTN ============*/
-#print-btn-div.hidden {
+#print-btn-div.hidden,
+#print-btn-2-div.hidden,
+#print-btn-3-div.hidden {
     display: none;
 }
 
-#print-btn-div {
+#print-btn-div,
+#print-btn-2-div,
+#print-btn-3-div {
     padding: 1em 8em 0em 1em;
     display: flex;
     justify-content: flex-end;
 }
 
-#print-btn {
+#print-btn,
+#print-btn-2,
+#print-btn-3 {
     width: 5em;
     height: 2em;
     border-radius: 0.75em;
@@ -572,11 +587,16 @@
 }
 
 /* =========== TIME SERIE ===========*/
-#time-serie-name-div.hidden {
+#time-serie-name-div.hidden,
+#inflow-time-serie-name-div.hidden,
+#outflow-time-serie-name-div.hidden {
     display: none;
 }
 
-#time-serie-name-div {
+#time-serie-name-div,
+#inflow-time-serie-name-div,
+#outflow-time-serie-name-div {
+    margin-top: 2em;
     display: flex;
     align-items: center;
     padding-left: 1em;
@@ -585,7 +605,9 @@
     background-color: var(--background-color-2);
 }
 
-#time-serie-name-div h2 {
+#time-serie-name-div h2,
+#inflow-time-serie-name-div h2,
+#outflow-time-serie-name-div h2 {
     color: white;
     font-size: 1.2em;
     font-weight: bold;

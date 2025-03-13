@@ -5,7 +5,7 @@
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>**TITLE**</title> <!-- DISTRICT Home Page -->
+        <title>Frequency Duration</title> <!-- DISTRICT Home Page -->
         <meta name="Description" content="U.S. Army Corps of Engineers DISTRICT HERE Home Page" />
         <link rel="stylesheet" href="../../css/body.css" />
         <link rel="stylesheet" href="../../css/breadcrumbs.css" />
@@ -36,7 +36,7 @@
                             <!-- Page Content Here -->
                             <div class="box-usace">
                                 <h2 class="box-header-striped">
-                                    <span class="titleLabel title">**TITLE**</span>
+                                    <span class="titleLabel title">Frequency Duration</span>
                                     <span class="rss"></span>
                                 </h2>
                                 <div class="box-content" style="margin:auto">
@@ -47,7 +47,7 @@
 
                                 
                                             <div class="header">
-                                                <h1 id="main-title">**TITLE**</h1>
+                                                <h1 id="main-title">Frequency Duration</h1>
                                                 <label>
                                                     <input type="checkbox">
                                                     <span></span>
@@ -104,8 +104,8 @@
                                                                     <td>Ending Year</td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <td><input type="date" id="begin-input" disabled="true" value="2018-01-01"></td>
-                                                                    <td><input type="date" id="end-input" disabled="true" value="2020-12-31"></td>
+                                                                    <td><input type="date" id="begin-input" value="2018-01-01"></td>
+                                                                    <td><input type="date" id="end-input" value="2020-12-31"></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -114,25 +114,120 @@
 
                                                 <div id="separator-div" class="separator hidden"></div>
 
-                                                <div id="settings-div" class="hidden">
+                                                <div class="input-checkbox hidden">
 
-                                                    <div class="input-checkbox">
-
-                                                        <h3>Statistical Time Window</h3>
-
-                                                        <div>
-                                                            <input type="checkbox" name="por" id="por-checkbox">
-                                                            <label>POR - Period of Record - See Default Time Window</label>
-                                                        </div>
-                                                        
-                                                        <div>
-                                                            <input type="checkbox" name="user" id="user-specific-checkbox">
-                                                            <label>User Specified Time Window - Enter Time Window in <strong>"Select Time Window"</strong> table</label>
-                                                        </div>
-                                                        
+                                                    <div class="group-interval">
+                                                        <h2>Group Interval:</h2>
+                                                        <input type="text" id="group-interval-txbox" value="1">
                                                     </div>
 
-                                                    <div id="sub-separator-1" class="sub-separator hidden"></div>
+                                                    <div class="bound-control">
+
+                                                        <h2>Upper and Lower Bound Control</h2>
+
+                                                        <div class="checkbox">
+
+                                                            <div>
+                                                                <input type="checkbox" name="por" id="manual-checkbox">
+                                                                <label>Manually Set Bounds</label>
+                                                            </div>
+
+                                                            <div>
+                                                                <input type="checkbox" name="por" id="auto-checkbox" checked>
+                                                                <label>Automatic Determination (Default)</label>
+                                                            </div>
+
+                                                        </div>
+
+                                                        <div class="bound-values hidden">
+                                                            <div>
+                                                                <label>Maximum Upper Bound</label>
+                                                                <input type="text" id="maximum-bound-txbox">
+                                                            </div>
+
+                                                            <div>
+                                                                <label>Minimum Upper Bound</label>
+                                                                <input type="text" id="minimum-bound-txbox">
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    
+                                                    <div class="data-exclusion">
+
+                                                        <h2>Time Window for Data Exclusions (Season, Single month, Single day, etc...)</h2>
+
+                                                        <div class="checkbox">
+
+                                                            <div>
+                                                                <input type="checkbox" id="exclusion-checkbox">
+                                                                <label>EXCLUSION</label>
+                                                            </div>
+
+                                                            <div>
+                                                                <input type="checkbox" id="no-exclusion-checkbox" checked>
+                                                                <label>No Data Exclusion (Default)</label>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="exclusion-settings hidden">
+
+                                                        <div class="checkbox">
+
+                                                            <div class="single-month-day-only">
+
+                                                                <div class="month-day-options">
+
+                                                                    <div class="single-month">
+                                                                        <input type="checkbox" id="single-month-checkbox">
+                                                                        <label>Single Month Only</label>
+                                                                    </div>
+
+                                                                    <div class="single-day">
+                                                                        <input type="checkbox" id="single-day-checkbox">
+                                                                        <label>Single Day Only</label>
+                                                                    </div>
+
+                                                                </div>
+
+                                                                <div class="single-month-day-input hidden">
+                                                                    <input type="text" id="single-month-day-txbox">
+                                                                    <span>==> Month (MM) or Day (DD)</span>
+                                                                </div>
+                                                                
+                                                            </div>
+
+                                                            <div class="specific-time-window-only">
+
+                                                                <div class="specific-time-window">
+                                                                    <input type="checkbox" id="specific-time-window-checkbox">
+                                                                    <label>Specific Time Window Only</label>
+                                                                </div>
+
+                                                                <div class="specific-time-window-input hidden">
+                                                                    <div>
+                                                                        <label>From:</label>
+                                                                        <input type="text" id="time-window-from-checkbox">
+                                                                    </div>
+                                                                    
+                                                                    <div>
+                                                                        <label>To:</label>
+                                                                        <input type="text" id="time-window-to-checkbox">
+                                                                    </div>
+                                                                    
+                                                                    <span>==> Month-Day (MM-DD)</span>
+                                                                </div>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+                                                    
+                                                </div>
 
                                                 </div>
 
@@ -140,22 +235,24 @@
 
                                                     <button id="instruction-btn">Instructions</button>
 
-                                                    <button id="analyzer-btn" disabled>Analyser Statistic</button>
+                                                    <button id="compute-html-btn" disabled>Compute HTML</button>
+
+                                                    <button id="compute-pdf-btn" disabled>Compute PDF</button>
 
                                                 </div>
 
                                                 <div id="instructions-div" class="hidden">
 
-                                                    <h2 class="title">How to Generate the Plot.</h2>
+                                                    <h2 class="title">How does this work.</h2>
 
                                                     <ul>
                                                         <li><strong>Select a Basin</strong> - Choose a basin from the dropdown list.</li>
                                                         <li><strong>Select a Gage</strong> - Pick the desired gage from the available options.</li>
-                                                        <li><strong>Choose a Time Window</strong> - If <strong>"No Statistics"</strong> is selected, the entire period of record will be used.</li>
-                                                        <li><strong>Select Years</strong> - Specify the years you want to display on the plot.</li>
-                                                        <li><strong>Optional: Display Additional Data</strong> - Enable <strong>"Flood Stage"</strong> or <strong>"LWRP"</strong> if the selected gage contains this information.</li>
-                                                        <li><strong>Select Statistical Data</strong> - Choose the statistical metrics you want to include in the plot.</li>
-                                                        <li><strong>Generate the Plot</strong> - Click <strong>"Plot CSH"</strong> to visualize the selected data.</li>
+                                                        <li><strong>Choose a Time Window</strong> - Select the time period for which you want the data to be analyzed.</li>
+                                                        <li><strong>Enter Group Interval</strong> - Set the increment value for the results. This will determine the granularity of the data.</li>
+                                                        <li><strong>Select the Upper and Lower Bound</strong> - Define the maximum and minimum stage elevation for the analysis.</li>
+                                                        <li><strong>Select Time Window for Exclusion</strong> - Choose a time window where only data inside this period will be used for the analysis, excluding other periods.</li>
+                                                        <li><strong>Press the "Compute HTML" Button</strong> - Click this button to generate the analysis results in HTML format.</li>
                                                     </ul>
 
                                                 </div>
@@ -193,7 +290,46 @@
                                                 </div>
                                             </div>
 
-                                            <div id="results"></div>
+                                            <div id="results" class="hidden">
+
+                                                <div class="tables">
+                                                    <table id="secundary-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th colspan="3">Sample Frequency of Occurrence</th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Interval</th>
+                                                                <th>Total</th>
+                                                                <th>Percent</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="secundary-table-body"></tbody>
+                                                    </table>
+    
+                                                    <table id="main-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th colspan="3">Sample Duration of Exceedance</th>
+                                                            </tr>
+                                                            <tr>
+                                                                <th>Level</th>
+                                                                <th>Total</th>
+                                                                <th>Percent</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="main-table-body"></tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                
+                                                <div class="statistics">
+                                                    <p>The Mean Stage for the selected POR is: <span class="number"></span></p>
+                                                    <p>The Highest Stage for the selected POR is: <span class="number"></span></p>
+                                                    <p>The Lowest Stage for the selected POR is: <span class="number"></span></p>
+                                                </div>
+
+                                            </div>
                                             
                                             <!-- <script src="https://cdn.sheetjs.com/xlsx-0.18.2/package/dist/xlsx.full.min.js"></script> -->
                                             <script src="../../js/xlsx.full.min.js"></script>

@@ -21,12 +21,16 @@
     --font-color-1: #FFFFFF;
     --font-color-2: #000;
     --checkbox-border-color: #000;
+    --time-window-color: #afbbff;
 
     --datrep-header-color: rgb(52, 58, 64);
     --datrep-body-color: rgb(248, 249, 250);
     --datrep-body-odd-color: rgb(233, 236, 239);
     --loader-font-color: rgb(51, 51, 51);
     --error-message: rgb(255, 155, 155);
+
+    --table-body-odd-color: rgb(228, 228, 228);
+    --table-body-even-color: rgb(248, 248, 248);
 }
 
 .page-content.blur {
@@ -57,12 +61,16 @@
     --font-color-1: #fff;
     --font-color-2: #fff;
     --checkbox-border-color: #fff;
+    --time-window-color: #cccccc;
 
     --datrep-header-color: rgb(24, 27, 30);
     --datrep-body-color: rgb(160, 161, 163);
     --datrep-body-odd-color: rgb(107, 108, 109);
     --loader-font-color: rgb(172, 172, 172);
     --error-message: rgb(255, 50, 50);
+
+    --table-body-odd-color: rgb(155, 155, 155);
+    --table-body-even-color: rgb(218, 218, 218);
 }
 
 .header {
@@ -316,6 +324,7 @@
     align-items: center;
     padding: 0 1em;
     box-shadow: var(--shadow-box);
+    gap: 1em;
 }
 
 #instruction-btn {
@@ -338,13 +347,184 @@
     padding-top: 0.2em;
 }
 
-#analyzer-btn {
+#compute-html-btn,
+#compute-pdf-btn {
     width: 10em;
     height: 2em;
     text-align: center;
     cursor: pointer;
     border-radius: 0.5em;
     font-size: 1em;
+}
+
+/* ============ CHECK BOX ================*/
+input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* ============= SETTINGS ================*/
+.input-checkbox.hidden {
+    display: none;
+}
+
+.input-checkbox {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+    padding: 1.5em;
+    margin-top: 0.5em;
+    box-shadow: var(--shadow-box);
+}
+
+.input-checkbox h2 {
+    font-size: 1.2em;
+    color: var(--font-color-2);
+}
+
+/* Group Interval */
+.input-checkbox .group-interval {
+    display: flex;
+    gap: 1em;
+}
+
+#group-interval-txbox {
+    width: 2.4em;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+/* Bound Control */
+.bound-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.bound-control .checkbox {
+    display: flex;
+    gap: 2em;
+}
+
+.bound-control .checkbox div {
+    display: flex;
+    gap: 0.5em;
+}
+
+.bound-control .bound-values.hidden {
+    display: none;
+}
+
+.bound-control .bound-values {
+    width: 30em;
+    padding: 1em;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5em;
+    border-radius: 1em;
+
+    background-color: var(--time-window-color);
+    color: black;
+    font-weight: bold;
+}
+
+.bound-control .bound-values div {
+    display: flex;
+    gap: 2em;
+}
+
+.bound-control .bound-values div input {
+    width: 3em;
+    text-align: center;
+}
+
+/* Data Exclusion */
+.data-exclusion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.data-exclusion .checkbox {
+    display: flex;
+    gap: 2em;
+}
+
+.data-exclusion .checkbox div {
+    display: flex;
+    gap: 0.5em;
+}
+
+/* Time Window */
+.exclusion-settings.hidden {
+    display: none;
+}
+
+.exclusion-settings {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5em;
+    width: 100%;
+    background-color: var(--time-window-color);
+    border-radius: 1em;
+    font-weight: bold;
+    color: black;
+}
+
+.exclusion-settings .checkbox {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.exclusion-settings .single-month-day-only {
+    display: flex;
+    gap: 5em;
+}
+
+.exclusion-settings .single-month-day-only .month-day-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.exclusion-settings .single-month-day-only .single-month-day-input.hidden {
+    display: none;
+}
+
+.exclusion-settings .single-month-day-only .single-month-day-input {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+}
+
+#single-month-day-txbox {
+    width: 6em;
+    text-align: center;
+}
+
+.exclusion-settings .specific-time-window-only {
+    display: flex;
+    gap: 5em;
+}
+
+.exclusion-settings .specific-time-window-only .specific-time-window-input.hidden {
+    display: none;
+}
+
+.exclusion-settings .specific-time-window-only .specific-time-window-input {
+    display: flex;
+}
+
+.exclusion-settings .specific-time-window-only .specific-time-window-input div {
+    display: flex;
+}
+
+.exclusion-settings .specific-time-window-only .specific-time-window-input div input {
+    width: 6em;
+    margin: 0em 1em 0em 0.5em;
+    text-align: center;
 }
 
 /* =========== SUB-SEPARATOR =============*/
@@ -413,6 +593,105 @@
     color: var(--font-color-2);
 }
 
+/* ============ RESULTS =================*/
+#results.hidden {
+    display: none;
+}
+
+#results {
+    margin-top: 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    box-shadow: var(--shadow-box);
+}
+
+#results .tables {
+    margin-top: 1em;
+    display: flex;
+    flex-direction: row;
+    gap: 14em;
+    justify-content: center;
+    box-shadow: var(--shadow-box);
+}
+
+#main-table,
+#secundary-table {
+    margin: 1em;
+    padding: 1em 1em;
+    text-align: center;
+}
+
+#main-table thead,
+#secundary-table thead {
+    background: var(--background-color-1);
+    color: white;
+}
+
+#main-table th,
+#secundary-table th {
+    padding: 0.5em 1em;
+    text-align: center;
+    font-weight: bold;
+}
+
+#main-table thead tr:nth-child(1) th,
+#secundary-table thead tr:nth-child(1) th {
+    padding: 0.5em 1em;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    border-top-left-radius: 1em;
+    border-top-right-radius: 1em;
+}
+
+#main-table tbody tr:nth-child(odd),
+#secundary-table tbody tr:nth-child(odd) {
+    background-color: var(--table-body-odd-color);
+    color: black;
+}
+
+#main-table tbody tr:nth-child(even),
+#secundary-table tbody tr:nth-child(even) {
+    background-color: var(--table-body-even-color);
+    color: black;
+}
+
+#main-table tbody tr:last-child,
+#secundary-table tbody tr:last-child {
+    border-bottom-right-radius: 1em;
+    border-bottom-left-radius: 1em;
+}
+
+#main-table td,
+#secundary-table td {
+    padding: 0.5em 3em;
+    text-align: center;
+}
+
+#main-table td:nth-child(2),
+#secundary-table td:nth-child(2) {
+    padding: 0.5em 3em;
+    text-align: center;
+}
+
+/* ========= STATISTICS DIV =============*/
+#results .statistics {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    padding: 1em 3em;
+}
+
+#results .statistics p {
+    padding: 0;
+    margin: 0;
+}
+
+#results .statistics .number {
+    font-weight: bold;
+}
+
 /* ========== LOADING DATA ==============*/
 
 #loading-image {
@@ -461,3 +740,7 @@
     color: var(--loader-font-color);
 }
 
+/* =========== DYNAMIC CHANGES ============*/
+.invalid-data {
+    border: 2px red solid;
+}

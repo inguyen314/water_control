@@ -231,7 +231,9 @@ function processData(data) {
   event2_0[0] = event2_0List[2];
   event2_0[1] = event2_0List[3];
 
-  let endDateForEvents = event0_5[1][0][event0_5[1][0].length - 1];
+  console.log( { event0_5 } );
+
+  let endDateForEvents = event0_5[0].length > 0 ? event0_5[1][0][event0_5[1][0].length - 1] : null;
 
   let above0_5Event = getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, 0.5);
   let above1_0Event = getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, 1.0);
@@ -241,23 +243,31 @@ function processData(data) {
 
   console.log( { above0_5Event, above1_0Event } );
 
-  above0_5Event.forEach((element) => {
+  if (above0_5Event.length > 0){
 
-    above0_5LinePlot.push({
-      y: upperLimit + 0.5,
-      x: element.date
-    })
+    above0_5Event.forEach((element) => {
 
-  });
+      above0_5LinePlot.push({
+        y: upperLimit + 0.5,
+        x: element.date
+      })
+  
+    });
 
-  above1_0Event.forEach((element) => {
+  }
+
+  if (above1_0Event.length > 0){
+
+    above1_0Event.forEach((element) => {
+
+      above1_0LinePlot.push({
+        y: upperLimit + 1.0,
+        x: element.date
+      })
+  
+    });
     
-    above1_0LinePlot.push({
-      y: upperLimit + 1.0,
-      x: element.date
-    })
-
-  });
+  }
 
   let tableHeader = ["Event", "Duration", "Start Date", "End Date"];
   let tableRows = [];
@@ -386,43 +396,46 @@ function getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, eventF
 
   let aboveValues = [];
 
-  let startCounting = false;
-  let startCountIndex = 0;
-  let previousIndex = null;
-  for (let i = 0; i < stageList.length; i++){
-    let tempStage = stageList[i];
-    let eventElevation = eventFeet + upperLimit;
-    let tempDate = dateList[i];
+  if (endDateForEvents !== null){
 
-    if (startCounting) {
-      startCountIndex += 1;
-    }
+    let startCounting = false;
+    let startCountIndex = 0;
+    let previousIndex = null;
+    for (let i = 0; i < stageList.length; i++){
+      let tempStage = stageList[i];
+      let eventElevation = eventFeet + upperLimit;
+      let tempDate = dateList[i];
 
-    if (tempDate === endDateForEvents){
-      startCounting = true;
+      if (startCounting) {
+        startCountIndex += 1;
+      }
+
+      if (tempDate === endDateForEvents){
+        startCounting = true;
+      };
+
+      if (startCounting && tempStage > eventElevation){
+        previousIndex = i;
+      }
+
+      if (startCounting && tempStage > eventElevation && previousIndex - i < 2){
+
+        aboveValues.push({
+          stage: tempStage,
+          date: i
+        });
+
+      } else if (startCounting && startCountIndex > 0) {
+
+        aboveValues.push({
+          stage: null,
+          date: null
+        });
+
+      };
+
     };
-
-    if (startCounting && tempStage > eventElevation){
-      previousIndex = i;
-    }
-
-    if (startCounting && tempStage > eventElevation && previousIndex - i < 2){
-
-      aboveValues.push({
-        stage: tempStage,
-        date: i
-      });
-
-    } else if (startCounting && startCountIndex > 0) {
-
-      aboveValues.push({
-        stage: null,
-        date: null
-      });
-
-    };
-
-  };
+  }
 
   return aboveValues
 

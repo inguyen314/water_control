@@ -204,9 +204,10 @@ table th, table td {
 
 /* ==== MISSING DAYS NUMBER ====*/
 #missing-number{
-    font-size: 1.2em;
+    font-size: 1.5em;
+    text-decoration: underline;
     font-weight: bold;
-    color: var(--color-blue-1);
+    color: var(--color-qaqc-text);
     cursor: pointer;
 }
 

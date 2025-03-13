@@ -1647,7 +1647,7 @@ function initialize(data) {
 
             urlName = stageName;
 
-            let offsetYear = 2;
+            let offsetYear = 5;
             let endDateInput = new Date(endDate.value.split('-')[0], endDate.value.split('-')[1] - 1, endDate.value.split('-')[2]);
 
             let newYear = parseInt(beginDate.value.split('-')[0]);
@@ -2528,12 +2528,36 @@ function exportTableToJSON() {
         datum: metadataDatum88.textContent,
         recordTime: metadataRecordedTime.textContent !== "" ? metadataRecordedTime.textContent : null,
         periodOfRecord: metadataPeriodOfRecord.textContent,
-        missingDates: metadataMissingDates.innerHTML === "Missing Dates: NA" ? null : metadataMissingDates.innerHTML.toString().split('<br>')[0].split('<strong>').join('').split('</strong>').join(''),
+        missingDates: metadataMissingDates.innerHTML === "Missing Dates: NA" ? null : `${metadataMissingDates.innerHTML.toString().split('<br>')[0].split('<strong>')[1].split('</strong>')[0]}`,
         disclamer: disclamerText
+    };
+
+    let baginDateList = beginDate.value.split('-');
+    let endDateList = endDate.value.split('-');
+
+    let yearMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    let dssStartDate = `${baginDateList[2]}${yearMonths[parseInt(baginDateList[1]) - 1]}${baginDateList[0]}`;
+    let dssEndDate = `${endDateList[2]}${yearMonths[parseInt(endDateList[1]) - 1]}${endDateList[0]}`;
+
+    let dssPart_E = metadataMissingDates.innerHTML === "Missing Dates: NA" ? "1Day" : "IR-Day";
+
+    if (hourlyCheckbox.checked) {
+        dssPart_E = "30Minute";
+    }
+
+    let dssValues = {
+        A: basinName.value,
+        B: gageName.value,
+        C: dailyCheckbox.checked ? "Stage - Observed at 08:00" : "Stage",
+        D: `${dssStartDate}-${dssEndDate}`,
+        E: dssPart_E,
+        F: "OBS"
     };
 
     let jsonObject = {
         metadata: jsonMetadata,
+        dss: dssValues,
         values: globalData
     }
 
@@ -3108,10 +3132,10 @@ function createJSONFile(){
             }
         });
 
-        let missingDateText = "Missing Dates: NA"
+        let missingDateText = null;
 
         if (actualMissingDates.length > 0){
-            missingDateText = `Missing Dates: ${actualMissingDates.length}`;
+            missingDateText = `${actualMissingDates.length}`;
         };
 
         let jsonMetadata = {
@@ -3122,10 +3146,34 @@ function createJSONFile(){
             disclamer: disclamerText
         };
 
+        let dssBeginDateList = beginDate.value.split('-');
+        let dssEndDateList = endDate.value.split('-');
+
+        let yearMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        let dssStartDate = `${dssBeginDateList[2]}${yearMonths[parseInt(dssBeginDateList[1]) - 1]}${dssBeginDateList[0]}`;
+        let dssEndDate = `${dssEndDateList[2]}${yearMonths[parseInt(dssEndDateList[1]) - 1]}${dssEndDateList[0]}`;
+
+        let dssPart_E = missingDateText === null ? "1Day" : "IR-Day";
+
+        if (hourlyCheckbox.checked) {
+            dssPart_E = "30Minute";
+        }
+
+        let dssValues = {
+            A: basinName.value,
+            B: currentGage.name,
+            C: dailyCheckbox.checked ? "Stage - Observed at 08:00" : "Stage",
+            D: `${dssStartDate}-${dssEndDate}`,
+            E: dssPart_E,
+            F: "OBS"
+        };
+
         jsonObject.push({
             gageName: currentGage.name,
             gageValues: {
                 metadata: jsonMetadata,
+                dss: dssValues,
                 values: currentGage.dataValues
             }
         });
