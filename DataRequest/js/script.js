@@ -2753,7 +2753,7 @@ async function getAllBasinGages(){
 
     console.log("Getting all gages data, please wait...");
     
-    let waitTime = 15000;
+    let waitTime =  20000;
 
     await sleep(waitTime);
 

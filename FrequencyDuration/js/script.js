@@ -1721,7 +1721,8 @@ function main(data) {
         minBound = roundedMin
     }
 
-    let groupInterval = parseInt(Math.round(groupIntervalTextbox.value))
+    //let groupInterval = parseInt(Math.round(groupIntervalTextbox.value))
+    let groupInterval = parseFloat(groupIntervalTextbox.value);
 
     let mainTableData = [];
     let secondTableData = [];
@@ -1863,6 +1864,10 @@ function main(data) {
 
     // Get data for the main table
     for (let i = minBound; i <= maxBound; i += groupInterval){
+
+        if (groupInterval % 0.5 !== 0){
+            i = Math.round(i * 100) / 100
+        }
         
         let levelTotal = 0;
 
@@ -1906,6 +1911,10 @@ function main(data) {
     // Get data for the second table
     for (let i = minBound; i <= maxBound; i += groupInterval){
 
+        if (groupInterval % 0.5 !== 0){
+            i = Math.round(i * 100) / 100
+        }
+
         let interval = i + groupInterval
         let levelTotal = 0;
 
@@ -1946,7 +1955,7 @@ function main(data) {
             levelPercent = Math.round((levelTotal / filteredData.length) * 10000) / 100;
 
             secondTableData.push({
-                level: `${i} >= WS < ${interval}`,
+                level: `${i} >= WS < ${Math.round(interval * 100) / 100}`,
                 total: levelTotal,
                 percent: levelPercent
             });
@@ -1962,7 +1971,7 @@ function main(data) {
         } else if ((maxBound - i) < groupInterval && (maxBound - i) !== 0) {
 
             secondTableData.push({
-                level: `${i} >= WS < ${maxBound}`,
+                level: `${i} >= WS < ${Math.round(maxBound * 100) / 100}`,
                 total: levelTotal,
                 percent: levelPercent
             });
@@ -1978,7 +1987,7 @@ function main(data) {
             levelPercent = Math.round((levelTotal / filteredData.length) * 10000) / 100;
 
             secondTableData.push({
-                level: `>= ${maxBound}`,
+                level: `>= ${Math.round(maxBound * 100) / 100}`,
                 total: levelTotal,
                 percent: levelPercent
             });
@@ -1986,7 +1995,7 @@ function main(data) {
         } else {
 
             secondTableData.push({
-                level: `${i} >= WS < ${interval}`,
+                level: `${i} >= WS < ${Math.round(interval * 100) / 100}`,
                 total: levelTotal,
                 percent: levelPercent
             });
