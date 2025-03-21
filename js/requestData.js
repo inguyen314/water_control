@@ -5,9 +5,11 @@ export function fetchJsonFile(urlToFetch, sucessFunction, errorFunction=function
         method: 'GET',
         headers: {
             'Accept': 'application/json;version=2'
-        }})
+        },
+    })
     .then(response => {
         if (!response.ok) {
+            console.log(response)
             throw new Error('Network response was not ok ' + response.statusText);
         }
         return response.json();

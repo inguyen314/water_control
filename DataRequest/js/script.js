@@ -1306,7 +1306,7 @@ function initialize(data) {
     darkModeCheckbox.addEventListener('click', toggleDarkModeBtn);
 
     // Add function to popup window button
-    popupWindowBtn.addEventListener('click', blurBackground);
+    //popupWindowBtn.addEventListener('click', blurBackground);
 
     // Extract the names of the basins with the list of gages
     let namesObject = getNames(data);
@@ -1700,6 +1700,19 @@ function initialize(data) {
         pageURL = domain + "/timeseries?" + "name=" + urlName + "&office=MVS&begin=" + beginDate.value + beginHours + newEndDate + endHours + "&page-size=" + dataAmount;
         console.log("TimeSerieURL: ", pageURL);
 
+        // // This block is for FLOW -> Not going to be implemented
+        // let testURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/timeseries?name=LD%2025%20TW-Mississippi.Flow.Inst.30Minutes.0.RatingCOE&office=MVS&begin=2024-01-01T00%3A00%3A00.00Z&end=2025-01-01T00%3A00%3A00.00Z&timezone=CST6CDT&page-size=5000000"
+        // console.log("TEST TimeSerieURL: ", testURL);
+        // fetchJsonFileV01(testURL, function(data_test){
+        //     console.log(data_test)
+        //     let temp_data = []
+        //     data_test["values"].forEach((element) => {
+        //         let new_date = reformatDateV02(element[0])
+        //         temp_data.push([new_date, element[1], element[2]])
+        //     })
+        //     console.log("Temp Data: ", temp_data)
+        // }, function(ex) { console.error(ex) })
+
         fetchJsonFile(pageURL, function(fetchedData){
 
             let dataValues = fetchedData['values']
@@ -1938,6 +1951,7 @@ function initialize(data) {
             errorMessageDiv.classList.add('show');
             loadingDiv.classList.remove('show');
         });    
+    
     });
 
     getBasinDataBtn.addEventListener('click', getAllBasinGages);
@@ -2022,6 +2036,29 @@ function reformatDate(dateNumber) {
     } else {
         return `${month}-${day}-${year} ${hours}:${minutes}`;
     }
+}
+
+function reformatDateV02(dateNumber) {
+    let newDate = new Date(dateNumber);
+
+    let newBeginDate = new Date(beginDate.value.split('-')[0], beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
+    let julyDate = new Date(beginDate.value.split('-')[0], 6, 1);
+    let offsetBegin = newBeginDate.getTimezoneOffset();
+    let offsetJuly = julyDate.getTimezoneOffset();
+
+    let offset;
+
+    if (offsetBegin != offsetJuly){
+        offset = new Date().getTimezoneOffset() + 60;
+    } else {
+        offset = new Date().getTimezoneOffset();
+    }
+
+    let timezoneOffsetMs = offset * 60 * 1000;
+
+    newDate.setTime(newDate.getTime() + timezoneOffsetMs);
+
+    return newDate
 }
 
 function findMissingDates(dates) {

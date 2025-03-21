@@ -4,8 +4,6 @@ import {
     addBasinNames,
     createUrl,
     formatString,
-    getList,
-    getMeanMinMaxList,
     haveOneYearOfData,
     blurBackground,
     popupMessage,
