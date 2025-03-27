@@ -60,6 +60,10 @@
                                                     <div class="inputs">
                                                         <div class="data-info">
                                                             <div class="basin">
+                                                                <label>Office:</label>
+                                                                <select name="office" id="officeCombobox"></select>
+                                                            </div>
+                                                            <div class="basin">
                                                                 <label>Basin:</label>
                                                                 <select name="basin" id="basinCombobox"></select>
                                                             </div>
@@ -282,6 +286,13 @@
                                                     <span style="--i: 20;"></span>
                                                     <h2 class="text-string">Loading Data<br><b>If this takes more than 15 seconds, reload the page.</b></h2>
                                                 </div>
+                                            </div>
+
+                                            <div id="progress-bar-div" class="hidden">
+                                                <div id="progress-bar">
+                                                    <div id="progress"></div>
+                                                </div>
+                                                <label class="progress-bar-text">Progress Bar... (50%)</label>
                                             </div>
 
                                             <div id="print-btn-div" class="hidden">
