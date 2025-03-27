@@ -24,6 +24,8 @@
     --color-blue-1: blue;
     --color-gray-for-text: rgb(82, 82, 82);
     --color-qaqc-text: red;
+
+    --progress-bar-color: darkblue;
 }
 
 #page-container.hidden {
@@ -98,6 +100,8 @@
     --color-blue-1: rgb(180, 180, 255);
     --color-gray-for-text: rgb(224, 224, 224);
     --color-qaqc-text: rgb(255, 151, 151);
+
+    --progress-bar-color: rgb(85, 85, 250);
 }
 
 #loading-image {

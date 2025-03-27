@@ -81,7 +81,10 @@ const basinName = document.getElementById('basinCombobox'),
       instructionsDiv = document.getElementById('instructions'),
       missingDateWindowCloseBtn = document.getElementById('close-btn'),
       missingDateWindow = document.getElementById('missing-dates-table'),
-      missingDateTableBody = document.querySelector('#missing-dates-table table tbody');
+      missingDateTableBody = document.querySelector('#missing-dates-table table tbody'),
+      progressBar = document.getElementById('progress'),
+      progressBarDiv = document.getElementById('progress-bar-div'),
+      progressBarText = document.querySelector('#progress-bar-div .progress-bar-text');
 
 
 let fetchedData = [];
@@ -1594,7 +1597,7 @@ function initialize(data) {
 
     console.log("Data: ", data);
 
-    getDataBtn.addEventListener('click', function() {
+    getDataBtn.addEventListener('click', async function() {
 
         if (!haveClass(missingDateWindow, 'hidden')){
             missingDateWindow.classList.add('hidden');
@@ -1614,7 +1617,20 @@ function initialize(data) {
         }
 
         tableResultsDiv.classList.remove('show');
-        loadingDiv.classList.add('show');
+        //loadingDiv.classList.add('show');
+
+        progressBar.style.width = '0%';
+
+        if (haveClass(progressBarDiv, 'hidden')){
+            progressBarDiv.classList.remove('hidden');
+        }
+
+        let counter = 0;
+        let totalCounters = 20;
+        let sleepTime = 250;
+
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
 
         // Excel initial function (Alert)
         getExcelBtn.removeEventListener('click', excelNoDataMessage);
@@ -1641,7 +1657,12 @@ function initialize(data) {
                     }
                 });
             };
+            
         });
+
+        counter += 1;
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
 
         if (hourlyCheckbox.checked) {
 
@@ -1673,12 +1694,20 @@ function initialize(data) {
             urlName = datmanName;
         };
 
+        counter += 1;
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
+
         // Handle Daylight Saving
         let newBeginDate = new Date(beginDate.value.split('-')[0], beginDate.value.split('-')[1] - 1, beginDate.value.split('-')[2]);
         let currentEndDate = new Date(endDate.value.split('-')[0], endDate.value.split('-')[1] - 1, endDate.value.split('-')[2]);
         let julyDate = new Date(beginDate.value.split('-')[0], 6, 1);
         let offsetBegin = newBeginDate.getTimezoneOffset();
         let offsetJuly = julyDate.getTimezoneOffset();
+
+        counter += 1;
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
 
         let beginHours = "T05%3A00%3A00.00Z&end=";
 
@@ -1690,32 +1719,34 @@ function initialize(data) {
         let newEndDateMonth = (nextDay.getMonth() + 1) > 9 ? `${nextDay.getMonth() + 1}` : `0${nextDay.getMonth() + 1}`;
         let newEndDate = `${nextDay.getFullYear()}-${newEndDateMonth}-${newEndDateDay}`;
 
+        counter += 1;
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
+
         if (offsetBegin != offsetJuly){
             beginHours = "T06%3A00%3A00.00Z&end=";
             endHours = "T05%3A30%3A00.00Z";
         }
+
+        counter += 1;
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
 
         // Get data for the period of record
         let dataAmount = 1000000;
         pageURL = domain + "/timeseries?" + "name=" + urlName + "&office=MVS&begin=" + beginDate.value + beginHours + newEndDate + endHours + "&page-size=" + dataAmount;
         console.log("TimeSerieURL: ", pageURL);
 
-        // // This block is for FLOW -> Not going to be implemented
-        // let testURL = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data/timeseries?name=LD%2025%20TW-Mississippi.Flow.Inst.30Minutes.0.RatingCOE&office=MVS&begin=2024-01-01T00%3A00%3A00.00Z&end=2025-01-01T00%3A00%3A00.00Z&timezone=CST6CDT&page-size=5000000"
-        // console.log("TEST TimeSerieURL: ", testURL);
-        // fetchJsonFileV01(testURL, function(data_test){
-        //     console.log(data_test)
-        //     let temp_data = []
-        //     data_test["values"].forEach((element) => {
-        //         let new_date = reformatDateV02(element[0])
-        //         temp_data.push([new_date, element[1], element[2]])
-        //     })
-        //     console.log("Temp Data: ", temp_data)
-        // }, function(ex) { console.error(ex) })
+        counter += 1;
+        processNextItem(counter, totalCounters, "Getting Gage Data");
+        await sleep(sleepTime);
 
-        fetchJsonFile(pageURL, function(fetchedData){
+        fetchJsonFile(pageURL, async function(fetchedData){
 
             let dataValues = fetchedData['values']
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data")
 
             let formattedData = [];
 
@@ -1727,11 +1758,19 @@ function initialize(data) {
                 });
             });
 
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
+
             globalData = [];
             
             formattedData.forEach(element => {
                 globalData.push(element);
             });
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
 
             console.log("Formatted Data: ", formattedData);
 
@@ -1751,6 +1790,10 @@ function initialize(data) {
                 datesList.push(`${month}-${day}-${year}`);
             });
 
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
+
             let missingDatesList = findMissingDates(datesList);
 
             let actualMissingDates = [];
@@ -1762,6 +1805,10 @@ function initialize(data) {
                 }
             })
 
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
+
             console.log("Missing Dates: ", actualMissingDates);
 
             // insertMissingDates(formattedData, actualMissingDates);
@@ -1769,6 +1816,10 @@ function initialize(data) {
             metadataTitle.textContent = gageName.value;
 
             metadataDescription.innerHTML = `Description:<br>${gageMetadata.description}`;
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
 
             if (isProjectText.textContent !== "Datum: NGVD29"){
                 metadataDatum88.innerHTML = `${gageMetadata.elevation.toFixed(2)}ft NAVD 88, add datum to stage to obtain elevation`;
@@ -1805,7 +1856,9 @@ function initialize(data) {
                     });
             }
 
-            
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
 
             if (isProjectText.textContent === "Datum: NGVD29" && dailyCheckbox.checked){
                 metadataRecordedTime.textContent = "All values were recorded at 08:00 am NGVD29 stage in ft";
@@ -1814,6 +1867,10 @@ function initialize(data) {
             } else {
                 metadataRecordedTime.textContent = "";
             }
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
 
             let metadataBeginDate = `${PORBeginDate.textContent.split('/')[0]}-${PORBeginDate.textContent.split('/')[1]}-${PORBeginDate.textContent.split('/')[2]}`;
             let metadataEndDate = `${POREndDate.textContent.split('/')[0]}-${POREndDate.textContent.split('/')[1]}-${POREndDate.textContent.split('/')[2]}`;
@@ -1827,6 +1884,10 @@ function initialize(data) {
             } else {
                 metadataMissingDates.innerHTML = "Missing Dates: NA";
             };
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
 
             if (hourlyCheckbox.checked){
                 data.forEach(element => {
@@ -1846,6 +1907,10 @@ function initialize(data) {
                 metadataHighlightValues.innerHTML = '';
             }
 
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
+
             tableTBody.innerHTML = '';
 
             globalFormattedData = [];
@@ -1853,6 +1918,10 @@ function initialize(data) {
             formattedData.forEach(element => {
                 globalFormattedData.push(element);
             });
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
 
             if (hourlyCheckbox.checked){
                 let startPaintingDay = parseInt(metadataHighlightValues.innerHTML.toString().split('<strong>')[1].split('</strong>')[0].split('-')[1]);
@@ -1875,6 +1944,10 @@ function initialize(data) {
                     }
                 })
             }
+
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
             
 
             // 500 Rows Max
@@ -1906,6 +1979,10 @@ function initialize(data) {
             
             haveGageData = true;
 
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
+            await sleep(sleepTime);
+
             if (haveBasinData){
                 disableBasinFilesBtns();
             }
@@ -1918,10 +1995,10 @@ function initialize(data) {
                 disableFilesBtns();
             }
         
-            loadingDiv.classList.remove('show');
+            //loadingDiv.classList.remove('show');
 
             tableResultsDiv.classList.add('show');
-            loadingDiv.classList.remove('show');
+            //loadingDiv.classList.remove('show');
 
             // Create tooltip for missing values
             let word = document.getElementById("missing-number");
@@ -1945,7 +2022,12 @@ function initialize(data) {
                 })
             }
 
+            counter += 1;
+            processNextItem(counter, totalCounters, "Getting Gage Data");
 
+            if (!haveClass(progressBarDiv, 'hidden')){
+                progressBarDiv.classList.add('hidden');
+            }
 
         }, function(){
             errorMessageDiv.classList.add('show');
@@ -2621,7 +2703,7 @@ async function getAllBasinGages(){
     instructionsDiv.classList.remove('show');
 
     disableButtons();
-    loadingDiv.classList.add('show');
+    //loadingDiv.classList.add('show');
 
     if (haveGageData){
         disableFilesBtns();
@@ -2631,11 +2713,13 @@ async function getAllBasinGages(){
         disableBasinFilesBtns();
     };
 
-    loadingDiv.classList.add('show');
+    //loadingDiv.classList.add('show');
 
     let gagesList = [];
 
     globalGageList = [];
+
+    getBasinDataBtn.disabled = true;
 
     fetchedData.forEach(element => {
         if (element['id'] === basinName.value) {
@@ -2789,10 +2873,46 @@ async function getAllBasinGages(){
 
 
     console.log("Getting all gages data, please wait...");
-    
-    let waitTime =  20000;
 
-    await sleep(waitTime);
+    let dataReady = false;
+    let countCheck = gagesList.length;
+
+    progressBar.style.width = '0%';
+
+    if (haveClass(progressBarDiv, 'hidden')){
+        progressBarDiv.classList.remove('hidden');
+    }
+
+    while (!dataReady){
+
+        let counter = 0;
+
+        gagesList.forEach((element) => {
+
+            if (element.dataValues) {
+                counter += 1;
+            }
+
+        });
+
+        processNextItem(counter, countCheck, "Loading Gages");
+
+        if (counter === countCheck) {
+            dataReady = true;
+        } else {
+            await sleep(500);
+        }
+
+    }
+
+    if (!haveClass(progressBarDiv, 'hidden')){
+        progressBarDiv.classList.add('hidden');
+    }
+
+    getBasinDataBtn.disabled = false;
+
+    console.log("All gages data retrieved successfully.");
+    
 
     if (!haveError) {
 
@@ -2806,7 +2926,7 @@ async function getAllBasinGages(){
 
         disableBasinFilesBtns();
 
-        loadingDiv.classList.remove('show');
+        //loadingDiv.classList.remove('show');
 
         haveBasinData = true;
 
@@ -2830,13 +2950,41 @@ async function getAllBasinGages(){
     
 }
 
+function processNextItem(currentItem, totalItems, text) {
+
+    if (currentItem < totalItems) {
+        // Simulate processing an item (replace with actual logic)
+        console.log(`Processing item ${currentItem + 1} of ${totalItems}`);
+
+        // Update progress
+        let progressPercent = ((currentItem + 1) / totalItems) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+        progressBar.textContent = `${Math.round(progressPercent)}%`;
+
+        if (text === "Getting Gage Data"){
+            progressBarText.innerHTML = `${text}...`;
+        } else {
+            progressBarText.innerHTML = `${text}... (${currentItem + 1}/${totalItems})`;
+        }
+
+    } else {
+        console.log("Processing complete!");
+    }
+}
+
 async function sleep(ms){
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function createExcelSheet(){
 
-    loadingDiv.classList.add('show');
+    //loadingDiv.classList.add('show');
+
+    progressBar.style.width = '0%';
+
+    if (haveClass(progressBarDiv, 'hidden')){
+        progressBarDiv.classList.remove('hidden');
+    }
 
     // Deactivate elements
     let elementList = [basinName, gageName, beginDate, endDate, getDataBtn, getBasinDataBtn, getExcelBtn, getJSONBtn, basinExcelBtn, basinJSONBtn, dailyCheckbox, hourlyCheckbox, darkModeCheckbox];
@@ -2857,6 +3005,8 @@ async function createExcelSheet(){
     // Create a new workbook and worksheet
     const workbook = new ExcelJS.Workbook();
 
+    let totalDataAmount = globalGageList.length;
+    let counter = 0;
     globalGageList.forEach(currentGage => {
 
         if (!currentGage){
@@ -3080,6 +3230,10 @@ async function createExcelSheet(){
             });
 
         }
+
+        counter += 1;
+
+        processNextItem(counter, totalDataAmount, "Sheet completed");
     
     });
 
@@ -3094,13 +3248,23 @@ async function createExcelSheet(){
         element.element.disabled = element.active;
     });
 
-    loadingDiv.classList.remove('show');
+    if (!haveClass(progressBarDiv, 'hidden')){
+        progressBarDiv.classList.add('hidden');
+    }
+
+    //loadingDiv.classList.remove('show');
 
 }
 
 function createJSONFile(){
 
-    loadingDiv.classList.add('show');
+    //loadingDiv.classList.add('show');
+
+    progressBar.style.width = '0%';
+
+    if (haveClass(progressBarDiv, 'hidden')){
+        progressBarDiv.classList.remove('hidden');
+    }
 
     // Deactivate elements
     let elementList = [basinName, gageName, beginDate, endDate, getDataBtn, getBasinDataBtn, getExcelBtn, getJSONBtn, basinExcelBtn, basinJSONBtn, dailyCheckbox, hourlyCheckbox, darkModeCheckbox];
@@ -3122,6 +3286,8 @@ function createJSONFile(){
 
     let jsonObject = [];
 
+    let totalDataAmount = globalGageList.length;
+    let counter = 0;
     globalGageList.forEach(currentGage => {
 
         let datumText = " ft NAVD88, add datum to stage to obtain elevation.";
@@ -3214,6 +3380,10 @@ function createJSONFile(){
                 values: currentGage.dataValues
             }
         });
+
+        counter += 1;
+
+        processNextItem(counter, totalDataAmount, "Gage completed");
     
     });
 
@@ -3242,9 +3412,13 @@ function createJSONFile(){
         element.element.disabled = element.active;
     });
 
+    if (!haveClass(progressBarDiv, 'hidden')){
+        progressBarDiv.classList.add('hidden');
+    }
+
     console.log("JSON file for Basin saved.");
 
-    loadingDiv.classList.remove('show');
+    //loadingDiv.classList.remove('show');
 
 }
 
