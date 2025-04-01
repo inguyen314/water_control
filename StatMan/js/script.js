@@ -52,7 +52,8 @@ const basinName = document.getElementById('basinCombobox'),
       porStartDate = document.querySelector('#info-table .por-start'),
       porEndDate = document.querySelector('#info-table .por-end'),
       mean29_88label = document.getElementById('mean-29-88-label'),
-      extreme29_88label = document.getElementById('extreme-29-88-label');
+      extreme29_88label = document.getElementById('extreme-29-88-label'),
+      tabTitle = document.getElementById('tab-title');
 
 
 let params = new URLSearchParams(window.location.search);
@@ -1757,6 +1758,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         checkboxDiv.style.display = 'none';
         computeHTMLBtn.style.display = 'none';
         computeCSV.style.display = 'none';
+        tabTitle.textContent = "DatRep - Daily Gage Values";
     }
 
     // Get the current date and time, and compute a "look-back" time for historical data
