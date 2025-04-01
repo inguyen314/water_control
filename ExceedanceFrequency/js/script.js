@@ -1267,7 +1267,7 @@ if (isMaintenance){
 }
 
 // Add function to popup window button
-popupWindowBtn.addEventListener('click', blurBackground);
+//popupWindowBtn.addEventListener('click', blurBackground);
 
 loadingPageData();
 

@@ -500,11 +500,11 @@ function main(data) {
     computeHTMLBtn.textContent = "Compute HTML";
     loadingPageData();
 
-    let aveTableSring = 'Day,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec\n';
-    for (let i = 3; i < averageTable.childNodes.length; i++) {
-        aveTableSring += averageTable.childNodes[i].innerText.split('\t').join(',');
-        aveTableSring += '\n';
-    }
+    // let aveTableSring = 'Day,Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec\n';
+    // for (let i = 3; i < averageTable.childNodes.length; i++) {
+    //     aveTableSring += averageTable.childNodes[i].innerText.split('\t').join(',');
+    //     aveTableSring += '\n';
+    // }
 
     computeCSV.addEventListener('click' , function() {
 
@@ -1749,7 +1749,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let setCategory = "Basins"; 
 
-    //let office = "MVS";
+    let office = "MVS";
     //let type = "no idea";
 
     if (type === "DATREP") {
@@ -1765,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let setBaseUrl = null;
     if (cda === "internal") {
-        setBaseUrl = `https://coe-${officeName.toLowerCase()}uwa04${officeName.toLowerCase()}.${officeName.toLowerCase()}.usace.army.mil:8243/${officeName.toLowerCase()}-data/`;
+        setBaseUrl = `https://coe-${office.toLowerCase()}uwa04${office.toLowerCase()}.${office.toLowerCase()}.usace.army.mil:8243/${office.toLowerCase()}-data/`;
         consoleLog(1, "setBaseUrl: ", setBaseUrl);
     } else if (cda === "public") {
         setBaseUrl = `https://cwms-data.usace.army.mil/cwms-data/`;
@@ -1773,7 +1773,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     // Define the URL to fetch location groups based on category
-    const categoryApiUrl = setBaseUrl + `location/group?office=${officeName}&include-assigned=false&location-category-like=${setCategory}`;
+    // const categoryApiUrl = setBaseUrl + `location/group?office=${office}&include-assigned=false&location-category-like=${setCategory}`;
+    const categoryApiUrl = setBaseUrl + `location/group?office=${office}&group-office-id=${office}&category-office-id=${office}&category-id=${setCategory}`;
     consoleLog(1, "categoryApiUrl: ", categoryApiUrl);
 
     // Initialize maps to store metadata and time-series ID (TSID) data for various parameters
