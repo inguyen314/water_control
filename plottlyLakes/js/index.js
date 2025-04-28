@@ -11,7 +11,7 @@ const office = "MVS";
 const timeSeries = {
     lakeShelbyville: {
         plot_1: ["Lovington-W Okaw.Flow.Inst.15Minutes.0.RatingUSGS", "Allenville-Whitley Cr.Flow.Inst.15Minutes.0.RatingUSGS", 
-            "Chesterville-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS", "Cooks Mill-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS"],
+            "Cooks Mill-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS"], // Removed (Chesterville-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS)
         plot_2: ["Lk Shelbyville-Kaskaskia.Stage.Inst.30Minutes.0.29"],
         plot_3: ["Shelbyville TW-Kaskaskia.Flow.Inst.30Minutes.0.RatingUSGS"],
         plot_4: ["Shelbyville TW-Kaskaskia.Flow.Inst.30Minutes.0.RatingUSGS", "Shelbyville-Robinson Cr.Flow.Inst.15Minutes.0.RatingUSGS",
@@ -36,22 +36,22 @@ const timeSeries = {
             "Murphysboro-Big Muddy.Flow.Inst.15Minutes.0.RatingUSGS"]
     },
     lakeMarkTwain: {
-        plot_1: ["Vandalia-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS", "Brownstown-Hickory Cr.Flow.Inst.15Minutes.0.RatingUSGS", 
-            "Mulberry Grove-Hurricane Cr.Flow.Inst.15Minutes.0.RatingUSGS", "Fairman-E Fork.Flow.Inst.15Minutes.0.RatingUSGS"],
-        plot_2: ["Carlyle Lk-Kaskaskia.Stage.Inst.30Minutes.0.29"],
-        plot_3: ["Carlyle-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS"],
-        plot_4: ["Carlyle-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS", "Hoffman-Crooked Cr.Flow.Inst.15Minutes.0.RatingCOE",
-            "Breese-Shoal Cr.Flow.Inst.15Minutes.0.RatingUSGS", "Venedy Station-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS"
-        ]
+        plot_1: ["Perry-Lick Cr.Flow.Inst.15Minutes.0.RatingUSGS", "Santa Fe-S Fork Salt.Flow.Inst.15Minutes.0.RatingUSGS", 
+            "Santa Fe-Long Branch.Flow.Inst.15Minutes.0.RatingUSGS", "Madison-Elk Fork Salt.Flow.Inst.15Minutes.0.RatingUSGS",
+            "Paris-Crooked Cr.Flow.Inst.15Minutes.0.RatingUSGS", "Hagers Grove-N Fork Salt.Flow.Inst.15Minutes.0.RatingUSGS",
+            "Holliday-Mid Fork Salt.Flow.Inst.15Minutes.0.RatingUSGS", "Shelbina-N Fork Salt.Flow.Inst.15Minutes.0.RatingUSGS"],
+        plot_2: ["Mark Twain Lk-Salt.Stage.Inst.30Minutes.0.29"],
+        plot_3: ["ReReg Pool-Salt.Stage.Inst.15Minutes.0.29"],
+        plot_4: ["Frankford-Spencer Cr.Flow.Inst.15Minutes.0.RatingUSGS", "New London-Salt.Flow.Inst.15Minutes.0.RatingUSGS",
+            "Norton Bridge-Salt.Flow.Inst.15Minutes.0.RatingUSGS"]
     },
     lakeWappapello: {
-        plot_1: ["Vandalia-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS", "Brownstown-Hickory Cr.Flow.Inst.15Minutes.0.RatingUSGS", 
-            "Mulberry Grove-Hurricane Cr.Flow.Inst.15Minutes.0.RatingUSGS", "Fairman-E Fork.Flow.Inst.15Minutes.0.RatingUSGS"],
-        plot_2: ["Carlyle Lk-Kaskaskia.Stage.Inst.30Minutes.0.29"],
-        plot_3: ["Carlyle-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS"],
-        plot_4: ["Carlyle-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS", "Hoffman-Crooked Cr.Flow.Inst.15Minutes.0.RatingCOE",
-            "Breese-Shoal Cr.Flow.Inst.15Minutes.0.RatingUSGS", "Venedy Station-Kaskaskia.Flow.Inst.15Minutes.0.RatingUSGS"
-        ]
+        plot_1: ["Roselle-St Francis.Flow.Inst.15Minutes.0.RatingCOE", "Millcreek-St Francis.Flow.Inst.15Minutes.0.RatingUSGS", 
+            "Saco-St Francis.Flow.Inst.15Minutes.0.RatingUSGS", "Patterson-St Francis.Flow.Inst.15Minutes.0.RatingUSGS"],
+        plot_2: ["Wappapello Lk-St Francis.Stage.Inst.30Minutes.0.29"],
+        plot_3: ["Iron Bridge-St Francis.Flow.Inst.30Minutes.0.RatingUSGS"],
+        plot_4: ["Iron Bridge-St Francis.Flow.Inst.30Minutes.0.RatingUSGS", "Fisk-St Francis.Flow.Inst.1Hour.0.RatingCOE",
+            "St Francis-St Francis.Flow.Inst.1Hour.0.RatingCOE"]
     }
 };
 
@@ -59,8 +59,8 @@ const timeSeries = {
 const plotShelbyville = true;
 const plotCarlyle = true;
 const plotRend = true;
-const plotMarkTwain = false;
-const plotWappapello = false;
+const plotMarkTwain = true;
+const plotWappapello = true;
 
 const shelbyvillePlot_1_Div = document.getElementById('shelbyville-plot-1');
 const shelbyvillePlot_2_Div = document.getElementById('shelbyville-plot-2');
@@ -88,6 +88,8 @@ const wappapelloPlot_3_Div = document.getElementById('wappapello-plot-3');
 const wappapelloPlot_4_Div = document.getElementById('wappapello-plot-4');
 
 const lookbackDaysSpan = document.querySelectorAll('.days-num');
+const lookbackTextBox = document.getElementById('lookback-days-txtbox')
+const lookbackBtn = document.getElementById('lookback-btn');
 
 // Get Today's date
 const today = new Date();
@@ -95,6 +97,16 @@ const today = new Date();
 // Check if there is a value un the url parameter for days, else the lookback days will be 4 as default
 const backDaysParam = lookbackDayURLParam ? lookbackDayURLParam : 4;
 const backDays = backDaysParam + 1;
+
+lookbackTextBox.value = backDaysParam;
+
+lookbackBtn.addEventListener('click', buttonClicked);
+
+lookbackTextBox.addEventListener('keydown', (e) => {
+    if (e.key === "Enter"){
+        buttonClicked();
+    }
+});
 
 lookbackDaysSpan.forEach(span => {
     span.textContent = backDays - 1;
@@ -204,12 +216,56 @@ async function getData() {
             processData(data, rendPlot_4_Div, "FLOW");
         });
     };
+
+    if (plotMarkTwain) {
+        await plotPromises("lakeMarkTwain", "plot_1")
+        .then(data => {
+            processData(data, markTwainPlot_1_Div, "FLOW");
+        });
+
+        await plotPromises("lakeMarkTwain", "plot_2")
+        .then(data => {
+            processData(data, markTwainPlot_2_Div, "STAGE");
+        });
+
+        await plotPromises("lakeMarkTwain", "plot_3")
+        .then(data => {
+            processData(data, markTwainPlot_3_Div, "STAGE");
+        });
+
+        await plotPromises("lakeMarkTwain", "plot_4")
+        .then(data => {
+            processData(data, markTwainPlot_4_Div, "FLOW");
+        });
+    };
+
+    if (plotWappapello) {
+        await plotPromises("lakeWappapello", "plot_1")
+        .then(data => {
+            processData(data, wappapelloPlot_1_Div, "FLOW");
+        });
+
+        await plotPromises("lakeWappapello", "plot_2")
+        .then(data => {
+            processData(data, wappapelloPlot_2_Div, "STAGE");
+        });
+
+        await plotPromises("lakeWappapello", "plot_3")
+        .then(data => {
+            processData(data, wappapelloPlot_3_Div, "FLOW");
+        });
+
+        await plotPromises("lakeWappapello", "plot_4")
+        .then(data => {
+            processData(data, wappapelloPlot_4_Div, "FLOW");
+        });
+    };
     
 }     
 
 function processData(data, plotDiv, type) {
     // Define color list and an empty array to store the series
-    const colorList = ["red", "green", "blue", "magenta", "black"]
+    const colorList = ["red", "green", "blue", "magenta", "orange", "red", "green", "blue", "magenta", "orange"]
     const seriesList = [];
     let tsTemplateForVerticalLines = null;
 
@@ -227,11 +283,13 @@ function processData(data, plotDiv, type) {
 
         const units = type.toLowerCase() === "stage" ? "ft" : "cfs";
 
-        seriesList.push(createSerie(fullData, `${ts.name} (${units})`, "lines", colorList[index]));
+        seriesList.push(createSerie(fullData, `${ts.name} (${units})`, "lines", colorList[index], type, index>4));
 
     });
 
-    const { tickvals, ticktext } = generateCustomTicks(backDaysDate, backDays, backDays * 24);
+    const hoursInterval = backDays > 12 ? (backDays > 20 ? 24 : 12) : 6;
+
+    const { tickvals, ticktext } = generateCustomTicks(backDaysDate, hoursInterval, backDays * 24);
     const verticalLines = tsTemplateForVerticalLines
     .filter(d => d.date.getUTCHours() === 0 && d.date.getUTCMinutes() === 0)
     .map(d => ({
@@ -251,6 +309,17 @@ function processData(data, plotDiv, type) {
 
     createPlot(seriesList, tickvals, ticktext, verticalLines, "", Math.min(tsTemplateForVerticalLines.value), Math.max(tsTemplateForVerticalLines.value), plotDiv, type)
 
+}
+
+function buttonClicked() {
+    if (isFinite(lookbackTextBox.value)) {
+        const link = document.createElement('a');
+        link.href = `${window.location.pathname}?days=${lookbackTextBox.value}`;
+
+        link.click();
+    } else {
+        lookbackTextBox.style.borderColor = "red";
+    }
 }
 
 // Create plot Function
@@ -295,7 +364,7 @@ function createPlot(data, labelVals, labelText, shapeVar, title, minValue, maxVa
             y:-0.35,
             xanchor: 'left',
             yanchor: 'top',
-            font: { size: 10 },
+            font: { size: 11 },
             ncols: 2
         }
     };
@@ -312,13 +381,13 @@ function createPlot(data, labelVals, labelText, shapeVar, title, minValue, maxVa
     Plotly.newPlot(plotDivID, data, layout, config);
 }
 
-function createSerie(data, serieName, serieMode, color) {
+function createSerie(data, serieName, serieMode, color, type, dot=false) {
 
     let serie = {
         x: data.map(x => x.date),
         y: data.map(x => x.value),
         mode: serieMode,
-        line: { color: color, width: 2 },
+        line: { color: color, width: 2, dash: `${dot&&'dot'}` },
         name: serieName,
         showlegend: true,
         hoverlabel: {
@@ -327,7 +396,7 @@ function createSerie(data, serieName, serieMode, color) {
             },
             bgcolor: color
         },
-        hovertemplate: `<span style="color:white;">%{y:,.0f}  |  ${serieName.split('.')[0]}</span><br><extra></extra>`,
+        hovertemplate: `<span style="color:white;">${type.toLowerCase()==="stage"?"%{y:,.2f} ft":"%{y:,.0f} cfs"}  |  ${serieName.split('.')[0]}</span><br><extra></extra>`,
         hovermode: 'closest'
     };
 
@@ -345,7 +414,10 @@ function generateCustomTicks(startDate, hoursInterval, totalHours) {
         currentDate.setHours(currentDate.getHours() + i);  // Increment hours
         const time24format = (currentDate.getHours() * 100) + currentDate.getMinutes();
 
-        const roundTime24Format = roundTime(time24format);
+        let roundTime24Format = roundTime(time24format);
+        if (totalHours/24 > 12){
+            roundTime24Format = roundTime12H(time24format);
+        }
 
         const newCurrentDate = new Date(currentDate.getTime());
         newCurrentDate.setUTCHours(roundTime24Format/100, 0, 0);
@@ -391,6 +463,14 @@ function roundTime(time) {
         return 1200
     } else if (time >= 1200 && time < 1800) {
         return 1800
+    } else {
+        return 0
+    }
+}
+
+function roundTime12H(time) {
+    if (time >= 0 && time < 1200) {
+        return 1200
     } else {
         return 0
     }
