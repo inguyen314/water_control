@@ -22,6 +22,7 @@ const filePicker = document.getElementById('file-picker');
 const clearBtn = document.getElementById('clear-file-picker-btn');
 const yAxisLabel = document.getElementById('y-axis-label');
 const seriesName = document.getElementById('series-name-txbox');
+const upperSerieToggleCheckbox = document.getElementById('upper-series-toggle-checkbox');
 
 // Empty Variables
 //createTableTextFile(tableRows, tableHeader, text, `${nameTextBox.value.split('.')[0]}.txt`)
@@ -608,23 +609,23 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
     },
     {
       name: '0.5 ft ' + '[' + plotAbove0_5Count + "]",
-      data: plotAbove0_5,
+      data: upperSerieToggleCheckbox.checked ? plotAbove0_5 : [],
       color: '#DD00FA',
       marker: {
         enabled: false // Disable markers for this series
       },
-      showInLegend: true,
+      showInLegend: upperSerieToggleCheckbox.checked ? true : false,
       //connectNulls: false,
       //legendSymbol: 'none'
     },
     {
       name: '1.0 ft ' + '[' + plotAbove1_0Count + "]",
-      data: plotAbove1_0,
+      data: upperSerieToggleCheckbox.checked ? plotAbove1_0 : [],
       color: '#0091FF',
       marker: {
         enabled: false // Disable markers for this series
       },
-      showInLegend: true,
+      showInLegend: upperSerieToggleCheckbox.checked ? true : false,
       //connectNulls: false,
       //legendSymbol: 'none'
     }
