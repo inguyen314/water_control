@@ -396,7 +396,7 @@ function createSerie(data, serieName, serieMode, color, type, dot=false) {
             },
             bgcolor: color
         },
-        hovertemplate: `<span style="color:white;">${type.toLowerCase()==="stage"?"%{y:,.2f} ft":"%{y:,.0f} cfs"}  |  ${serieName.split('.')[0]}</span><br><extra></extra>`,
+        hovertemplate: `<span style="color:white;">${type.toLowerCase()==="stage"?"%{y:,.2f} ft":"%{y:,.0f} cfs"}  |  ${serieName.split('.')[0]} ${dot&&"(dot)"}</span><br><extra></extra>`,
         hovermode: 'closest'
     };
 

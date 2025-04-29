@@ -46,6 +46,7 @@ let isExcelFile = false;
 let globalExcelData = {
   dates: [],
   stages: [],
+  hypothetical: []
 };
 
 // URL of the JSON file
@@ -140,11 +141,13 @@ function processData(data) {
 
   let dateList;
   let stageList;
+  let hypoStageList;
 
   if (isExcelFile){
 
     dateList = data.dates;
     stageList = data.stages;
+    hypoStageList = data.hypothetical;
 
   }
   else {
@@ -336,7 +339,8 @@ function processData(data) {
 
   createChart(yAxisTitle=chartYaxisLabel, title=newTitle, xAxisArray=dateList, yAxisArray=stageList,
     upperLimitSerie=upperList, lowerLimitSerie=lowerList, plot0_5=event0_5plot, plot1_0=event1_0plot, 
-    plot1_5=event1_5plot, plot2_0=event2_0plot, plotAbove0_5=above0_5LinePlot, plotAbove1_0=above1_0LinePlot
+    plot1_5=event1_5plot, plot2_0=event2_0plot, plotAbove0_5=above0_5LinePlot, plotAbove1_0=above1_0LinePlot, 
+    hypotheticalSerie=hypoStageList
   );
 
   let userData = {
@@ -377,20 +381,21 @@ function processExcelData(data, outputFileName){
   console.log("Excel Data: ", data);
 
   data.forEach(element => {
-    const excelBaseDate = new Date(1900, 1, 0);  // January 1, 1900
-    const daysSinceBase = element["Date"] - 2;
+    const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
+    const daysSinceBase = element["Date"] - 1;
     const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
 
     // Format the date as MM/DD/YYYY
-    const month = jsDate.getMonth(); // Months are zero-based
+    const month = jsDate.getMonth() + 1; // Months are zero-based
     const day = jsDate.getDate();
     const year = jsDate.getFullYear();
 
     globalExcelData.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
-    globalExcelData.stages.push(element["Stage"]);
+    globalExcelData.stages.push(element["Stage"] || element["24 Pool"]);
+    globalExcelData.hypothetical.push(element["Hypothetical Pool"] || null);
   });
 
-  console.log("globalExcelData: ", globalExcelData);
+  console.log({globalExcelData});
 }
 
 function getAfterEvent(endDateForEvents, stageList, dateList, upperLimit, eventFeet){
@@ -517,7 +522,7 @@ function getList(list, elemIndex) {
   return newList
 }
 
-function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie, upperLimitSerie, plot0_5, plot1_0, plot1_5, plot2_0, plotAbove0_5, plotAbove1_0) {
+function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie, upperLimitSerie, plot0_5, plot1_0, plot1_5, plot2_0, plotAbove0_5, plotAbove1_0, hypotheticalSerie) {
 
   // Font Size
   let titleFontSize = titleSize.value + "px";
@@ -553,6 +558,15 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
     {
       name: seriesName.value,
       data: yAxisArray,
+      color: 'blue',
+      marker: {
+        enabled: false // Disable markers for this series
+      }
+    },
+    {
+      name: "Hypothetical",
+      data: hypotheticalSerie,
+      color: 'red',
       marker: {
         enabled: false // Disable markers for this series
       }
