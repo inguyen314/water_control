@@ -186,16 +186,21 @@ header h1{
 .container .settings .extra-info {
     grid-area: extra;
     display: flex;
-    gap: 100px;
+    gap: 60px;
     padding-left: 15px;
     justify-content: left;
     align-items: center;
 }
 
+.container .settings .extra-info input {
+    width: 15em;
+}
+
 .container .settings .extra-info .limits,
 .container .settings .extra-info .y-axis-textbox,
 .container .settings .extra-info .color-div,
-.container .settings .extra-info .series-textbox {
+.container .settings .extra-info .series-textbox,
+.container .settings .extra-info .hypothetical-textbox {
     display: flex;
     flex-direction: column;
 }
@@ -256,3 +261,8 @@ header h1{
     padding-top: 3px;
 }
 
+.plot-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+}

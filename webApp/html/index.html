@@ -100,6 +100,10 @@
                     <label>Series Name</label>
                     <input type="text" id="series-name-txbox" placeholder="Ex. Stage[ft]", value="Series">
                 </div>
+                <div class="hypothetical-textbox">
+                    <label>Hypothetical Serie Name</label>
+                    <input type="text" id="hypo-name-txbox" placeholder="Ex. Stage[ft]", value="Hypothetical">
+                </div>
                 <div class="toggle-checkbox">
                     <input type="checkbox" id="upper-series-toggle-checkbox">
                     <label>Show Upper Series</label>
@@ -107,7 +111,9 @@
             </div>
         </div>
 
-        <div class="chart-cont" id="chartContainer"></div>
+        <div class="plot-container">
+            <div class="chart-cont" id="chartContainer"></div>
+        </div>
     </div>
     
     <script src="../js/index.js"></script>

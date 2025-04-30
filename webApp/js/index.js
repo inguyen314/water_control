@@ -24,6 +24,9 @@ const yAxisLabel = document.getElementById('y-axis-label');
 const seriesName = document.getElementById('series-name-txbox');
 const upperSerieToggleCheckbox = document.getElementById('upper-series-toggle-checkbox');
 
+const container = document.querySelector('.plot-container');
+const hypotheticalName = document.getElementById('hypo-name-txbox');
+
 // Empty Variables
 //createTableTextFile(tableRows, tableHeader, text, `${nameTextBox.value.split('.')[0]}.txt`)
 let tableRowsData;
@@ -43,11 +46,8 @@ window.onload = loadUserData;
 
 // If a file was picked then block the other inputs
 let isExcelFile = false;
-let globalExcelData = {
-  dates: [],
-  stages: [],
-  hypothetical: []
-};
+let excelFileName = "";
+let globalExcelData = [];
 
 // URL of the JSON file
 const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
@@ -103,22 +103,30 @@ filePicker.addEventListener('change', function(event){
   const reader = new FileReader();
 
   console.log("Selected File: ", file.name);
-
-  globalExcelData.dates = [];
-  globalExcelData.stages = [];
+  excelFileName = file.name.split('.')[0];
 
   reportBtn.removeEventListener('click', getReport);
 
   reader.onload = function(e){
     const data = new Uint8Array(e.target.result);
     const workbook = XLSX.read(data, {type:'array'});
+    const workbookSheets = workbook.SheetNames;
+    const sheetsData = []
 
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
+    // const sheetName = workbook.SheetNames[0];
+    // const sheet = workbook.Sheets[sheetName];
 
-    const json = XLSX.utils.sheet_to_json(sheet);
+    workbookSheets.forEach((sheetName) => {
+      const sheet = workbook.Sheets[sheetName]
 
-    processExcelData(json, file.name.split('.')[0]);
+      const json = XLSX.utils.sheet_to_json(sheet);
+      sheetsData.push({
+        sheetName: sheetName,
+        data: json
+      });
+    })
+
+    processExcelData(sheetsData);
     
   };
 
@@ -137,14 +145,16 @@ clearBtn.addEventListener('click', function(){
 })
 
 // ==== Main funtion to work with the data after getting the data =====
-function processData(data) {
+function processData(data, chartDivId) {
 
+  let plotName;
   let dateList;
   let stageList;
   let hypoStageList;
 
   if (isExcelFile){
 
+    plotName = `${excelFileName} - ${data.name}`;
     dateList = data.dates;
     stageList = data.stages;
     hypoStageList = data.hypothetical;
@@ -209,10 +219,10 @@ function processData(data) {
   let event2_0 = [];
 
   // Fill the empty arrays for each event
-  let event0_5List = getEvents(stageList=stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev0_5)
-  let event1_0List = getEvents(stageList=stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_0)
-  let event1_5List = getEvents(stageList=stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_5)
-  let event2_0List = getEvents(stageList=stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev2_0)
+  let event0_5List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev0_5);
+  let event1_0List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_0);
+  let event1_5List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_5);
+  let event2_0List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev2_0);
 
   // Get X and Y values for each event
   let xValues0_5 = event0_5List[1];
@@ -235,7 +245,7 @@ function processData(data) {
   event2_0[0] = event2_0List[2];
   event2_0[1] = event2_0List[3];
 
-  console.log( { event0_5 } );
+  // console.log( { event0_5 } );
 
   let endDateForEvents = event0_5[0].length > 0 ? event0_5[1][0][event0_5[1][0].length - 1] : null;
 
@@ -245,7 +255,7 @@ function processData(data) {
   let above0_5LinePlot = [];
   let above1_0LinePlot = [];
 
-  console.log( { above0_5Event, above1_0Event } );
+  // console.log( { above0_5Event, above1_0Event } );
 
   if (above0_5Event.length > 0){
 
@@ -337,10 +347,13 @@ function processData(data) {
   console.log( { event0_5plot: event0_5plot } );
   console.log( { above0_5LinePlot: above0_5LinePlot } );
 
-  createChart(yAxisTitle=chartYaxisLabel, title=newTitle, xAxisArray=dateList, yAxisArray=stageList,
+  let hypoCountList = isExcelFile ? hypoStageList.filter(x => x < upperLimit) : [];
+  let hypoCount = hypoCountList.length;
+
+  createChart(yAxisTitle=chartYaxisLabel, title=plotName?plotName:newTitle, xAxisArray=dateList, yAxisArray=stageList,
     upperLimitSerie=upperList, lowerLimitSerie=lowerList, plot0_5=event0_5plot, plot1_0=event1_0plot, 
     plot1_5=event1_5plot, plot2_0=event2_0plot, plotAbove0_5=above0_5LinePlot, plotAbove1_0=above1_0LinePlot, 
-    hypotheticalSerie=hypoStageList
+    hypotheticalSerie=hypoStageList, hypoCount=hypoCount, chartDivId=chartDivId
   );
 
   let userData = {
@@ -366,9 +379,7 @@ function processData(data) {
 
 }
 
-function processExcelData(data, outputFileName){
-
-  fileName = outputFileName;
+function processExcelData(excelTab){
 
   let elemntList = [nameTextBox, officeTextBox, beginTextBox, endTextBox];
 
@@ -378,21 +389,33 @@ function processExcelData(data, outputFileName){
 
   isExcelFile = true;
 
-  console.log("Excel Data: ", data);
+  console.log("Excel Data: ", excelTab);
 
-  data.forEach(element => {
-    const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
-    const daysSinceBase = element["Date"] - 1;
-    const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
+  excelTab.forEach((tab) => {
+    const currentTab = {
+      name: tab.sheetName,
+      dates: [],
+      stages: [],
+      hypothetical: []
+    };
 
-    // Format the date as MM/DD/YYYY
-    const month = jsDate.getMonth() + 1; // Months are zero-based
-    const day = jsDate.getDate();
-    const year = jsDate.getFullYear();
+    tab.data.forEach(element => {
+      const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
+      const daysSinceBase = element["Date"] - 1;
+      const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
+  
+      // Format the date as MM/DD/YYYY
+      const month = jsDate.getMonth() + 1; // Months are zero-based
+      const day = jsDate.getDate();
+      const year = jsDate.getFullYear();
+  
+      currentTab.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
+      currentTab.stages.push(element["Stage"] || element["24 Pool"]);
+      currentTab.hypothetical.push(element["Hypothetical Pool"] || null);
+    });
 
-    globalExcelData.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
-    globalExcelData.stages.push(element["Stage"] || element["24 Pool"]);
-    globalExcelData.hypothetical.push(element["Hypothetical Pool"] || null);
+    globalExcelData.push(currentTab);
+
   });
 
   console.log({globalExcelData});
@@ -522,7 +545,7 @@ function getList(list, elemIndex) {
   return newList
 }
 
-function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie, upperLimitSerie, plot0_5, plot1_0, plot1_5, plot2_0, plotAbove0_5, plotAbove1_0, hypotheticalSerie) {
+function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie, upperLimitSerie, plot0_5, plot1_0, plot1_5, plot2_0, plotAbove0_5, plotAbove1_0, hypotheticalSerie, hypoCount, chartDivId) {
 
   // Font Size
   let titleFontSize = titleSize.value + "px";
@@ -564,8 +587,9 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: "Hypothetical",
-      data: hypotheticalSerie,
+      name: hypotheticalName.value + '[' + hypoCount + ']',
+      data: hypotheticalSerie || [],
+      dashStyle: 'Dash',
       color: 'red',
       marker: {
         enabled: false // Disable markers for this series
@@ -706,7 +730,7 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
   };
 
   // Create the chart
-  Highcharts.chart('chartContainer', data);
+  Highcharts.chart(chartDivId, data);
 };
 
 // Function to create the url
@@ -879,9 +903,24 @@ createGraphBtn.addEventListener('click', function(){
   url += `&page-size=${dataLenght}`;
 
   if (isExcelFile){
-    
-    console.log("Excel file.");
-    processData(globalExcelData);
+
+    globalExcelData.forEach((excelSheet, index) => {
+
+      console.log("loop data -> ", {excelSheet, index})
+
+      if (index > 0){
+        const newPlotDiv = document.createElement('div');
+        newPlotDiv.classList.add('chart-cont');
+        newPlotDiv.classList.add('active-cont');
+        newPlotDiv.id = `${excelSheet.name}-plot`;
+        container.append(newPlotDiv);
+
+        processData(excelSheet, `${newPlotDiv.id}`);
+      } else {
+        processData(excelSheet, 'chartContainer');
+      }
+            
+    });
 
   }
   else {
@@ -897,7 +936,7 @@ createGraphBtn.addEventListener('click', function(){
         let dataObj = data["values"];
         //alert(dataObj);
         // Do something with the data
-        processData(dataObj);
+        processData(dataObj, 'chartContainer');
       });
 
     } else {
@@ -940,6 +979,7 @@ function loadUserData() {
     graphYAxisLimits.value = userData.jsonGraphLimits;
     yAxisLabel.value = userData.jsonYAxisLabel;
     seriesName.value = userData.jsonSeriesName;
+    hypotheticalName.value = userData.jsonHypotheticalName;
 
   } else {
     console.log("No saved user data found.");
