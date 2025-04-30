@@ -399,6 +399,12 @@ function processExcelData(excelTab){
       hypothetical: []
     };
 
+    console.log(tab)
+
+    const datesColumnNames = [];
+    const stageColumnNames = [];
+    const hypoColumnNames = [];
+
     tab.data.forEach(element => {
       const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
       const daysSinceBase = element["Date"] - 1;
