@@ -205,6 +205,8 @@ function processData(data, chartDivId) {
     // Get the stage data
     stageList = getList(data, 1);
 
+    globalExcelData.push([{stageColumn:"Stage"}])
+
     if (consoleLogTest) {
       console.log("stageList: ", stageList);
       console.log("dateList: ", dateList);
@@ -950,8 +952,16 @@ function formatDate(timestamp) {
   const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
   const year = date.getFullYear();
 
+  const monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const outputMonth = (monthFormat&&monthFormat.toLowerCase()) === "mmm" ?
+    `${monthList[date.getMonth()]}` : `${month.toString().padStart(2, '0')}`;
+
+  const dateToPush = (scenario&&scenario.toLowerCase()) === "no-year-plot" ? 
+    `${outputMonth}-${day.toString().padStart(2, '0')}` :
+    `${year}-${outputMonth}-${day.toString().padStart(2, '0')}`;
+
   // Return the formatted date
-  return `${year}-${month}-${day}`;
+  return `${dateToPush}`;
 }
 
 function fetchData(url, successFunction) {
