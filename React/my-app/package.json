@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://wm.mvs.ds.usace.army.mil/scripts/water_control/React/my-app",
+  "homepage": "https://wm.mvs.ds.usace.army.mil/scripts/water_control/React/my-app/dist",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
