@@ -1,3 +1,4 @@
+const params = new URLSearchParams(window.location.search)
 
 // Declare some const elements
 const nameTextBox = document.getElementById('name-input');
@@ -41,6 +42,16 @@ var endValue;
 var url;
 var fileName;
 
+// Tooltip
+document.getElementById('tooltip').innerHTML = `
+To customize the date format in the plot, you can modify the URL parameters: 
+<br>add <strong>"month=mmm"</strong> to display months in an abbreviated format (e.g., "Jan"), 
+<br>or use <strong>"scenario=no-year-plot"</strong> to show dates with only the month and day, excluding the year. 
+<br>Ensure that a <strong>question mark ('?')</strong> is added after the URL, followed by the parameters. 
+<br>If you're adding multiple parameters, <strong>separate them with an '&'</strong>. 
+<br>For example: <strong>'/water_control/webApp/html/index.html?scenario=no-year-plot&month=mmm'</strong>.
+`;
+
 // Call this function when the page loads to prepopulate the form
 window.onload = loadUserData;
 
@@ -55,6 +66,8 @@ const domain = "https://coe-mvsuwa04mvs.mvs.usace.army.mil:8243/mvs-data";
 const timeSeries = "/timeseries?";
 const timeZone = "CST6CDT";
 
+const scenario = params.get("scenario");
+const monthFormat = params.get("month");
 let consoleLogTest = true;
 
 // Function for Report btn before getting the graph
@@ -429,17 +442,25 @@ function processExcelData(excelTab){
       tab.data.forEach(element => {
         
         const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
-        const daysSinceBase = element["Date"] - 1;
+        const daysSinceBase = element[date] - 1;
         const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
     
         // Format the date as MM/DD/YYYY
+        const monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         const month = jsDate.getMonth() + 1; // Months are zero-based
         const day = jsDate.getDate();
         const year = jsDate.getFullYear();
+
+        const outputMonth = (monthFormat&&monthFormat.toLowerCase()) === "mmm" ?
+          `${monthList[month]}` : `${month.toString().padStart(2, '0')}`;
+
+        const dateToPush = (scenario&&scenario.toLowerCase()) === "no-year-plot" ? 
+          `${outputMonth}-${day.toString().padStart(2, '0')}` :
+          `${year}-${outputMonth}-${day.toString().padStart(2, '0')}`;
     
-        currentTab.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
-        currentTab.stages.push(element["Stage"] || element["24 Pool"]);
-        currentTab.hypothetical.push(element["Hypothetical Pool"] || null);
+        currentTab.dates.push(dateToPush);
+        currentTab.stages.push(element[stage]);
+        currentTab.hypothetical.push(element[hypothetical]);
       });
   
       globalExcelData.push(currentTab);
@@ -447,21 +468,37 @@ function processExcelData(excelTab){
     });
   } else {
     const currentTab = {
+      dateColumn: "",
+      stageColumn: "",
       dates: [],
       stages: []
     }
+
+    const columnList = Object.keys(excelTab[0]);
+    const [ date, stage ] = [...columnList];
+    currentTab.dateColumn = date,
+    currentTab.stageColumn = stage,
+
     excelTab.forEach(element => {
       const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
-      const daysSinceBase = element["Date"] - 1;
+      const daysSinceBase = element[date] - 1;
       const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
   
       // Format the date as MM/DD/YYYY
+      const monthList = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
       const month = jsDate.getMonth() + 1; // Months are zero-based
       const day = jsDate.getDate();
       const year = jsDate.getFullYear();
+
+      const outputMonth = (monthFormat&&monthFormat.toLowerCase()) === "mmm" ?
+        `${monthList[month]}` : `${month.toString().padStart(2, '0')}`;
+
+      const dateToPush = (scenario&&scenario.toLowerCase()) === "no-year-plot" ? 
+        `${outputMonth}-${day.toString().padStart(2, '0')}` :
+        `${year}-${outputMonth}-${day.toString().padStart(2, '0')}`;
   
-      currentTab.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
-      currentTab.stages.push(element["Stage"]);
+      currentTab.dates.push(dateToPush);
+      currentTab.stages.push(element[stage]);
     });
 
     globalExcelData.push(currentTab);

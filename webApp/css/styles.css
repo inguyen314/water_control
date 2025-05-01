@@ -266,3 +266,53 @@ header h1{
     flex-direction: column;
     gap: 2em;
 }
+
+.file-browser-div {
+    display: flex;
+    align-items: center;
+}
+
+.help-div {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.question-mark {
+    background: rgb(85, 83, 238);
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    border: 2px solid white;
+    border-radius: 100%;
+    height: 1.5em;
+    width: 1.5em;
+    cursor: pointer;
+    user-select: none;
+}
+
+.question-mark:hover ~ .tooltip-div {
+    opacity: 100;
+    top: 90%;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.tooltip-div {
+    position: absolute;
+    top: -1000%;
+    left: 0%;
+    opacity: 0;
+    min-width: 20em;
+    height: auto;
+    background: white;
+    border-radius: 1em;
+    padding: 1em;
+    user-select: none;
+
+    font-size: 0.80em;
+
+    box-shadow: 5px 5px 5px rgba(0,0,0,0.1);
+    transition: opacity 0.5s ease-in-out;
+}
