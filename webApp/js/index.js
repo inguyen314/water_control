@@ -46,6 +46,7 @@ window.onload = loadUserData;
 
 // If a file was picked then block the other inputs
 let isExcelFile = false;
+let haveHypo = false;
 let excelFileName = "";
 let globalExcelData = [];
 
@@ -113,20 +114,33 @@ filePicker.addEventListener('change', function(event){
     const workbookSheets = workbook.SheetNames;
     const sheetsData = []
 
-    // const sheetName = workbook.SheetNames[0];
-    // const sheet = workbook.Sheets[sheetName];
+    // Check if there is a hypothetical column
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
 
-    workbookSheets.forEach((sheetName) => {
-      const sheet = workbook.Sheets[sheetName]
+    const sheetData = XLSX.utils.sheet_to_json(sheet);
+    const columnsCount = Object.keys(sheetData[0]).length;
 
-      const json = XLSX.utils.sheet_to_json(sheet);
-      sheetsData.push({
-        sheetName: sheetName,
-        data: json
+    if (columnsCount > 2){
+
+      workbookSheets.forEach((sheetName) => {
+        const sheet = workbook.Sheets[sheetName]
+  
+        const json = XLSX.utils.sheet_to_json(sheet);
+        sheetsData.push({
+          sheetName: sheetName,
+          data: json
+        });
       });
-    })
 
-    processExcelData(sheetsData);
+      haveHypo = true;
+
+      processExcelData(sheetsData);
+
+    } else {
+      processExcelData(sheetData);
+    };
+
     
   };
 
@@ -152,13 +166,16 @@ function processData(data, chartDivId) {
   let stageList;
   let hypoStageList;
 
-  if (isExcelFile){
+  if (isExcelFile && haveHypo){
 
     plotName = `${excelFileName} - ${data.name}`;
     dateList = data.dates;
     stageList = data.stages;
     hypoStageList = data.hypothetical;
 
+  } else if(isExcelFile){
+    dateList = data.dates;
+    stageList = data.stages;
   }
   else {
 
@@ -219,10 +236,10 @@ function processData(data, chartDivId) {
   let event2_0 = [];
 
   // Fill the empty arrays for each event
-  let event0_5List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev0_5);
-  let event1_0List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_0);
-  let event1_5List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_5);
-  let event2_0List = getEvents(isExcelFile?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev2_0);
+  let event0_5List = getEvents((isExcelFile&&haveHypo)?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev0_5);
+  let event1_0List = getEvents((isExcelFile&&haveHypo)?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_0);
+  let event1_5List = getEvents((isExcelFile&&haveHypo)?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev1_5);
+  let event2_0List = getEvents((isExcelFile&&haveHypo)?hypoStageList:stageList, upperLimit=upperLimit, dateList=dateList, eventFt=elev2_0);
 
   // Get X and Y values for each event
   let xValues0_5 = event0_5List[1];
@@ -347,7 +364,7 @@ function processData(data, chartDivId) {
   console.log( { event0_5plot: event0_5plot } );
   console.log( { above0_5LinePlot: above0_5LinePlot } );
 
-  let hypoCountList = isExcelFile ? hypoStageList.filter(x => x < upperLimit) : [];
+  let hypoCountList = (isExcelFile&&haveHypo) ? hypoStageList.filter(x => x < upperLimit) : [];
   let hypoCount = hypoCountList.length;
 
   createChart(yAxisTitle=chartYaxisLabel, title=plotName?plotName:newTitle, xAxisArray=dateList, yAxisArray=stageList,
@@ -391,21 +408,43 @@ function processExcelData(excelTab){
 
   console.log("Excel Data: ", excelTab);
 
-  excelTab.forEach((tab) => {
+  if (excelTab[0].sheetName){
+    excelTab.forEach((tab) => {
+      const currentTab = {
+        name: tab.sheetName,
+        dates: [],
+        stages: [],
+        hypothetical: []
+      };
+  
+      const datesColumnNames = [];
+      const stageColumnNames = [];
+      const hypoColumnNames = [];
+  
+      tab.data.forEach(element => {
+        const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
+        const daysSinceBase = element["Date"] - 1;
+        const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
+    
+        // Format the date as MM/DD/YYYY
+        const month = jsDate.getMonth() + 1; // Months are zero-based
+        const day = jsDate.getDate();
+        const year = jsDate.getFullYear();
+    
+        currentTab.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
+        currentTab.stages.push(element["Stage"] || element["24 Pool"]);
+        currentTab.hypothetical.push(element["Hypothetical Pool"] || null);
+      });
+  
+      globalExcelData.push(currentTab);
+  
+    });
+  } else {
     const currentTab = {
-      name: tab.sheetName,
       dates: [],
-      stages: [],
-      hypothetical: []
-    };
-
-    console.log(tab)
-
-    const datesColumnNames = [];
-    const stageColumnNames = [];
-    const hypoColumnNames = [];
-
-    tab.data.forEach(element => {
+      stages: []
+    }
+    excelTab.forEach(element => {
       const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
       const daysSinceBase = element["Date"] - 1;
       const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
@@ -416,14 +455,11 @@ function processExcelData(excelTab){
       const year = jsDate.getFullYear();
   
       currentTab.dates.push(`${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`);
-      currentTab.stages.push(element["Stage"] || element["24 Pool"]);
-      currentTab.hypothetical.push(element["Hypothetical Pool"] || null);
+      currentTab.stages.push(element["Stage"]);
     });
 
     globalExcelData.push(currentTab);
-
-  });
-
+  }
   console.log({globalExcelData});
 }
 
