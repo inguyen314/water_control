@@ -412,16 +412,22 @@ function processExcelData(excelTab){
     excelTab.forEach((tab) => {
       const currentTab = {
         name: tab.sheetName,
+        dateColumn: "",
+        stageColumn: "",
+        hypoColumn: "",
         dates: [],
         stages: [],
         hypothetical: []
       };
-  
-      const datesColumnNames = [];
-      const stageColumnNames = [];
-      const hypoColumnNames = [];
+
+      const columnList = Object.keys(tab.data[0]);
+      const [ date, stage, hypothetical ] = [...columnList];
+      currentTab.dateColumn = date,
+      currentTab.stageColumn = stage,
+      currentTab.hypoColumn = hypothetical
   
       tab.data.forEach(element => {
+        
         const excelBaseDate = new Date(1900, 0, 0);  // January 1, 1900
         const daysSinceBase = element["Date"] - 1;
         const jsDate = new Date(excelBaseDate.getTime() + daysSinceBase * 24 * 60 * 60 * 1000);
@@ -621,7 +627,7 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
   // Initial series data
   const series = [
     {
-      name: seriesName.value,
+      name: seriesName.value===""?globalExcelData[0].stageColumn:seriesName.value,
       data: yAxisArray,
       color: 'blue',
       marker: {
@@ -629,7 +635,7 @@ function createChart(yAxisTitle, title, xAxisArray, yAxisArray, lowerLimitSerie,
       }
     },
     {
-      name: hypotheticalName.value + '[' + hypoCount + ']',
+      name: ([undefined, "undefined", ""].includes(hypotheticalName.value))?(globalExcelData[0].hypoColumn + '[' + hypoCount + ']'):(hypotheticalName.value + '[' + hypoCount + ']'),
       data: hypotheticalSerie || [],
       dashStyle: 'Dash',
       color: 'red',
