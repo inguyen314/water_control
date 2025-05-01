@@ -300,6 +300,7 @@ header h1{
 }
 
 .tooltip-div {
+    z-index: 999;
     position: absolute;
     top: -1000%;
     left: 0%;
